@@ -5,6 +5,11 @@ plugins {
 }
 
 android {
+    buildTypes {
+    release {
+        signingConfig signingConfigs.debug
+    }
+    }
     namespace "com.hustlelink.app"
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
