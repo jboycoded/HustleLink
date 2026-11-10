@@ -40,7 +40,8 @@ final appRouter = GoRouter(
           GoRoute(
             path: '/chat',
             builder: (context, state) => ChangeNotifierProvider(
-              create: (ctx) => ChatViewModel(ctx.read<GigRepository>())..load(),
+              //create: (ctx) => ChatViewModel(ctx.read<GigRepository>())..load(),
+              create: (ctx) => ChatViewModel()..load(),
               child: const ChatScreen(),
             ),
           ),
