@@ -1,0 +1,123 @@
+import 'package:flutter/material.dart';
+
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_tokens.dart';
+import '../../data/models/gig.dart';
+
+class MatchedGigTile extends StatelessWidget {
+  const MatchedGigTile({
+    super.key,
+    required this.gig,
+    this.onTap,
+    this.onDelete,
+  });
+
+  final Gig gig;
+  final VoidCallback? onTap;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final colors = context.appColors;
+    final text = theme.textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: BorderRadius.circular(AppTokens.rLg ?? 12),
+          border: Border.all(
+            color: scheme.outline,
+            width: AppTokens.borderWidth,
+          ),
+          boxShadow: AppTokens.hardShadow(scheme.outline, 3),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppTokens.rLg ?? 12),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  // Optional Action/Status Button on Left
+                  GestureDetector(
+                    onTap: onDelete,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: scheme.outline,
+                          width: AppTokens.borderWidth,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 16,
+                        color: scheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  
+                  // Main Body Details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${gig.title} - ${gig.location}',
+                          style: text.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: scheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.peachSoft,
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: scheme.outline,
+                                  width: AppTokens.borderWidth,
+                                ),
+                              ),
+                              child: Text(
+                                '₦${gig.price}',
+                                style: text.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: scheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Chevron Right Navigation Indicator
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: colors.muted,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
