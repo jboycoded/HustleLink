@@ -67,8 +67,9 @@ class MatchedGigTile extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Title matched with precise data fields
                         Text(
-                          '${gig.title} - ${gig.location}',
+                          '${gig.title} • ${gig.distanceKm} km away',
                           style: text.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: scheme.onSurface,
@@ -91,7 +92,7 @@ class MatchedGigTile extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                '₦${gig.price}',
+                                '₦${gig.pay}',
                                 style: text.labelMedium?.copyWith(
                                   fontWeight: FontWeight.w700,
                                   color: scheme.onSurface,
