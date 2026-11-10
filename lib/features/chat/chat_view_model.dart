@@ -1,12 +1,13 @@
 import 'package:flutter/foundation.dart';
-import '../../data/repositories/gig_repository.dart';
+//import '../../data/repositories/gig_repository.dart';
 import 'models/chat_message.dart';
 
 
 class ChatViewModel extends ChangeNotifier {
-  ChatViewModel(this._repo);
+  //ChatViewModel(this._repo);
+  ChatViewModel();
   
-  final GigRepository _repo;
+  //final GigRepository _repo;
   List<ChatMessage> _messages = [];
   bool isLoading = false;
 
