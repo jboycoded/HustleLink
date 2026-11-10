@@ -28,7 +28,10 @@ final appRouter = GoRouter(
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/matches',
-            builder: (context, state) => const MatchesScreen(),
+            builder: (context, state) => ChangeNotifierProvider(
+              create: (ctx) => MatchesViewModel(ctx.read<GigRepository>()), // loaded automatically via initState in your MatchesScreen
+              child: const MatchesScreen(),
+            ),
           ),
         ]),
         StatefulShellBranch(routes: [
