@@ -18,6 +18,8 @@ class HustleLinkApp extends StatelessWidget {
         title: 'HUSTLELINK',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        themeMode: ThemeMode.system,
         routerConfig: appRouter,
       ),
     );
