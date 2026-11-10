@@ -209,7 +209,7 @@ class _SwipeBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    //final scheme = Theme.of(context).colorScheme;
 
     return Container(
       alignment: alignment,
