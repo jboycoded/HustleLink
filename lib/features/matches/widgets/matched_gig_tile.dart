@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_tokens.dart';
-import '../../data/models/gig.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../../data/models/gig.dart';
 
 class MatchedGigTile extends StatelessWidget {
   const MatchedGigTile({
@@ -28,7 +28,7 @@ class MatchedGigTile extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: scheme.surface,
-          borderRadius: BorderRadius.circular(AppTokens.rLg ?? 12),
+          borderRadius: BorderRadius.circular(AppTokens.rLg),
           border: Border.all(
             color: scheme.outline,
             width: AppTokens.borderWidth,
@@ -39,12 +39,11 @@ class MatchedGigTile extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(AppTokens.rLg ?? 12),
+            borderRadius: BorderRadius.circular(AppTokens.rLg),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  // Optional Action/Status Button on Left
                   GestureDetector(
                     onTap: onDelete,
                     child: Container(
@@ -64,8 +63,6 @@ class MatchedGigTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  
-                  // Main Body Details
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,8 +103,6 @@ class MatchedGigTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
-                  // Chevron Right Navigation Indicator
                   Icon(
                     Icons.chevron_right_rounded,
                     color: colors.muted,
