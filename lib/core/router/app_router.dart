@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../data/repositories/gig_repository.dart';
 import '../../features/chat/chat_screen.dart';
+import '../../features/chat/chat_view_model.dart';
 import '../../features/matches/matches_screen.dart';
 import '../../features/matches/matches_view_model.dart';
 import '../../features/profile/profile_screen.dart';
@@ -38,7 +39,10 @@ final appRouter = GoRouter(
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/chat',
-            builder: (context, state) => const ChatScreen(),
+            builder: (context, state) => ChangeNotifierProvider(
+              create: (ctx) => ChatViewModel(ctx.read<GigRepository>())..load(),
+              child: const ChatScreen(),
+            ),
           ),
         ]),
         StatefulShellBranch(routes: [
