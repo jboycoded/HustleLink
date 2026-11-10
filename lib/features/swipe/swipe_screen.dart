@@ -13,148 +13,176 @@ class SwipeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<SwipeViewModel>();
-    final gig = vm.currentGig;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final colors = context.appColors;
-    final screenWidth = MediaQuery.sizeOf(context).width;
+    final text = theme.textTheme;
 
-    final horizontalPadding = screenWidth > 700 ? 32.0 : 20.0;
+    Widget body;
+
+    if (vm.isLoading) {
+      body = Center(
+        child: CircularProgressIndicator(
+          color: scheme.primary,
+        ),
+      );
+    } else if (vm.error != null) {
+      body = Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTokens.space),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.wifi_off_rounded,
+                size: 42,
+                color: colors.muted,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                vm.error!,
+                textAlign: TextAlign.center,
+                style: text.bodyLarge?.copyWith(
+                  color: scheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: vm.load,
+                child: const Text('Try again'),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else if (vm.currentGig == null) {
+      body = Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTokens.space),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.explore_outlined,
+                size: 52,
+                color: colors.muted,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No more gigs near you.',
+                textAlign: TextAlign.center,
+                style: text.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: scheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Check back soon for new opportunities.',
+                textAlign: TextAlign.center,
+                style: text.bodyMedium?.copyWith(
+                  color: colors.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      final gig = vm.currentGig!;
+
+      body = Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 25, 12),
+        child: Dismissible(
+          key: ValueKey(gig.id),
+          direction: DismissDirection.horizontal,
+          onDismissed: (direction) {
+            if (direction == DismissDirection.startToEnd) {
+              vm.apply();
+            } else {
+              vm.pass();
+            }
+          },
+          background: _SwipeBackground(
+            alignment: Alignment.centerLeft,
+            label: 'APPLY',
+            icon: Icons.check_circle_outline,
+            color: scheme.primary,
+          ),
+          secondaryBackground: _SwipeBackground(
+            alignment: Alignment.centerRight,
+            label: 'PASS',
+            icon: Icons.close_rounded,
+            color: scheme.error,
+          ),
+          child: GigCard(gig: gig),
+        ),
+      );
+    }
 
     return SafeArea(
       child: Column(
         children: [
-          // HEADER
           Padding(
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              12,
-              horizontalPadding,
-              14,
-            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
               children: [
-                const Icon(
-                  Icons.bolt_rounded,
-                  size: 22,
-                  color: Colors.black,
-                ),
-                const SizedBox(width: 6),
                 Text(
                   'HUSTLELINK',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                      ),
-                ),
-                const SizedBox(width: 7),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.peach,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.black, width: 1.5),
-                  ),
-                  child: const Text(
-                    'BETA',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  style: text.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                    color: scheme.onSurface,
                   ),
                 ),
                 const Spacer(),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.menu_rounded),
-                  tooltip: 'Menu',
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.peachSoft,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: scheme.outline,
+                      width: AppTokens.borderWidth,
+                    ),
+                  ),
+                  child: Text(
+                    'DISCOVER',
+                    style: text.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onSurface,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
 
-          // CATEGORY FILTERS
-          SizedBox(
-            height: 42,
-            child: ListView.separated(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              scrollDirection: Axis.horizontal,
-              itemCount: vm.categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 9),
-              itemBuilder: (context, index) {
-                final category = vm.categories[index];
-                final selected = category == vm.selectedCategory;
+          Expanded(child: body),
 
-                return GestureDetector(
-                  onTap: () => vm.selectCategory(category),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 17,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected ? Colors.black : Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                        color: Colors.black,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Text(
-                      category,
-                      style: TextStyle(
-                        color: selected ? Colors.white : Colors.black,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // MAIN GIG AREA
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-              ),
-              child: _buildGigArea(context, vm, gig),
-            ),
-          ),
-
-          // ACTION BUTTONS
-          if (gig != null && !vm.isLoading)
+          if (vm.currentGig != null && !vm.isLoading && vm.error == null)
             Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 18),
+              padding: const EdgeInsets.only(bottom: 20, top: 4),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _ActionButton(
+                  _RoundButton(
                     icon: Icons.close_rounded,
                     label: 'Pass',
-                    size: 58,
+                    size: 64,
                     onPressed: vm.pass,
                   ),
-                  const SizedBox(width: 22),
-                  _ActionButton(
-                    icon: Icons.bookmark_border_rounded,
-                    label: 'Save',
-                    size: 58,
-                    onPressed: vm.save,
-                  ),
-                  const SizedBox(width: 22),
-                  _ActionButton(
+                  const SizedBox(width: 28),
+                  _RoundButton(
                     icon: Icons.check_rounded,
                     label: 'Apply',
-                    size: 68,
-                    background: Colors.black,
-                    foreground: Colors.white,
+                    size: 72,
+                    fill: scheme.primary,
+                    iconColor: scheme.onPrimary,
                     onPressed: vm.apply,
                   ),
                 ],
@@ -164,146 +192,104 @@ class SwipeScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildGigArea(
-    BuildContext context,
-    SwipeViewModel vm,
-    dynamic gig,
-  ) {
-    if (vm.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
+class _SwipeBackground extends StatelessWidget {
+  const _SwipeBackground({
+    required this.alignment,
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
 
-    if (vm.error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.wifi_off_rounded, size: 42),
-            const SizedBox(height: 12),
-            Text(
-              vm.error!,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: vm.load,
-              child: const Text('Try again'),
-            ),
-          ],
+  final Alignment alignment;
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppTokens.rLg),
+        border: Border.all(
+          color: color,
+          width: AppTokens.borderWidth,
         ),
-      );
-    }
-
-    if (gig == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.explore_outlined,
-              size: 58,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'No more gigs around you.',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Check back later for new opportunities.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 18),
-            OutlinedButton(
-              onPressed: vm.load,
-              child: const Text('Refresh gigs'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: Dismissible(
-              key: ValueKey(gig.id),
-              direction: DismissDirection.horizontal,
-              onDismissed: (direction) {
-                if (direction == DismissDirection.startToEnd) {
-                  vm.apply();
-                } else {
-                  vm.pass();
-                }
-              },
-              child: SizedBox(
-                height: constraints.maxHeight,
-                width: double.infinity,
-                child: GigCard(gig: gig),
-              ),
-            ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 34, color: color),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
+class _RoundButton extends StatelessWidget {
+  const _RoundButton({
     required this.icon,
     required this.label,
     required this.size,
     required this.onPressed,
-    this.background = Colors.white,
-    this.foreground = Colors.black,
+    this.fill,
+    this.iconColor,
   });
 
   final IconData icon;
   final String label;
   final double size;
   final VoidCallback onPressed;
-  final Color background;
-  final Color foreground;
+  final Color? fill;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Tooltip(
       message: label,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Material(
-            color: background,
-            shape: const CircleBorder(
-              side: BorderSide(
-                color: Colors.black,
-                width: AppTokens.borderWidth,
-              ),
-            ),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: onPressed,
-              child: SizedBox(
-                height: size,
-                width: size,
-                child: Icon(
-                  icon,
-                  size: size * 0.43,
-                  color: foreground,
-                ),
-              ),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: fill ?? scheme.surface,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: scheme.outline,
+            width: AppTokens.borderWidth,
+          ),
+          boxShadow: AppTokens.hardShadow(scheme.outline, 3),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onPressed,
+            child: Icon(
+              icon,
+              size: size * 0.4,
+              color: iconColor ?? scheme.onSurface,
             ),
           ),
-        ],
+        ),
       ),
     );
   }
