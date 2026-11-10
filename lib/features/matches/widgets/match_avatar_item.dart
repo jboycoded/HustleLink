@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_tokens.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_tokens.dart';
 import '../matches_view_model.dart';
 
 class MatchAvatarItem extends StatelessWidget {
@@ -24,7 +24,7 @@ class MatchAvatarItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.horizontal(8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0), // Fixed constructor
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
