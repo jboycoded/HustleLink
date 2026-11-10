@@ -1,8 +1,12 @@
+
 import 'package:flutter/material.dart';
 
 import 'app_palette.dart';
 
-/// Brand colours that Material's ColorScheme has no slot for.
+/// Semantic brand colours that complement Flutter's ColorScheme.
+///
+/// Every screen should obtain these colours through:
+/// Theme.of(context).extension<AppColors>()
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
@@ -17,11 +21,23 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color peachDeep;
   final Color muted;
 
+  /// Light theme brand colours.
   static const light = AppColors(
     peach: AppPalette.peach,
     peachSoft: AppPalette.peachSoft,
     peachDeep: AppPalette.peachDeep,
     muted: AppPalette.muted,
+  );
+
+  /// Dark theme brand colours.
+  ///
+  /// Peach remains consistent to preserve HustleLink's identity.
+  /// Muted text becomes lighter for readability on dark surfaces.
+  static const dark = AppColors(
+    peach: AppPalette.peach,
+    peachSoft: AppPalette.peachSoft,
+    peachDeep: AppPalette.peachDeep,
+    muted: Color(0xFFB8B8B0),
   );
 
   @override
@@ -30,17 +46,19 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? peachSoft,
     Color? peachDeep,
     Color? muted,
-  }) =>
-      AppColors(
-        peach: peach ?? this.peach,
-        peachSoft: peachSoft ?? this.peachSoft,
-        peachDeep: peachDeep ?? this.peachDeep,
-        muted: muted ?? this.muted,
-      );
+  }) {
+    return AppColors(
+      peach: peach ?? this.peach,
+      peachSoft: peachSoft ?? this.peachSoft,
+      peachDeep: peachDeep ?? this.peachDeep,
+      muted: muted ?? this.muted,
+    );
+  }
 
   @override
   AppColors lerp(ThemeExtension<AppColors>? other, double t) {
     if (other is! AppColors) return this;
+
     return AppColors(
       peach: Color.lerp(peach, other.peach, t)!,
       peachSoft: Color.lerp(peachSoft, other.peachSoft, t)!,
@@ -50,6 +68,8 @@ class AppColors extends ThemeExtension<AppColors> {
   }
 }
 
+/// Convenient access to HustleLink's custom theme colours.
 extension AppColorsContext on BuildContext {
-  AppColors get appColors => Theme.of(this).extension<AppColors>()!;
+  AppColors get appColors =>
+      Theme.of(this).extension<AppColors>()!;
 }
