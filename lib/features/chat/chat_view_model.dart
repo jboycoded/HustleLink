@@ -6,7 +6,7 @@ import 'models/chat_message.dart';
 class ChatViewModel extends ChangeNotifier {
   ChatViewModel(this._repo);
   
-  final GigRepository _repo;
+  //final GigRepository _repo;
   List<ChatMessage> _messages = [];
   bool isLoading = false;
 
