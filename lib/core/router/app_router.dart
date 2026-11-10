@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../data/repositories/gig_repository.dart';
 import '../../features/chat/chat_screen.dart';
 import '../../features/matches/matches_screen.dart';
+import '../../features/matches/matches_view_model.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/swipe/swipe_screen.dart';
 import '../../features/swipe/swipe_view_model.dart';
