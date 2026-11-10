@@ -6,7 +6,8 @@ import 'app_palette.dart';
 /// Semantic brand colours that complement Flutter's ColorScheme.
 ///
 /// Every screen should obtain these colours through:
-/// Theme.of(context).extension<AppColors>()
+/// 
+//Theme.of(context).extension<AppColors>()
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
