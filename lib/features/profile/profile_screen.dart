@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,13 +19,15 @@ class ProfileScreen extends StatelessWidget {
     final text = theme.textTheme;
 
     if (profile == null) {
-      return Center(child: CircularProgressIndicator(color: scheme.primary));
+      return Center(
+        child: CircularProgressIndicator(color: scheme.secondary),
+      );
     }
 
     return SafeArea(
       child: Column(
         children: [
-          // 1. Unified Header Bar
+          // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
@@ -40,9 +43,12 @@ class ProfileScreen extends StatelessWidget {
                 const Spacer(),
                 if (profile.isVerified)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: colors.peachSoft,
+                      color: scheme.secondary,
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
                         color: scheme.outline,
@@ -52,13 +58,17 @@ class ProfileScreen extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.verified_rounded, size: 14, color: scheme.onSurface),
+                        Icon(
+                          Icons.verified_rounded,
+                          size: 14,
+                          color: scheme.onSecondary,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'VERIFIED',
                           style: text.labelSmall?.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: scheme.onSurface,
+                            color: scheme.onSecondary,
                             letterSpacing: 0.8,
                           ),
                         ),
@@ -69,12 +79,12 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
 
-          // 2. Scrollable Profile Body
+          // Scrollable profile content
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
               children: [
-                // User Identity Card
+                // Identity card
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -93,32 +103,43 @@ class ProfileScreen extends StatelessWidget {
                         height: 76,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: colors.peachSoft,
+                          color: scheme.secondary,
                           border: Border.all(
                             color: scheme.outline,
                             width: AppTokens.borderWidth,
                           ),
-                          boxShadow: AppTokens.hardShadow(scheme.outline, 2),
+                          boxShadow: AppTokens.hardShadow(
+                            scheme.outline,
+                            2,
+                          ),
                         ),
                         alignment: Alignment.center,
                         child: Text(
                           profile.initials,
-                          style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+                          style: text.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: scheme.onSecondary,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         profile.fullName,
-                        style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                        style: text.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: scheme.onSurface,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         profile.role,
-                        style: text.bodyMedium?.copyWith(color: colors.muted),
+                        style: text.bodyMedium?.copyWith(
+                          color: colors.muted,
+                        ),
                       ),
                       const SizedBox(height: 20),
 
-                      // Stats Row (Rating & Completed Gigs)
+                      // Statistics
                       Row(
                         children: [
                           Expanded(
@@ -142,9 +163,12 @@ class ProfileScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Availability Toggle Card
+                // Availability
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: scheme.surface,
                     borderRadius: BorderRadius.circular(AppTokens.rLg),
@@ -162,18 +186,24 @@ class ProfileScreen extends StatelessWidget {
                           children: [
                             Text(
                               'Available for Gigs',
-                              style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                              style: text.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: scheme.onSurface,
+                              ),
                             ),
                             Text(
                               'Show your profile to nearby clients',
-                              style: text.labelSmall?.copyWith(color: colors.muted),
+                              style: text.labelSmall?.copyWith(
+                                color: colors.muted,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       Switch(
                         value: vm.isAvailableForGigs,
-                        activeColor: scheme.primary,
+                        activeThumbColor: scheme.onSecondary,
+                        activeTrackColor: scheme.secondary,
                         onChanged: vm.toggleAvailability,
                       ),
                     ],
@@ -182,7 +212,7 @@ class ProfileScreen extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // Skills Section
+                // Skills
                 Text(
                   'YOUR SKILLS',
                   style: text.labelSmall?.copyWith(
@@ -197,9 +227,12 @@ class ProfileScreen extends StatelessWidget {
                   runSpacing: 8,
                   children: profile.skills.map((skill) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: colors.peachSoft,
+                        color: scheme.secondary,
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
                           color: scheme.outline,
@@ -210,7 +243,7 @@ class ProfileScreen extends StatelessWidget {
                         skill,
                         style: text.labelMedium?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: scheme.onSurface,
+                          color: scheme.onSecondary,
                         ),
                       ),
                     );
@@ -226,7 +259,10 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _StatBox extends StatelessWidget {
-  const _StatBox({required this.label, required this.value});
+  const _StatBox({
+    required this.label,
+    required this.value,
+  });
 
   final String label;
   final String value;
@@ -241,7 +277,7 @@ class _StatBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: colors.peachSoft.withValues(alpha: 0.4),
+        color: scheme.secondary.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(AppTokens.rLg),
         border: Border.all(
           color: scheme.outline,
@@ -252,7 +288,10 @@ class _StatBox extends StatelessWidget {
         children: [
           Text(
             value,
-            style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            style: text.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: scheme.onSurface,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
