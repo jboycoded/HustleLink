@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -32,7 +33,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return SafeArea(
       child: Column(
         children: [
-          // 1. Client Header Bar Layout
+          // Client header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
@@ -42,16 +43,20 @@ class _ChatScreenState extends State<ChatScreen> {
                   height: 40,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: colors.peachSoft,
+                    color: scheme.secondary,
                     border: Border.all(
                       color: scheme.outline,
                       width: AppTokens.borderWidth,
                     ),
+                    boxShadow: AppTokens.hardShadow(scheme.outline, 2),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     'AO',
-                    style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                    style: text.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onSecondary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -60,11 +65,16 @@ class _ChatScreenState extends State<ChatScreen> {
                   children: [
                     Text(
                       'Ada O.',
-                      style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                      style: text.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onSurface,
+                      ),
                     ),
                     Text(
                       'Wig Install • Active Now',
-                      style: text.labelSmall?.copyWith(color: colors.muted),
+                      style: text.labelSmall?.copyWith(
+                        color: colors.muted,
+                      ),
                     ),
                   ],
                 ),
@@ -72,37 +82,57 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-          const Divider(height: 1, thickness: 1),
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: scheme.outline,
+          ),
 
-          // 2. Chat Dialogue Feed
+          // Chat dialogue feed
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
               itemCount: vm.messages.length,
               itemBuilder: (context, index) {
                 final message = vm.messages[index];
+
                 return Align(
-                  alignment: message.isMe ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: message.isMe
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6.0),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Container(
                       constraints: BoxConstraints(
                         maxWidth: MediaQuery.of(context).size.width * 0.75,
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
-                        color: message.isMe ? scheme.primary : scheme.surface,
+                        color: message.isMe
+                            ? scheme.secondary
+                            : scheme.surface,
                         borderRadius: BorderRadius.circular(AppTokens.rLg),
                         border: Border.all(
                           color: scheme.outline,
                           width: AppTokens.borderWidth,
                         ),
-                        boxShadow: AppTokens.hardShadow(scheme.outline, 2),
+                        boxShadow: AppTokens.hardShadow(
+                          scheme.outline,
+                          2,
+                        ),
                       ),
                       child: Text(
                         message.text,
                         style: text.bodyMedium?.copyWith(
-                          color: message.isMe ? scheme.onPrimary : scheme.onSurface,
+                          color: message.isMe
+                              ? scheme.onSecondary
+                              : scheme.onSurface,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -113,7 +143,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-          // 3. Neo-Brutalist Message Bar Input Field
+          // Message input
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
             child: Row(
@@ -127,11 +157,17 @@ class _ChatScreenState extends State<ChatScreen> {
                         color: scheme.outline,
                         width: AppTokens.borderWidth,
                       ),
-                      boxShadow: AppTokens.hardShadow(scheme.outline, 2),
+                      boxShadow: AppTokens.hardShadow(
+                        scheme.outline,
+                        2,
+                      ),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: TextField(
                       controller: _controller,
+                      style: text.bodyMedium?.copyWith(
+                        color: scheme.onSurface,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Type a message...',
                         hintStyle: TextStyle(color: colors.muted),
@@ -143,8 +179,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 const SizedBox(width: 12),
                 GestureDetector(
                   onTap: () {
-                    if (_controller.text.isNotEmpty) {
-                      vm.sendMessage(_controller.text);
+                    if (_controller.text.trim().isNotEmpty) {
+                      vm.sendMessage(_controller.text.trim());
                       _controller.clear();
                     }
                   },
@@ -152,17 +188,20 @@ class _ChatScreenState extends State<ChatScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: colors.peachSoft,
+                      color: scheme.secondary,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: scheme.outline,
                         width: AppTokens.borderWidth,
                       ),
-                      boxShadow: AppTokens.hardShadow(scheme.outline, 2),
+                      boxShadow: AppTokens.hardShadow(
+                        scheme.outline,
+                        2,
+                      ),
                     ),
                     child: Icon(
-                      Icons.send_rounded, 
-                      color: scheme.onSurface, 
+                      Icons.send_rounded,
+                      color: scheme.onSecondary,
                       size: 20,
                     ),
                   ),
