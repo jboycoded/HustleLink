@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,9 +19,10 @@ class _MatchesScreenState extends State<MatchesScreen> {
   @override
   void initState() {
     super.initState();
-    // Safely trigger data loading after initialization context binds
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MatchesViewModel>().load();
+      if (mounted) {
+        context.read<MatchesViewModel>().load();
+      }
     });
   }
 
@@ -36,9 +38,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
     if (vm.isLoading) {
       body = Center(
-        child: CircularProgressIndicator(
-          color: scheme.primary,
-        ),
+        child: CircularProgressIndicator(color: scheme.secondary),
       );
     } else if (vm.error != null) {
       body = Center(
@@ -47,18 +47,12 @@ class _MatchesScreenState extends State<MatchesScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.wifi_off_rounded,
-                size: 42,
-                color: colors.muted,
-              ),
+              Icon(Icons.wifi_off_rounded, size: 42, color: colors.muted),
               const SizedBox(height: 16),
               Text(
                 vm.error!,
                 textAlign: TextAlign.center,
-                style: text.bodyLarge?.copyWith(
-                  color: scheme.onSurface,
-                ),
+                style: text.bodyLarge?.copyWith(color: scheme.onSurface),
               ),
               const SizedBox(height: 16),
               FilledButton(
@@ -94,9 +88,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
               Text(
                 'Keep swiping to discover new connections!',
                 textAlign: TextAlign.center,
-                style: text.bodyMedium?.copyWith(
-                  color: colors.muted,
-                ),
+                style: text.bodyMedium?.copyWith(color: colors.muted),
               ),
             ],
           ),
@@ -106,7 +98,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
       body = ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
         children: [
-          // 1. Horizontal New Matches Segment
           if (vm.newMatches.isNotEmpty) ...[
             Text(
               'NEW MATCHES',
@@ -127,7 +118,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   return MatchAvatarItem(
                     profile: profile,
                     onTap: () {
-                      // Handle router navigation step to chat screen
+                      // Chat navigation will be connected separately.
                     },
                   );
                 },
@@ -135,8 +126,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
             ),
             const SizedBox(height: 24),
           ],
-
-          // 2. Vertical Your Gigs Segment
           if (vm.matchedGigs.isNotEmpty) ...[
             Text(
               'YOUR GIGS',
@@ -156,7 +145,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 return MatchedGigTile(
                   gig: gig,
                   onTap: () {
-                    // Navigate to chat room for this gig
+                    // Chat navigation will be connected separately.
                   },
                   onDelete: () => vm.removeMatch(gig.id),
                 );
@@ -170,7 +159,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
     return SafeArea(
       child: Column(
         children: [
-          // Screen Custom App Bar Header matching Swipe Screen layout style
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
@@ -190,7 +178,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: colors.peachSoft,
+                    color: scheme.secondary,
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
                       color: scheme.outline,
@@ -201,7 +189,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     '${vm.matchedGigs.length} ACTIVE',
                     style: text.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: scheme.onSurface,
+                      color: scheme.onSecondary,
                       letterSpacing: 0.8,
                     ),
                   ),
@@ -209,7 +197,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
               ],
             ),
           ),
-          
           Expanded(child: body),
         ],
       ),
