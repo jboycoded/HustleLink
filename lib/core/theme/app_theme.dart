@@ -131,17 +131,33 @@ abstract final class AppTheme {
       ),
 
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: surface,
-        indicatorColor: AppPalette.peach,
-        indicatorShape: StadiumBorder(side: border),
-        height: 72,
-        labelTextStyle: WidgetStatePropertyAll(
-          GoogleFonts.spaceGrotesk(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
+  backgroundColor: surface,
+  indicatorColor: AppPalette.peach,
+  indicatorShape: StadiumBorder(side: border),
+  height: 72,
+  iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+    (states) {
+      if (states.contains(WidgetState.selected)) {
+        return const IconThemeData(
+          color: AppPalette.ink,
+        );
+      }
+
+      return IconThemeData(color: muted);
+    },
+  ),
+  labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
+    (states) {
+      return GoogleFonts.spaceGrotesk(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: states.contains(WidgetState.selected)
+            ? foreground
+            : muted,
+      );
+    },
+  ),
+),
 
       dividerTheme: DividerThemeData(
         color: scheme.outline.withValues(alpha: 0.25),
