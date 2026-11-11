@@ -1,6 +1,6 @@
+
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../data/models/gig.dart';
 
@@ -20,11 +20,10 @@ class MatchedGigTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final colors = context.appColors;
     final text = theme.textTheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Container(
         decoration: BoxDecoration(
           color: scheme.surface,
@@ -41,7 +40,7 @@ class MatchedGigTile extends StatelessWidget {
             onTap: onTap,
             borderRadius: BorderRadius.circular(AppTokens.rLg),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
                   GestureDetector(
@@ -67,7 +66,6 @@ class MatchedGigTile extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title matched with precise data fields
                         Text(
                           '${gig.title} • ${gig.distanceKm} km away',
                           style: text.titleMedium?.copyWith(
@@ -76,37 +74,33 @@ class MatchedGigTile extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colors.peachSoft,
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: scheme.outline,
-                                  width: AppTokens.borderWidth,
-                                ),
-                              ),
-                              child: Text(
-                                '₦${gig.pay}',
-                                style: text.labelMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: scheme.onSurface,
-                                ),
-                              ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: scheme.secondary,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: scheme.outline,
+                              width: AppTokens.borderWidth,
                             ),
-                          ],
+                          ),
+                          child: Text(
+                            '₦${gig.pay}',
+                            style: text.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: scheme.onSecondary,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
                   Icon(
                     Icons.chevron_right_rounded,
-                    color: colors.muted,
+                    color: scheme.onSurfaceVariant,
                   ),
                 ],
               ),
