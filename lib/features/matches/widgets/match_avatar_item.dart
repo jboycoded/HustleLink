@@ -1,8 +1,7 @@
+
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
-//import '../matches_view_model.dart';
 import '../models/match_profile.dart';
 
 class MatchAvatarItem extends StatelessWidget {
@@ -19,13 +18,12 @@ class MatchAvatarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final colors = context.appColors;
     final text = theme.textTheme;
 
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0), // Fixed constructor
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -34,7 +32,7 @@ class MatchAvatarItem extends StatelessWidget {
               height: 56,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: colors.peachSoft,
+                color: scheme.secondary,
                 border: Border.all(
                   color: scheme.outline,
                   width: AppTokens.borderWidth,
@@ -46,7 +44,7 @@ class MatchAvatarItem extends StatelessWidget {
                 profile.initials,
                 style: text.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: scheme.onSurface,
+                  color: scheme.onSecondary,
                 ),
               ),
             ),
