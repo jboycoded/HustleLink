@@ -202,8 +202,18 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       Switch(
                         value: vm.isAvailableForGigs,
-                        activeThumbColor: scheme.onSecondary,
-                        activeTrackColor: scheme.secondary,
+                        thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
+                          if (states.contains(WidgetState.selected)) {
+                            return scheme.onSecondary;
+                          }    
+                          return scheme.surface;
+                        }),
+                        trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
+                          if (states.contains(WidgetState.selected)) {
+                            return scheme.secondary;
+                          }
+                          return scheme.outlineVariant;
+                        }),
                         onChanged: vm.toggleAvailability,
                       ),
                     ],
