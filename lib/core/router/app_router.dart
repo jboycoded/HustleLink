@@ -8,6 +8,7 @@ import '../../features/chat/chat_view_model.dart';
 import '../../features/matches/matches_screen.dart';
 import '../../features/matches/matches_view_model.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/profile/profile_view_model.dart';
 import '../../features/swipe/swipe_screen.dart';
 import '../../features/swipe/swipe_view_model.dart';
 import '../widgets/app_shell.dart';
@@ -49,7 +50,10 @@ final appRouter = GoRouter(
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/profile',
-            builder: (context, state) => const ProfileScreen(),
+            builder: (context, state) => ChangeNotifierProvider(
+              create: (_) => ProfileViewModel()..load(),
+              child: const ProfileScreen(),
+            ),
           ),
         ]),
       ],
