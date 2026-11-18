@@ -10,7 +10,49 @@ service cloud.firestore {
 
       allow create: if request.auth != null
                     && request.auth.uid == userId
-                    && request.resource.data.uid == userId;
+                    && request.resource.data.keys().hasAll([
+                      'uid',
+                      'fullName',
+                      'email',
+                      'roles',
+                      'activeRole',
+                      'location',
+                      'skills',
+                      'isVerified',
+                      'profileCompleted',
+                      'isAvailableForGigs',
+                      'rating',
+                      'completedGigs',
+                      'createdAt'
+                    ])
+                    && request.resource.data.keys().hasOnly([
+                      'uid',
+                      'fullName',
+                      'email',
+                      'roles',
+                      'activeRole',
+                      'location',
+                      'skills',
+                      'isVerified',
+                      'profileCompleted',
+                      'isAvailableForGigs',
+                      'rating',
+                      'completedGigs',
+                      'createdAt'
+                    ])
+                    && request.resource.data.uid == userId
+                    && request.resource.data.fullName is string
+                    && request.resource.data.email is string
+                    && request.resource.data.roles is list
+                    && request.resource.data.activeRole in ['worker', 'poster']
+                    && request.resource.data.location is string
+                    && request.resource.data.skills is list
+                    && request.resource.data.isVerified == false
+                    && request.resource.data.profileCompleted is bool
+                    && request.resource.data.isAvailableForGigs is bool
+                    && request.resource.data.rating == 0
+                    && request.resource.data.completedGigs == 0
+                    && request.resource.data.createdAt is timestamp;
 
       allow update: if request.auth != null
                     && request.auth.uid == userId
@@ -25,13 +67,15 @@ service cloud.firestore {
                          'isAvailableForGigs',
                          'updatedAt'
                        ])
-                    && request.resource.data.activeRole
-                       in ['worker', 'poster']
+                    && request.resource.data.activeRole in ['worker', 'poster']
                     && request.resource.data.fullName is string
                     && request.resource.data.location is string
                     && request.resource.data.skills is list
                     && request.resource.data.profileCompleted is bool
-                    && request.resource.data.isAvailableForGigs is bool;
+                    && (
+                      !('isAvailableForGigs' in request.resource.data)
+                      || request.resource.data.isAvailableForGigs is bool
+                    );
 
       allow delete: if false;
     }
