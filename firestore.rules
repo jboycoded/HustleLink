@@ -1,0 +1,39 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+      allow read: if request.auth != null
+                  && request.auth.uid == userId;
+
+      allow create: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.uid == userId;
+
+      allow update: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.diff(resource.data)
+                       .affectedKeys()
+                       .hasOnly([
+                         'fullName',
+                         'location',
+                         'skills',
+                         'profileCompleted',
+                         'activeRole',
+                         'isAvailableForGigs',
+                         'updatedAt'
+                       ])
+                    && request.resource.data.activeRole
+                       in ['worker', 'poster']
+                    && request.resource.data.fullName is string
+                    && request.resource.data.location is string
+                    && request.resource.data.skills is list
+                    && request.resource.data.profileCompleted is bool
+                    && request.resource.data.isAvailableForGigs is bool;
+
+      allow delete: if false;
+    }
+  }
+}
