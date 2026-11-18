@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/gig_repository.dart';
+import 'data/repositories/user_profile_repository.dart';
 import 'data/services/auth_service.dart';
 import 'data/services/gig_service.dart';
 
@@ -47,15 +47,18 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
   Widget build(BuildContext context) {
     return Provider<AuthService>.value(
       value: _authService,
-      child: Provider<GigRepository>(
-        create: (_) => GigRepository(const GigService()),
-        child: MaterialApp.router(
-          title: 'HUSTLELINK',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light(),
-          darkTheme: AppTheme.dark(),
-          themeMode: ThemeMode.system,
-          routerConfig: _router,
+      child: Provider<UserProfileRepository>(
+        create: (_) => UserProfileRepository(),
+        child: Provider<GigRepository>(
+          create: (_) => GigRepository(const GigService()),
+          child: MaterialApp.router(
+            title: 'HUSTLELINK',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light(),
+            darkTheme: AppTheme.dark(),
+            themeMode: ThemeMode.system,
+            routerConfig: _router,
+          ),
         ),
       ),
     );
