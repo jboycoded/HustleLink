@@ -32,9 +32,12 @@ class AuthService {
         'roles': ['worker', 'poster'],
         'activeRole': 'worker',
         'location': '',
-        'skills': [],
+        'skills': <String>[],
         'isVerified': false,
         'profileCompleted': false,
+        'isAvailableForGigs': true,
+        'rating': 0,
+        'completedGigs': 0,
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (_) {
