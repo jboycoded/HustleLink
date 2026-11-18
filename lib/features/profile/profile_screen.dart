@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../data/services/auth_service.dart';
 import 'profile_view_model.dart';
+import 'models/user_profile.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -19,15 +21,31 @@ class ProfileScreen extends StatelessWidget {
     final text = theme.textTheme;
 
     if (profile == null) {
-      return Center(
-        child: CircularProgressIndicator(color: scheme.secondary),
+      return SafeArea(
+        child: Center(
+          child: vm.isLoading
+              ? CircularProgressIndicator(color: scheme.secondary)
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      vm.errorMessage ?? 'Unable to load your profile.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: vm.load,
+                      child: const Text('Try again'),
+                    ),
+                  ],
+                ),
+        ),
       );
     }
 
     return SafeArea(
       child: Column(
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
@@ -75,11 +93,16 @@ class ProfileScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                IconButton(
+                  tooltip: 'Log out',
+                  onPressed: () async {
+                    await context.read<AuthService>().signOut();
+                  },
+                  icon: const Icon(Icons.logout_rounded),
+                ),
               ],
             ),
           ),
-
-          // Scrollable profile content
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -124,7 +147,9 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        profile.fullName,
+                        profile.fullName.isEmpty
+                            ? 'Complete your profile'
+                            : profile.fullName,
                         style: text.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: scheme.onSurface,
@@ -132,14 +157,55 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        profile.role,
+                        profile.email,
+                        style: text.bodySmall?.copyWith(
+                          color: colors.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        profile.location.isEmpty
+                            ? 'Location not added'
+                            : profile.location,
                         style: text.bodyMedium?.copyWith(
                           color: colors.muted,
                         ),
                       ),
+                      const SizedBox(height: 16),
+
+                      // Worker / Poster selector
+                      Wrap(
+                        spacing: 10,
+                        children: [
+                          _RoleButton(
+                            label: 'Worker',
+                            selected: profile.activeRole == 'worker',
+                            onPressed: () async {
+                              await vm.switchRole('worker');
+                            },
+                          ),
+                          _RoleButton(
+                            label: 'Poster',
+                            selected: profile.activeRole == 'poster',
+                            onPressed: () async {
+                              await vm.switchRole('poster');
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      OutlinedButton.icon(
+                        onPressed: () => _editProfile(
+                          context,
+                          vm,
+                          profile,
+                        ),
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('Edit profile'),
+                      ),
                       const SizedBox(height: 20),
 
-                      // Statistics
                       Row(
                         children: [
                           Expanded(
@@ -160,7 +226,6 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 20),
 
                 // Availability
@@ -202,27 +267,31 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       Switch(
                         value: vm.isAvailableForGigs,
-                        thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
-                          if (states.contains(WidgetState.selected)) {
-                            return scheme.onSecondary;
-                          }    
-                          return scheme.surface;
-                        }),
-                        trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
-                          if (states.contains(WidgetState.selected)) {
-                            return scheme.secondary;
-                          }
-                          return scheme.outlineVariant;
-                        }),
+                        thumbColor:
+                            WidgetStateProperty.resolveWith<Color?>(
+                          (states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return scheme.onSecondary;
+                            }
+                            return scheme.surface;
+                          },
+                        ),
+                        trackColor:
+                            WidgetStateProperty.resolveWith<Color?>(
+                          (states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return scheme.secondary;
+                            }
+                            return scheme.outlineVariant;
+                          },
+                        ),
                         onChanged: vm.toggleAvailability,
                       ),
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 24),
 
-                // Skills
                 Text(
                   'YOUR SKILLS',
                   style: text.labelSmall?.copyWith(
@@ -232,38 +301,187 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: profile.skills.map((skill) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: scheme.secondary,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: scheme.outline,
-                          width: AppTokens.borderWidth,
+                if (profile.skills.isEmpty)
+                  Text(
+                    'No skills added yet. Edit your profile to add skills.',
+                    style: text.bodyMedium?.copyWith(color: colors.muted),
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: profile.skills.map((skill) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
                         ),
-                      ),
-                      child: Text(
-                        skill,
-                        style: text.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: scheme.onSecondary,
+                        decoration: BoxDecoration(
+                          color: scheme.secondary,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: scheme.outline,
+                            width: AppTokens.borderWidth,
+                          ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                ),
+                        child: Text(
+                          skill,
+                          style: text.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: scheme.onSecondary,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                if (vm.errorMessage != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    vm.errorMessage!,
+                    style: TextStyle(color: scheme.error),
+                  ),
+                ],
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _editProfile(
+    BuildContext context,
+    ProfileViewModel vm,
+    UserProfile profile,
+  ) async {
+    final nameController = TextEditingController(
+      text: profile.fullName,
+    );
+    final locationController = TextEditingController(
+      text: profile.location,
+    );
+    final skillsController = TextEditingController(
+      text: profile.skills.join(', '),
+    );
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Edit profile'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Full name',
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: locationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Location',
+                    hintText: 'e.g. Lagos, Nigeria',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: skillsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Skills',
+                    hintText: 'e.g. Plumbing, Design, Coding',
+                    helperText: 'Separate skills with commas.',
+                  ),
+                  maxLines: 3,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final name = nameController.text.trim();
+
+                if (name.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please enter your full name.'),
+                    ),
+                  );
+                  return;
+                }
+
+                final skills = skillsController.text
+                    .split(',')
+                    .map((skill) => skill.trim())
+                    .where((skill) => skill.isNotEmpty)
+                    .toSet()
+                    .toList();
+
+                final saved = await vm.updateProfile(
+                  fullName: name,
+                  location: locationController.text,
+                  skills: skills,
+                );
+
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext, saved);
+                }
+              },
+              child: const Text('Save changes'),
+            ),
+          ],
+        );
+      },
+    );
+
+    nameController.dispose();
+    locationController.dispose();
+    skillsController.dispose();
+
+    if (result == false && context.mounted && vm.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(vm.errorMessage!)),
+      );
+    }
+  }
+}
+
+class _RoleButton extends StatelessWidget {
+  const _RoleButton({
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return OutlinedButton(
+      onPressed: selected ? null : onPressed,
+      style: OutlinedButton.styleFrom(
+        backgroundColor: selected ? scheme.secondary : scheme.surface,
+        foregroundColor:
+            selected ? scheme.onSecondary : scheme.onSurface,
+        side: BorderSide(
+          color: scheme.outline,
+          width: AppTokens.borderWidth,
+        ),
+      ),
+      child: Text(label),
     );
   }
 }
