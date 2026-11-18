@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/repositories/gig_repository.dart';
+import '../../data/repositories/user_profile_repository.dart';
 import '../../data/services/auth_service.dart';
 import '../../features/auth/auth_screen.dart';
 import '../../features/chat/chat_screen.dart';
@@ -106,7 +107,8 @@ GoRouter createAppRouter({
               GoRoute(
                 path: '/profile',
                 builder: (context, state) => ChangeNotifierProvider(
-                  create: (_) => ProfileViewModel()..load(),
+                  create: (ctx) =>
+    ProfileViewModel(ctx.read<UserProfileRepository>())..load(),
                   child: const ProfileScreen(),
                 ),
               ),
