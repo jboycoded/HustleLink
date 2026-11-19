@@ -209,6 +209,28 @@ class GigService {
     return applications;
   }
 
+  Future<void> updateApplicationStatus({
+    required String applicationId,
+    required String status,
+  }) async {
+    if (status != 'accepted' && status != 'rejected') {
+      throw ArgumentError('Application status must be accepted or rejected.');
+    }
+    final ref = _applications.doc(applicationId);
+    final snapshot = await ref.get();
+    if (!snapshot.exists) throw StateError('Application not found.');
+    if (snapshot.data()?['posterId'] != _uid) {
+      throw StateError('Only the poster can review this application.');
+    }
+    if (snapshot.data()?['status'] != 'pending') {
+      throw StateError('This application has already been reviewed.');
+    }
+    await ref.update({
+      'status': status,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> updateGig({
     required String gigId,
     required String title,
