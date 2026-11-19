@@ -53,16 +53,20 @@ class _MatchesScreenState extends State<MatchesScreen> {
           child: const Text('Try again'),
         ),
       );
+    } else if (vm.isPosterMode) {
+      body = vm.posterGigs.isEmpty
+          ? const _EmptyState(
+              icon: Icons.work_outline_rounded,
+              title: 'No gigs yet.',
+              message: 'Gigs you create will appear here so you can manage their applicants.',
+            )
+          : _buildPosterApplications(context, vm);
     } else if (vm.applicationCount == 0) {
-      body = _EmptyState(
+      body = const _EmptyState(
         icon: Icons.favorite_border_rounded,
         title: 'No applications yet.',
-        message: vm.isPosterMode
-            ? 'Applications from workers will appear here when they apply to your gigs.'
-            : 'Gigs you apply for will appear here so you can track their status.',
+        message: 'Gigs you apply for will appear here so you can track their status.',
       );
-    } else if (vm.isPosterMode) {
-      body = _buildPosterApplications(context, vm);
     } else {
       body = _buildWorkerApplications(context, vm);
     }
