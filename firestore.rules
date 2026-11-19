@@ -159,5 +159,53 @@ service cloud.firestore {
       allow delete: if request.auth != null
                     && resource.data.posterId == request.auth.uid;
     }
+
+    match /applications/{applicationId} {
+      allow read: if request.auth != null
+                  && (
+                    resource.data.workerId == request.auth.uid
+                    || resource.data.posterId == request.auth.uid
+                  );
+
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasAll([
+                      'gigId',
+                      'workerId',
+                      'posterId',
+                      'workerName',
+                      'gigTitle',
+                      'gigCategory',
+                      'gigPay',
+                      'gigLocation',
+                      'status',
+                      'createdAt'
+                    ])
+                    && request.resource.data.keys().hasOnly([
+                      'gigId',
+                      'workerId',
+                      'posterId',
+                      'workerName',
+                      'gigTitle',
+                      'gigCategory',
+                      'gigPay',
+                      'gigLocation',
+                      'status',
+                      'createdAt'
+                    ])
+                    && request.resource.data.workerId == request.auth.uid
+                    && request.resource.data.posterId != request.auth.uid
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.workerName is string
+                    && request.resource.data.gigTitle is string
+                    && request.resource.data.gigCategory is string
+                    && request.resource.data.gigPay is int
+                    && request.resource.data.gigLocation is string
+                    && request.resource.data.createdAt == request.time
+                    && exists(/databases/$(database)/documents/gigs/$(request.resource.data.gigId))
+                    && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.status == 'open'
+                    && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.posterId == request.resource.data.posterId;
+
+      allow update, delete: if false;
+    }
   }
 }
