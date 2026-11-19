@@ -40,6 +40,28 @@ class MatchesViewModel extends ChangeNotifier {
     return _workerApplications.length;
   }
 
+  final Set<String> _updatingApplicationIds = {};
+  bool isUpdating(String id) => _updatingApplicationIds.contains(id);
+
+  Future<void> reviewApplication(
+    String applicationId,
+    String status,
+  ) async {
+    if (_updatingApplicationIds.contains(applicationId)) return;
+    _updatingApplicationIds.add(applicationId);
+    notifyListeners();
+    try {
+      await _repo.setApplicationStatus(
+        applicationId: applicationId,
+        status: status,
+      );
+      await load();
+    } finally {
+      _updatingApplicationIds.remove(applicationId);
+      notifyListeners();
+    }
+  }
+
   Future<void> load() async {
     isLoading = true;
     error = null;
