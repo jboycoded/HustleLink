@@ -146,7 +146,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(sheetContentContext).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -157,7 +157,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
             height: MediaQuery.of(sheetContext).size.height * .72,
             child: FutureBuilder<Gig?>(
               future: gigFuture,
-              builder: (context, snapshot) {
+              builder: (sheetContentContext, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -170,7 +170,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                         width: 42,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.outlineVariant,
+                          color: Theme.of(sheetContentContext).colorScheme.outlineVariant,
                           borderRadius: BorderRadius.circular(99),
                         ),
                       ),
@@ -178,7 +178,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     const SizedBox(height: 20),
                     Text(
                       gig?.title ?? gigTitle,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      style: Theme.of(sheetContentContext).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
                     ),
@@ -189,7 +189,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                           if ((gig?.description ?? '').isNotEmpty) ...[
                             Text(
                               'DESCRIPTION',
-                              style: Theme.of(context).textTheme.labelSmall
+                              style: Theme.of(sheetContentContext).textTheme.labelSmall
                                   ?.copyWith(fontWeight: FontWeight.w800),
                             ),
                             const SizedBox(height: 6),
