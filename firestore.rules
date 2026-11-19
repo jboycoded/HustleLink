@@ -311,6 +311,7 @@ service cloud.firestore {
           'lastMessage',
           'lastMessageAt',
           'lastSenderId',
+          'lastReadAt',
           'createdAt'
         ])
         && request.auth.uid == request.resource.data.posterId
@@ -330,15 +331,18 @@ service cloud.firestore {
         && request.resource.data.lastReadAt[request.resource.data.posterId] == request.time;
 
       allow update: if isParticipant()
-        && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['lastMessage', 'lastMessageAt', 'lastSenderId', 'lastReadAt'])
-        && request.resource.data.lastSenderId == request.auth.uid
-        && request.resource.data.lastMessage is string
-        && request.resource.data.lastMessageAt == request.time
         && (
-          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastReadAt'])
+          (
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['lastMessage', 'lastMessageAt', 'lastSenderId'])
+            && request.resource.data.lastSenderId == request.auth.uid
+            && request.resource.data.lastMessage is string
+            && request.resource.data.lastMessageAt == request.time
+          )
           || (
-            request.resource.data.lastReadAt is map
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['lastReadAt'])
+            && request.resource.data.lastReadAt is map
             && request.resource.data.lastReadAt.diff(resource.data.lastReadAt)
               .affectedKeys().hasOnly([request.auth.uid])
             && request.resource.data.lastReadAt[request.auth.uid] == request.time
