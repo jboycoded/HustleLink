@@ -26,6 +26,37 @@ class UserProfileRepository {
     return user.uid;
   }
 
+  DocumentReference<Map<String, dynamic>> _publicProfile(String uid) =>
+      _firestore.collection('publicProfiles').doc(uid);
+
+  Map<String, dynamic> _publicData({
+    required String uid,
+    required String fullName,
+    required String activeRole,
+    required String location,
+    required List<String> skills,
+    required bool isAvailable,
+    required double rating,
+    required int completedGigs,
+  }) =>
+      {
+        'uid': uid,
+        'fullName': fullName,
+        'activeRole': activeRole,
+        'location': location,
+        'skills': skills,
+        'isAvailableForGigs': isAvailable,
+        'rating': rating,
+        'completedGigs': completedGigs,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+  Future<UserProfile?> getPublicProfile(String userId) async {
+    final document = await _publicProfile(userId).get();
+    if (!document.exists) return null;
+    return UserProfile.fromMap(document.id, document.data()!);
+  }
+
   Future<UserProfile> getMyProfile() async {
     final user = _auth.currentUser;
 
@@ -53,14 +84,33 @@ class UserProfileRepository {
       };
 
       await _users.doc(user.uid).set(data);
+      await _publicProfile(user.uid).set(_publicData(
+        uid: user.uid,
+        fullName: data['fullName'] as String,
+        activeRole: data['activeRole'] as String,
+        location: data['location'] as String,
+        skills: const [],
+        isAvailable: true,
+        rating: 0,
+        completedGigs: 0,
+      ));
 
       return UserProfile.fromMap(user.uid, data);
     }
 
-    return UserProfile.fromMap(
-      document.id,
-      document.data()!,
-    );
+    final data = document.data()!;
+    await _publicProfile(user.uid).set(_publicData(
+      uid: user.uid,
+      fullName: data['fullName'] as String? ?? '',
+      activeRole: data['activeRole'] as String? ?? 'worker',
+      location: data['location'] as String? ?? '',
+      skills: List<String>.from(data['skills'] ?? []),
+      isAvailable: data['isAvailableForGigs'] as bool? ?? true,
+      rating: (data['rating'] as num?)?.toDouble() ?? 0,
+      completedGigs: (data['completedGigs'] as num?)?.toInt() ?? 0,
+    ), SetOptions(merge: true));
+
+    return UserProfile.fromMap(document.id, data);
   }
 
   Future<void> updateProfile({
@@ -75,6 +125,12 @@ class UserProfileRepository {
       'profileCompleted': true,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    await _publicProfile(_uid).set({
+      'fullName': fullName.trim(),
+      'location': location.trim(),
+      'skills': skills,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   Future<void> updateActiveRole(String role) async {
@@ -86,6 +142,10 @@ class UserProfileRepository {
       'activeRole': role,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    await _publicProfile(_uid).set({
+      'activeRole': role,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   Future<void> updateAvailability(bool isAvailable) async {
@@ -93,6 +153,10 @@ class UserProfileRepository {
       'isAvailableForGigs': isAvailable,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    await _publicProfile(_uid).set({
+      'isAvailableForGigs': isAvailable,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   Stream<UserProfile?> watchMyProfile() {
