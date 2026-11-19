@@ -180,7 +180,6 @@ class _GigFormDialogState extends State<GigFormDialog> {
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Require 30-second proof video'),
                   value: _proofVideoRequired,
-                  activeThumbColor: scheme.primary,
                   onChanged: (value) {
                     setState(() => _proofVideoRequired = value);
                   },
