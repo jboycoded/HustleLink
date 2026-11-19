@@ -362,7 +362,7 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 _ProfileProofVideoSection(
                   videoUrl: profile.proofVideoUrl,
-                  isBusy: vm.isSaving,
+                  isBusy: vm.isSaving || vm.isVideoUploading,
                   onUpload: () => _chooseProofVideo(context, vm),
                   onRemove: profile.proofVideoUrl == null
                       ? null
@@ -427,6 +427,7 @@ class ProfileScreen extends StatelessWidget {
     );
     if (source == null || !context.mounted) return;
 
+    vm.setVideoUploading(true);
     try {
       final url = await context.read<ProofVideoService>().pickAndUpload(source);
       if (url == null || !context.mounted) return;
@@ -446,6 +447,8 @@ class ProfileScreen extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error.toString().replaceFirst('Bad state: ', ''))),
       );
+    } finally {
+      vm.setVideoUploading(false);
     }
   }
 
