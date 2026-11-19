@@ -133,6 +133,298 @@ class _MatchesScreenState extends State<MatchesScreen> {
     );
   }
 
+  Future<void> _showGigApplicants(
+    BuildContext context,
+    String gigTitle,
+    List<GigApplication> applications,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            12,
+            20,
+            20 + MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: SizedBox(
+            height: MediaQuery.of(sheetContext).size.height * 0.72,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Theme.of(sheetContext).colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  gigTitle,
+                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${applications.length} applicants',
+                  style: Theme.of(sheetContext).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: applications.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final application = applications[index];
+                      final initials = application.workerName
+                          .trim()
+                          .split(RegExp(r'\\s+'))
+                          .where((part) => part.isNotEmpty)
+                          .take(2)
+                          .map((part) => part[0].toUpperCase())
+                          .join();
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                        ),
+                        leading: CircleAvatar(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.secondary,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onSecondary,
+                          child: Text(initials.isEmpty ? '?' : initials),
+                        ),
+                        title: Text(
+                          application.workerName,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        subtitle: Text(
+                          '${application.status[0].toUpperCase()}${application.status.substring(1)}',
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () {
+                          Navigator.pop(sheetContext);
+                          _showApplicantDetails(context, application);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showApplicantDetails(
+    BuildContext context,
+    GigApplication application,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Theme.of(sheetContext).colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor:
+                          Theme.of(sheetContext).colorScheme.secondary,
+                      foregroundColor:
+                          Theme.of(sheetContext).colorScheme.onSecondary,
+                      child: Text(
+                        application.workerName
+                            .trim()
+                            .split(RegExp(r'\\s+'))
+                            .where((part) => part.isNotEmpty)
+                            .take(2)
+                            .map((part) => part[0].toUpperCase())
+                            .join(),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            application.workerName,
+                            style: Theme.of(sheetContext)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                          Text('Worker applicant'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                Text(
+                  'APPLICATION DETAILS',
+                  style: Theme.of(sheetContext).textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                _DetailRow(label: 'Gig', value: application.gigTitle),
+                _DetailRow(label: 'Category', value: application.gigCategory),
+                _DetailRow(
+                  label: 'Payment',
+                  value: '₦${application.gigPay}',
+                ),
+                _DetailRow(label: 'Location', value: application.gigLocation),
+                _DetailRow(
+                  label: 'Applied',
+                  value: application.createdAt == null
+                      ? 'Date unavailable'
+                      : MaterialLocalizations.of(sheetContext)
+                          .formatMediumDate(application.createdAt!),
+                ),
+                _DetailRow(
+                  label: 'Status',
+                  value: application.status.toUpperCase(),
+                ),
+                const SizedBox(height: 18),
+                if (application.status == 'pending')
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _reviewFromSheet(
+                            sheetContext,
+                            context,
+                            application,
+                            'rejected',
+                          ),
+                          child: const Text('Reject'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () => _reviewFromSheet(
+                            sheetContext,
+                            context,
+                            application,
+                            'accepted',
+                          ),
+                          child: const Text('Accept'),
+                        ),
+                      ),
+                    ],
+                  )
+                else if (application.status == 'accepted')
+                  const Text(
+                    'This application has been accepted. Chat access will be available once conversations are enabled.',
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _reviewFromSheet(
+    BuildContext sheetContext,
+    BuildContext pageContext,
+    GigApplication application,
+    String status,
+  ) async {
+    final accepted = status == 'accepted';
+    final confirmed = await showDialog<bool>(
+      context: sheetContext,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(accepted ? 'Accept applicant?' : 'Reject applicant?'),
+        content: Text(
+          accepted
+              ? 'Accept ${application.workerName} for ${application.gigTitle}?'
+              : 'Reject ${application.workerName}\'s application?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(accepted ? 'Accept' : 'Reject'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !pageContext.mounted) return;
+    try {
+      await pageContext.read<MatchesViewModel>().reviewApplication(
+            application.id,
+            status,
+          );
+      if (sheetContext.mounted) Navigator.pop(sheetContext);
+      if (pageContext.mounted) {
+        ScaffoldMessenger.of(pageContext).showSnackBar(
+          SnackBar(
+            content: Text(
+              accepted ? 'Applicant accepted.' : 'Application rejected.',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (!pageContext.mounted) return;
+      ScaffoldMessenger.of(pageContext).showSnackBar(
+        const SnackBar(
+          content: Text('Could not update this application. Please try again.'),
+        ),
+      );
+    }
+  }
+
   Widget _buildPosterApplications(
     BuildContext context,
     MatchesViewModel vm,
@@ -150,39 +442,10 @@ class _MatchesScreenState extends State<MatchesScreen> {
           final applications = entry.value;
           final gigTitle = applications.first.gigTitle;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      gigTitle,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                  ),
-                  Text(
-                    '${applications.length} ${applications.length == 1 ? 'APPLICANT' : 'APPLICANTS'}',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ...applications.map(
-                (application) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ApplicationCard(
-                    application: application,
-                    showWorkerName: true,
-                  ),
-                ),
-              ),
-            ],
+          return _GigApplicationsCard(
+            gigTitle: gigTitle,
+            applications: applications,
+            onTap: () => _showGigApplicants(context, gigTitle, applications),
           );
         },
       ),
@@ -339,6 +602,110 @@ class _ApplicationCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 92,
+            child: Text(
+              label,
+              style: TextStyle(color: scheme.onSurfaceVariant),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value.isEmpty ? 'Not provided' : value,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GigApplicationsCard extends StatelessWidget {
+  const _GigApplicationsCard({
+    required this.gigTitle,
+    required this.applications,
+    required this.onTap,
+  });
+
+  final String gigTitle;
+  final List<GigApplication> applications;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final pending = applications.where((item) => item.status == 'pending').length;
+    return Material(
+      color: scheme.surface,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: scheme.outline,
+              width: AppTokens.borderWidth,
+            ),
+            boxShadow: AppTokens.hardShadow(scheme.outline, 3),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      gigTitle,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${applications.length} applicants • $pending pending',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'VIEW APPLICANTS',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                            color: scheme.secondary,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
       ),
     );
   }
