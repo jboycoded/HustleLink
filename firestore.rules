@@ -296,6 +296,7 @@ service cloud.firestore {
           'lastMessage',
           'lastMessageAt',
           'lastSenderId',
+          'lastReadAt',
           'createdAt'
         ])
         && request.resource.data.keys().hasOnly([
@@ -324,14 +325,25 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.workerId == request.resource.data.workerId
         && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.posterId == request.resource.data.posterId
         && request.resource.data.createdAt == request.time
-        && request.resource.data.lastMessageAt == request.time;
+        && request.resource.data.lastMessageAt == request.time
+        && request.resource.data.lastReadAt is map
+        && request.resource.data.lastReadAt[request.resource.data.posterId] == request.time;
 
       allow update: if isParticipant()
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['lastMessage', 'lastMessageAt', 'lastSenderId'])
+          .hasOnly(['lastMessage', 'lastMessageAt', 'lastSenderId', 'lastReadAt'])
         && request.resource.data.lastSenderId == request.auth.uid
         && request.resource.data.lastMessage is string
-        && request.resource.data.lastMessageAt == request.time;
+        && request.resource.data.lastMessageAt == request.time
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastReadAt'])
+          || (
+            request.resource.data.lastReadAt is map
+            && request.resource.data.lastReadAt.diff(resource.data.lastReadAt)
+              .affectedKeys().hasOnly([request.auth.uid])
+            && request.resource.data.lastReadAt[request.auth.uid] == request.time
+          )
+        );
 
       allow delete: if false;
 
