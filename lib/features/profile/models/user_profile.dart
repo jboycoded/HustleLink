@@ -11,6 +11,7 @@ class UserProfile {
   final bool isAvailableForGigs;
   final double rating;
   final int completedGigs;
+  final String? proofVideoUrl;
 
   const UserProfile({
     required this.id,
@@ -25,6 +26,7 @@ class UserProfile {
     required this.isAvailableForGigs,
     required this.rating,
     required this.completedGigs,
+    this.proofVideoUrl,
   });
 
   String get initials {
@@ -60,6 +62,7 @@ class UserProfile {
           data['isAvailableForGigs'] as bool? ?? true,
       rating: (data['rating'] as num?)?.toDouble() ?? 0,
       completedGigs: (data['completedGigs'] as num?)?.toInt() ?? 0,
+      proofVideoUrl: data['proofVideoUrl'] as String?,
     );
   }
 
@@ -76,6 +79,7 @@ class UserProfile {
       'isAvailableForGigs': isAvailableForGigs,
       'rating': rating,
       'completedGigs': completedGigs,
+      'proofVideoUrl': proofVideoUrl,
     };
   }
 }
