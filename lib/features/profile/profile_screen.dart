@@ -475,16 +475,15 @@ class ProfileScreen extends StatelessWidget {
     if (confirmed != true || !context.mounted) return;
 
     try {
-      await context.read<ProofVideoService>().deleteProfileVideo();
       final saved = await vm.updateProofVideoUrl(null);
+      if (!saved) {
+        throw StateError(vm.errorMessage ?? 'Could not update your profile.');
+      }
+      await context.read<ProofVideoService>().deleteProfileVideo();
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            saved
-                ? 'Your profile video has been removed.'
-                : vm.errorMessage ?? 'Could not update your profile.',
-          ),
+        const SnackBar(
+          content: Text('Your profile video has been removed.'),
         ),
       );
     } catch (error) {
