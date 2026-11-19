@@ -94,7 +94,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     ),
                   ),
                   child: Text(
-                    '${vm.applicationCount} PENDING',
+                    '${vm.applicationCount} APPLICATIONS',
                     style: text.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: scheme.onSecondary,
