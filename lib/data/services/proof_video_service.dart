@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
@@ -39,7 +38,7 @@ class ProofVideoService {
     }
 
     final controller = VideoPlayerController.file(file);
-    Duration? duration;
+    late final Duration duration;
     try {
       await controller.initialize();
       duration = controller.value.duration;
@@ -47,7 +46,7 @@ class ProofVideoService {
       await controller.dispose();
     }
 
-    if (duration == null || duration <= Duration.zero) {
+    if (duration <= Duration.zero) {
       throw StateError('The selected video could not be read.');
     }
     if (duration > const Duration(seconds: 30)) {
