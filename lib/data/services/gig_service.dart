@@ -229,6 +229,36 @@ class GigService {
       'status': status,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+
+    if (status == 'accepted') {
+      final application = snapshot.data()!;
+      final gigSnapshot = await _gigs.doc(application['gigId'] as String).get();
+      final gigData = gigSnapshot.data() ?? <String, dynamic>{};
+      final workerSnapshot =
+          await _firestore.collection('users').doc(application['workerId'] as String).get();
+      final workerData = workerSnapshot.data() ?? <String, dynamic>{};
+      final conversationRef = _firestore
+          .collection('conversations')
+          .doc(applicationId);
+
+      await conversationRef.set({
+        'applicationId': applicationId,
+        'gigId': application['gigId'],
+        'gigTitle': application['gigTitle'],
+        'workerId': application['workerId'],
+        'posterId': application['posterId'],
+        'workerName': application['workerName'],
+        'posterName': (gigData['posterName'] as String?) ?? 'Poster',
+        'participants': [
+          application['workerId'],
+          application['posterId'],
+        ],
+        'lastMessage': 'Application accepted. You can now chat.',
+        'lastMessageAt': FieldValue.serverTimestamp(),
+        'lastSenderId': '',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
   Future<void> updateGig({
