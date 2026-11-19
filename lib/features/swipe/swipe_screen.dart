@@ -409,47 +409,72 @@ class SwipeScreen extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  if (!gig.isOpen)
-                    const Expanded(
-                      child: Text(
-                        'CLOSED',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    )
-                  else
-                    const Spacer(),
-                  OutlinedButton.icon(
-                    onPressed: vm.isSaving
-                        ? null
-                        : () => _showGigForm(context, vm, gig: gig),
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text('Edit'),
-                  ),
-                  const SizedBox(width: 8),
-                  if (gig.isOpen)
-                    OutlinedButton.icon(
-                      onPressed: () => _closeGig(context, vm, gig),
-                      icon: const Icon(Icons.check_circle_outline, size: 18),
-                      label: const Text('Close'),
-                    ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    tooltip: 'Delete gig',
-                    onPressed: () => _deleteGig(context, vm, gig),
-                    icon: const Icon(Icons.delete_outline),
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
               SizedBox(
                 height: 290,
                 child: GigCard(gig: gig),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline,
+                    width: AppTokens.borderWidth,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed: vm.isSaving
+                            ? null
+                            : () => _showGigForm(context, vm, gig: gig),
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('Edit'),
+                      ),
+                    ),
+                    if (gig.isOpen) ...[
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _closeGig(context, vm, gig),
+                          icon: const Icon(
+                            Icons.check_circle_outline,
+                            size: 18,
+                          ),
+                          label: const Text('Close'),
+                        ),
+                      ),
+                    ] else ...[
+                      const SizedBox(width: 6),
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            'CLOSED',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(width: 4),
+                    IconButton.filledTonal(
+                      tooltip: 'Delete gig',
+                      onPressed: () => _deleteGig(context, vm, gig),
+                      style: IconButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                  ],
+                ),
               ),
             ],
           );
