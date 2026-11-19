@@ -63,6 +63,23 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> updateProofVideoUrl(String? url) async {
+    _isSaving = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _repository.updateProofVideoUrl(url);
+      _profile = await _repository.getMyProfile();
+      return true;
+    } catch (error) {
+      _errorMessage = _friendlyError(error);
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> switchRole(String role) async {
     if (_profile == null || !_profile!.roles.contains(role)) {
       _errorMessage = 'This role is not available on your account.';
