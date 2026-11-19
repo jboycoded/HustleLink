@@ -6,21 +6,44 @@ import '../../data/repositories/user_profile_repository.dart';
 import 'models/user_profile.dart';
 import 'widgets/profile_proof_video_player.dart';
 
-class PublicProfileScreen extends StatelessWidget {
+class PublicProfileScreen extends StatefulWidget {
   const PublicProfileScreen({super.key, required this.userId});
 
   final String userId;
 
   @override
+  State<PublicProfileScreen> createState() => _PublicProfileScreenState();
+}
+
+class _PublicProfileScreenState extends State<PublicProfileScreen> {
+  late Future<UserProfile?> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  @override
+  void didUpdateWidget(covariant PublicProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId) _loadProfile();
+  }
+
+  void _loadProfile() {
+    _profileFuture =
+        context.read<UserProfileRepository>().getPublicProfile(widget.userId);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final repository = context.read<UserProfileRepository>();
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('PUBLIC PROFILE')),
       body: FutureBuilder<UserProfile?>(
-        future: repository.getPublicProfile(userId),
+        future: _profileFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
