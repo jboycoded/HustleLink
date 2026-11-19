@@ -11,6 +11,8 @@ class ChatConversation {
     required this.workerName,
     required this.posterName,
     required this.lastMessage,
+    required this.lastSenderId,
+    required this.lastReadAt,
     this.lastMessageAt,
   });
 
@@ -23,10 +25,27 @@ class ChatConversation {
   final String workerName;
   final String posterName;
   final String lastMessage;
+  final String lastSenderId;
+  final Map<String, DateTime?> lastReadAt;
   final DateTime? lastMessageAt;
+
+  bool isUnreadFor(String userId) {
+    if (lastSenderId.isEmpty || lastSenderId == userId || lastMessageAt == null) {
+      return false;
+    }
+    final readAt = lastReadAt[userId];
+    return readAt == null || lastMessageAt!.isAfter(readAt);
+  }
 
   factory ChatConversation.fromMap(String id, Map<String, dynamic> data) {
     final timestamp = data['lastMessageAt'];
+    final rawReadAt = data['lastReadAt'] as Map<String, dynamic>? ?? {};
+    final readAt = <String, DateTime?>{};
+    for (final entry in rawReadAt.entries) {
+      readAt[entry.key] = entry.value is Timestamp
+          ? (entry.value as Timestamp).toDate()
+          : null;
+    }
     return ChatConversation(
       id: id,
       applicationId: data['applicationId'] as String? ?? id,
@@ -37,6 +56,8 @@ class ChatConversation {
       workerName: data['workerName'] as String? ?? 'Worker',
       posterName: data['posterName'] as String? ?? 'Poster',
       lastMessage: data['lastMessage'] as String? ?? 'Conversation started',
+      lastSenderId: data['lastSenderId'] as String? ?? '',
+      lastReadAt: readAt,
       lastMessageAt: timestamp is Timestamp ? timestamp.toDate() : null,
     );
   }
