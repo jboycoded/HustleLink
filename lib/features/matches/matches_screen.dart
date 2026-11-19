@@ -185,7 +185,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   child: ListView.separated(
                     itemCount: applications.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
+                    itemBuilder: (itemContext, index) {
                       final application = applications[index];
                       final initials = application.workerName
                           .trim()
@@ -202,14 +202,14 @@ class _MatchesScreenState extends State<MatchesScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: BorderSide(
-                            color: Theme.of(context).colorScheme.outline,
+                            color: Theme.of(itemContext).colorScheme.outline,
                           ),
                         ),
                         leading: CircleAvatar(
                           backgroundColor:
-                              Theme.of(context).colorScheme.secondary,
+                              Theme.of(itemContext).colorScheme.secondary,
                           foregroundColor:
-                              Theme.of(context).colorScheme.onSecondary,
+                              Theme.of(itemContext).colorScheme.onSecondary,
                           child: Text(initials.isEmpty ? '?' : initials),
                         ),
                         title: Text(
