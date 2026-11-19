@@ -479,6 +479,7 @@ class ProfileScreen extends StatelessWidget {
 
     try {
       final saved = await vm.updateProofVideoUrl(null);
+      if (!context.mounted) return;
       if (!saved) {
         throw StateError(vm.errorMessage ?? 'Could not update your profile.');
       }
