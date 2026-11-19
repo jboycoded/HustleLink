@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -445,6 +446,18 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   label: 'Status',
                   value: application.status.toUpperCase(),
                 ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(sheetContext);
+                      context.push('/profile/${application.workerId}');
+                    },
+                    icon: const Icon(Icons.person_outline_rounded),
+                    label: const Text('View public profile'),
+                  ),
+                ),
                 const SizedBox(height: 18),
                 if (application.status == 'pending')
                   Row(
@@ -476,7 +489,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   )
                 else if (application.status == 'accepted')
                   const Text(
-                    'This application has been accepted. Chat access will be available once conversations are enabled.',
+                    'This application has been accepted. You can find the conversation in your Chats tab.',
                   ),
               ],
             ),
