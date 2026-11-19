@@ -39,7 +39,7 @@ class ProofVideoService {
     }
 
     final controller = VideoPlayerController.file(file);
-    Duration duration;
+    Duration? duration;
     try {
       await controller.initialize();
       duration = controller.value.duration;
@@ -47,7 +47,7 @@ class ProofVideoService {
       await controller.dispose();
     }
 
-    if (duration <= Duration.zero) {
+    if (duration == null || duration <= Duration.zero) {
       throw StateError('The selected video could not be read.');
     }
     if (duration > const Duration(seconds: 30)) {
