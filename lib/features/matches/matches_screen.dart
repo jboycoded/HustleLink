@@ -413,7 +413,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                                 .titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
-                          Text('Worker applicant'),
+                          const Text('Worker applicant'),
                         ],
                       ),
                     ),
