@@ -64,6 +64,7 @@ service cloud.firestore {
                          'profileCompleted',
                          'activeRole',
                          'isAvailableForGigs',
+                         'proofVideoUrl',
                          'updatedAt'
                        ])
                     && request.resource.data.activeRole in ['worker', 'poster']
@@ -74,6 +75,11 @@ service cloud.firestore {
                     && (
                       !('isAvailableForGigs' in request.resource.data)
                       || request.resource.data.isAvailableForGigs is bool
+                    )
+                    && (
+                      !('proofVideoUrl' in request.resource.data)
+                      || request.resource.data.proofVideoUrl == null
+                      || request.resource.data.proofVideoUrl is string
                     );
 
       allow delete: if false;
@@ -93,6 +99,7 @@ service cloud.firestore {
           'isAvailableForGigs',
           'rating',
           'completedGigs',
+          'proofVideoUrl',
           'updatedAt'
         ])
         && request.resource.data.keys().hasOnly([
@@ -114,6 +121,11 @@ service cloud.firestore {
         && request.resource.data.isAvailableForGigs is bool
         && request.resource.data.rating is number
         && request.resource.data.completedGigs is int
+        && (
+          !('proofVideoUrl' in request.resource.data)
+          || request.resource.data.proofVideoUrl == null
+          || request.resource.data.proofVideoUrl is string
+        )
         && request.resource.data.updatedAt == request.time;
 
       allow update: if request.auth != null
@@ -125,6 +137,7 @@ service cloud.firestore {
             'location',
             'skills',
             'isAvailableForGigs',
+            'proofVideoUrl',
             'updatedAt'
           ])
         && request.resource.data.fullName is string
@@ -132,6 +145,11 @@ service cloud.firestore {
         && request.resource.data.location is string
         && request.resource.data.skills is list
         && request.resource.data.isAvailableForGigs is bool
+        && (
+          !('proofVideoUrl' in request.resource.data)
+          || request.resource.data.proofVideoUrl == null
+          || request.resource.data.proofVideoUrl is string
+        )
         && request.resource.data.updatedAt == request.time;
 
       allow delete: if false;
