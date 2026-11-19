@@ -150,26 +150,22 @@ class GigService {
     final applicationId = '${gig.id}_$uid';
     final applicationRef = _applications.doc(applicationId);
 
-    await _firestore.runTransaction((transaction) async {
-      final existing = await transaction.get(applicationRef);
-
-      if (existing.exists) {
-        throw StateError('You have already applied to this gig.');
-      }
-
-      transaction.set(applicationRef, {
-        'gigId': gig.id,
-        'workerId': uid,
-        'posterId': gig.posterId,
-        'workerName':
-            workerName == null || workerName.isEmpty ? 'Worker' : workerName,
-        'gigTitle': gigData['title'] ?? gig.title,
-        'gigCategory': gigData['category'] ?? gig.category,
-        'gigPay': gigData['pay'] ?? gig.pay,
-        'gigLocation': gigData['location'] ?? gig.location,
-        'status': 'pending',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+    // Use a direct create write. The deterministic document ID prevents
+    // duplicate applications, while Firestore rules reject updates to an
+    // existing application. A transaction read here would be denied for a
+    // not-yet-created document by the application's read rules.
+    await applicationRef.set({
+      'gigId': gig.id,
+      'workerId': uid,
+      'posterId': gig.posterId,
+      'workerName':
+          workerName == null || workerName.isEmpty ? 'Worker' : workerName,
+      'gigTitle': gigData['title'] ?? gig.title,
+      'gigCategory': gigData['category'] ?? gig.category,
+      'gigPay': gigData['pay'] ?? gig.pay,
+      'gigLocation': gigData['location'] ?? gig.location,
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
