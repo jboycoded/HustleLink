@@ -198,15 +198,17 @@ class _MatchesScreenState extends State<MatchesScreen> {
                           ],
                           _DetailRow(
                             label: 'Category',
-                            value: gig?.category ?? applications.first.gigCategory,
+                            value: gig?.category ??
+                                (applications.isNotEmpty ? applications.first.gigCategory : ''),
                           ),
                           _DetailRow(
                             label: 'Payment',
-                            value: '₦${gig?.pay ?? applications.first.gigPay}',
+                            value: '₦${gig?.pay ?? (applications.isNotEmpty ? applications.first.gigPay : 0)}',
                           ),
                           _DetailRow(
                             label: 'Location',
-                            value: gig?.location ?? applications.first.gigLocation,
+                            value: gig?.location ??
+                                (applications.isNotEmpty ? applications.first.gigLocation : ''),
                           ),
                           _DetailRow(
                             label: 'Schedule',
@@ -298,7 +300,11 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 ),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: ListView.separated(
+                  child: applications.isEmpty
+                      ? const Center(
+                          child: Text('No applications have been received for this gig yet.'),
+                        )
+                      : ListView.separated(
                     itemCount: applications.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (itemContext, index) {
@@ -557,23 +563,24 @@ class _MatchesScreenState extends State<MatchesScreen> {
     BuildContext context,
     MatchesViewModel vm,
   ) {
-    final groups = vm.posterApplicationsByGig.entries.toList();
+    final gigs = vm.posterGigs;
 
     return RefreshIndicator(
       onRefresh: vm.load,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        itemCount: groups.length,
+        itemCount: gigs.length,
         separatorBuilder: (_, __) => const SizedBox(height: 24),
         itemBuilder: (context, index) {
-          final entry = groups[index];
-          final applications = entry.value;
-          final gigTitle = applications.first.gigTitle;
+          final gig = gigs[index];
+          final applications =
+              vm.posterApplicationsByGig[gig.id] ?? const <GigApplication>[];
 
           return _GigApplicationsCard(
-            gigTitle: gigTitle,
+            gigTitle: gig.title,
             applications: applications,
-            onTap: () => _showGigDetails(context, entry.key, gigTitle, applications),
+            onTap: () =>
+                _showGigDetails(context, gig.id, gig.title, applications),
           );
         },
       ),
@@ -820,7 +827,7 @@ class _GigApplicationsCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'VIEW APPLICANTS',
+                      'VIEW GIG DETAILS',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.8,
