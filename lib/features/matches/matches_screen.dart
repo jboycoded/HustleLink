@@ -189,7 +189,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                       final application = applications[index];
                       final initials = application.workerName
                           .trim()
-                          .split(RegExp(r'\\s+'))
+                          .split(RegExp(r'\s+'))
                           .where((part) => part.isNotEmpty)
                           .take(2)
                           .map((part) => part[0].toUpperCase())
@@ -277,7 +277,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                       child: Text(
                         application.workerName
                             .trim()
-                            .split(RegExp(r'\\s+'))
+                            .split(RegExp(r'\s+'))
                             .where((part) => part.isNotEmpty)
                             .take(2)
                             .map((part) => part[0].toUpperCase())
