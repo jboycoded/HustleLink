@@ -11,11 +11,13 @@ class ProfileViewModel extends ChangeNotifier {
   UserProfile? _profile;
   bool _isLoading = false;
   bool _isSaving = false;
+  bool _isVideoUploading = false;
   String? _errorMessage;
 
   UserProfile? get profile => _profile;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
+  bool get isVideoUploading => _isVideoUploading;
   String? get errorMessage => _errorMessage;
 
   bool get isAvailableForGigs =>
@@ -61,6 +63,11 @@ class ProfileViewModel extends ChangeNotifier {
       _isSaving = false;
       notifyListeners();
     }
+  }
+
+  void setVideoUploading(bool value) {
+    _isVideoUploading = value;
+    notifyListeners();
   }
 
   Future<bool> updateProofVideoUrl(String? url) async {
