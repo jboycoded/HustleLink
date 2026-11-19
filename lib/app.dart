@@ -8,6 +8,7 @@ import 'core/theme/app_theme.dart';
 import 'data/repositories/gig_repository.dart';
 import 'data/repositories/user_profile_repository.dart';
 import 'data/services/auth_service.dart';
+import 'data/services/chat_service.dart';
 import 'data/services/gig_service.dart';
 
 class HustleLinkApp extends StatefulWidget {
@@ -50,6 +51,8 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
       value: _authService,
       child: Provider<UserProfileRepository>(
         create: (_) => UserProfileRepository(),
+        child: Provider<ChatService>(
+        create: (_) => ChatService(),
         child: Provider<GigRepository>(
           create: (_) => GigRepository(GigService()),
           child: MaterialApp.router(
@@ -61,6 +64,7 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
             routerConfig: _router,
           ),
         ),
+      ),
       ),
     );
   }
