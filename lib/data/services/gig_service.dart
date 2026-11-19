@@ -96,6 +96,12 @@ class GigService {
     return gigs;
   }
 
+  Future<Gig?> fetchGigById(String gigId) async {
+    final document = await _gigs.doc(gigId).get();
+    if (!document.exists) return null;
+    return Gig.fromMap(document.id, document.data()!);
+  }
+
   Future<List<Gig>> fetchMyGigs() async {
     final snapshot = await _gigs
         .where('posterId', isEqualTo: _uid)
