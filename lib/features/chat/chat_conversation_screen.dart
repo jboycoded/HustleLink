@@ -20,6 +20,19 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
   bool _sending = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      try {
+        await context.read<ChatService>().markAsRead(widget.conversationId);
+      } catch (_) {
+        // The conversation stream will show an access error if this user is not a participant.
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
