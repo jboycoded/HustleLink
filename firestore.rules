@@ -79,6 +79,64 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /publicProfiles/{userId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasAll([
+          'uid',
+          'fullName',
+          'activeRole',
+          'location',
+          'skills',
+          'isAvailableForGigs',
+          'rating',
+          'completedGigs',
+          'updatedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'fullName',
+          'activeRole',
+          'location',
+          'skills',
+          'isAvailableForGigs',
+          'rating',
+          'completedGigs',
+          'updatedAt'
+        ])
+        && request.resource.data.uid == userId
+        && request.resource.data.fullName is string
+        && request.resource.data.activeRole in ['worker', 'poster']
+        && request.resource.data.location is string
+        && request.resource.data.skills is list
+        && request.resource.data.isAvailableForGigs is bool
+        && request.resource.data.rating is number
+        && request.resource.data.completedGigs is int
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly([
+            'fullName',
+            'activeRole',
+            'location',
+            'skills',
+            'isAvailableForGigs',
+            'updatedAt'
+          ])
+        && request.resource.data.fullName is string
+        && request.resource.data.activeRole in ['worker', 'poster']
+        && request.resource.data.location is string
+        && request.resource.data.skills is list
+        && request.resource.data.isAvailableForGigs is bool
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
     match /gigs/{gigId} {
       allow read: if request.auth != null
                   && (
