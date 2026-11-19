@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../data/models/gig_application.dart';
+import '../../data/models/gig.dart';
+import '../../data/repositories/gig_repository.dart';
 import 'matches_view_model.dart';
 
 class MatchesScreen extends StatefulWidget {
@@ -129,6 +131,119 @@ class _MatchesScreenState extends State<MatchesScreen> {
             showWorkerName: false,
           );
         },
+      ),
+    );
+  }
+
+  Future<void> _showGigDetails(
+    BuildContext context,
+    String gigId,
+    String gigTitle,
+    List<GigApplication> applications,
+  ) async {
+    final gigFuture = context.read<GigRepository>().getGigById(gigId);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
+          child: SizedBox(
+            height: MediaQuery.of(sheetContext).size.height * .72,
+            child: FutureBuilder<Gig?>(
+              future: gigFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final gig = snapshot.data;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      gig?.title ?? gigTitle,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView(
+                        children: [
+                          if ((gig?.description ?? '').isNotEmpty) ...[
+                            Text(
+                              'DESCRIPTION',
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(fontWeight: FontWeight.w800),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(gig!.description),
+                            const SizedBox(height: 16),
+                          ],
+                          _DetailRow(
+                            label: 'Category',
+                            value: gig?.category ?? applications.first.gigCategory,
+                          ),
+                          _DetailRow(
+                            label: 'Payment',
+                            value: '₦${gig?.pay ?? applications.first.gigPay}',
+                          ),
+                          _DetailRow(
+                            label: 'Location',
+                            value: gig?.location ?? applications.first.gigLocation,
+                          ),
+                          _DetailRow(
+                            label: 'Schedule',
+                            value: gig?.when ?? 'Not available',
+                          ),
+                          _DetailRow(
+                            label: 'Video required',
+                            value: gig == null
+                                ? 'Check gig settings'
+                                : (gig.proofVideoRequired ? 'Yes' : 'No'),
+                          ),
+                          _DetailRow(
+                            label: 'Applicants',
+                            value: '${applications.length}',
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _showGigApplicants(
+                            context,
+                            gig?.title ?? gigTitle,
+                            applications,
+                          );
+                        },
+                        child: const Text('View applicants'),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -445,7 +560,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           return _GigApplicationsCard(
             gigTitle: gigTitle,
             applications: applications,
-            onTap: () => _showGigApplicants(context, gigTitle, applications),
+            onTap: () => _showGigDetails(context, entry.key, gigTitle, applications),
           );
         },
       ),
