@@ -2,6 +2,9 @@ name: Build Flutter APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -23,7 +26,7 @@ jobs:
           flutter-version: '3.29.0'
           channel: stable
           cache: true
-          
+
       - name: Get Flutter dependencies
         run: flutter pub get
 
