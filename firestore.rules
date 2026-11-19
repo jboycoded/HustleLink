@@ -205,7 +205,20 @@ service cloud.firestore {
                     && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.status == 'open'
                     && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.posterId == request.resource.data.posterId;
 
-      allow update, delete: if false;
+      allow update: if request.auth != null
+                    && resource.data.posterId == request.auth.uid
+                    && resource.data.status == 'pending'
+                    && request.resource.data.diff(resource.data)
+                       .affectedKeys()
+                       .hasOnly(['status', 'updatedAt'])
+                    && request.resource.data.status in ['accepted', 'rejected']
+                    && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
+    match /conversations/{conversationId} {
+      allow read, write: if false;
     }
   }
 }
