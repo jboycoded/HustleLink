@@ -172,6 +172,16 @@ class GigService {
 
     final workerProfile = profileDocument.data();
     await _syncPublicProfile(uid, workerProfile);
+
+    if (gigData['proofVideoRequired'] == true) {
+      final proofVideoUrl = workerProfile?['proofVideoUrl'] as String?;
+      if (proofVideoUrl == null || proofVideoUrl.isEmpty) {
+        throw StateError(
+          'This gig requires a 30-second profile video. Add one to your profile before applying.',
+        );
+      }
+    }
+
     final workerName =
         (workerProfile?['fullName'] as String?)?.trim();
 
