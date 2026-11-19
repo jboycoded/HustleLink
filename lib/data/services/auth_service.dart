@@ -58,5 +58,13 @@ class AuthService {
     );
   }
 
+  Future<void> sendPasswordResetEmail(String email) {
+    final normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
+      throw ArgumentError('Enter a valid email address.');
+    }
+    return _auth.sendPasswordResetEmail(email: normalizedEmail);
+  }
+
   Future<void> signOut() => _auth.signOut();
 }
