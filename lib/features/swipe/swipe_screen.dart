@@ -581,11 +581,15 @@ class _PosterGigAction extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final colors = context.appColors;
-    final foreground = destructive ? scheme.error : scheme.onSurface;
-    final background = destructive ? scheme.surface : colors.peachSoft;
+    final foreground = destructive ? scheme.error : AppPalette.ink;
+    final background = destructive
+        ? scheme.surface
+        : theme.brightness == Brightness.dark
+            ? colors.peach
+            : colors.peachSoft;
 
     return Material(
-      color: background,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(AppTokens.rMd),
       child: InkWell(
         onTap: onTap,
@@ -594,6 +598,7 @@ class _PosterGigAction extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 46),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
+            color: background,
             borderRadius: BorderRadius.circular(AppTokens.rMd),
             border: Border.all(
               color: scheme.outline,
