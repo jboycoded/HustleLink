@@ -280,7 +280,15 @@ service cloud.firestore {
                     && request.resource.data.createdAt == request.time
                     && exists(/databases/$(database)/documents/gigs/$(request.resource.data.gigId))
                     && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.status == 'open'
-                    && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.posterId == request.resource.data.posterId;
+                    && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.posterId == request.resource.data.posterId
+                    && (
+                      get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.proofVideoRequired == false
+                      || (
+                        exists(/databases/$(database)/documents/users/$(request.auth.uid))
+                        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.proofVideoUrl is string
+                        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.proofVideoUrl.size() > 0
+                      )
+                    );
 
       allow update: if request.auth != null
                     && resource.data.posterId == request.auth.uid
