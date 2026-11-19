@@ -165,20 +165,20 @@ class SwipeViewModel extends ChangeNotifier {
   }
 
   void pass() {
-    final gig = currentGig;
-    if (gig == null) return;
+  final gig = currentGig;
+  if (gig == null) return;
 
-    _passedGigIds.add(gig.id);
+  _passedGigIds.add(gig.id);
 
-    final available = _discoveryGigs;
-    if (available.isEmpty) {
-      _currentIndex = 0;
-    } else {
-      _currentIndex %= available.length;
-    }
-
-    notifyListeners();
+  final available = _discoveryGigs;
+  if (available.isNotEmpty) {
+    _currentIndex = (_currentIndex + 1) % available.length;
+  } else {
+    _currentIndex = 0;
   }
+
+  notifyListeners();
+}
 
   Future<bool> apply() async {
     final gig = currentGig;
