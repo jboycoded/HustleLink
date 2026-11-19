@@ -121,6 +121,36 @@ Future<void> _submit() async {
     }
   }
 
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your email address first.')),
+      );
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      await widget.authService.sendPasswordResetEmail(email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('If an account exists for that email, a password reset link has been sent.')),
+      );
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_authErrorMessage(error))),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not send the reset email. Check your connection and try again.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _toggleMode() {
     setState(() {
       _isRegistering = !_isRegistering;
@@ -274,6 +304,15 @@ Future<void> _submit() async {
                         return null;
                       },
                     ),
+
+                    if (!_isRegistering)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _isLoading ? null : _forgotPassword,
+                          child: const Text('Forgot password?'),
+                        ),
+                      ),
 
                     const SizedBox(height: 24),
 
