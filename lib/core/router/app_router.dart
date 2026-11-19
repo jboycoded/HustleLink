@@ -15,6 +15,7 @@ import '../../features/chat/chat_conversation_screen.dart';
 import '../../features/matches/matches_screen.dart';
 import '../../features/matches/matches_view_model.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/profile/public_profile_screen.dart';
 import '../../features/profile/profile_view_model.dart';
 import '../../features/swipe/swipe_screen.dart';
 import '../../features/swipe/swipe_view_model.dart';
@@ -121,6 +122,14 @@ GoRouter createAppRouter({
                         ..load(),
                   child: const ProfileScreen(),
                 ),
+                routes: [
+                  GoRoute(
+                    path: ':userId',
+                    builder: (context, state) => PublicProfileScreen(
+                      userId: state.pathParameters['userId']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
