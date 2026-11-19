@@ -39,6 +39,13 @@ class ChatService {
         .snapshots();
   }
 
+  Future<void> markAsRead(String conversationId) async {
+    final uid = _uid;
+    await _conversations.doc(conversationId).update({
+      'lastReadAt.$uid': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> sendMessage({
     required String conversationId,
     required String text,
