@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -18,22 +20,35 @@ class ChatConversationScreen extends StatefulWidget {
 class _ChatConversationScreenState extends State<ChatConversationScreen> {
   final TextEditingController _controller = TextEditingController();
   bool _sending = false;
+  bool _markingRead = false;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _readSubscription;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      try {
-        await context.read<ChatService>().markAsRead(widget.conversationId);
-      } catch (_) {
-        // The conversation stream will show an access error if this user is not a participant.
-      }
+      final service = context.read<ChatService>();
+      _readSubscription = service.watchMessages(widget.conversationId).listen(
+        (snapshot) {
+          if (snapshot.docs.isEmpty || _markingRead || !mounted) return;
+          final latest = snapshot.docs.last.data();
+          if (latest['senderId'] == service.currentUserId) return;
+          _markingRead = true;
+          service.markAsRead(widget.conversationId).whenComplete(() {
+            _markingRead = false;
+          }).catchError((_) {
+            _markingRead = false;
+          });
+        },
+        onError: (_) {},
+      );
     });
   }
 
   @override
   void dispose() {
+    _readSubscription?.cancel();
     _controller.dispose();
     super.dispose();
   }
