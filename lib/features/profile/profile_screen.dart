@@ -96,8 +96,30 @@ class ProfileScreen extends StatelessWidget {
                 IconButton(
                   tooltip: 'Log out',
                   onPressed: () async {
-                    await context.read<AuthService>().signOut();
-                  },
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Sign out?'),
+      content: const Text(
+        'Are you sure you want to sign out of HustleLink?',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: const Text('Sign out'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true || !context.mounted) return;
+
+  await context.read<AuthService>().signOut();
+},
                   icon: const Icon(Icons.logout_rounded),
                 ),
               ],
