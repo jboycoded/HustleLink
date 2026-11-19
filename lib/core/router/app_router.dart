@@ -72,8 +72,10 @@ GoRouter createAppRouter({
               GoRoute(
                 path: '/swipe',
                 builder: (context, state) => ChangeNotifierProvider(
-                  create: (ctx) =>
-                      SwipeViewModel(ctx.read<GigRepository>())..load(),
+                  create: (ctx) => SwipeViewModel(
+                    ctx.read<GigRepository>(),
+                    ctx.read<UserProfileRepository>(),
+                  )..load(),
                   child: const SwipeScreen(),
                 ),
               ),
@@ -108,7 +110,8 @@ GoRouter createAppRouter({
                 path: '/profile',
                 builder: (context, state) => ChangeNotifierProvider(
                   create: (ctx) =>
-    ProfileViewModel(ctx.read<UserProfileRepository>())..load(),
+                      ProfileViewModel(ctx.read<UserProfileRepository>())
+                        ..load(),
                   child: const ProfileScreen(),
                 ),
               ),
