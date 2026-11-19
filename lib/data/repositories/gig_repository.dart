@@ -59,6 +59,15 @@ class GigRepository {
 
   Future<void> applyToGig(Gig gig) => _service.submitApplication(gig);
 
+  Future<void> setApplicationStatus({
+    required String applicationId,
+    required String status,
+  }) =>
+      _service.updateApplicationStatus(
+        applicationId: applicationId,
+        status: status,
+      );
+
   Future<List<GigApplication>> getWorkerApplications() =>
       _service.fetchWorkerApplications();
 
