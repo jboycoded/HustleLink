@@ -199,6 +199,38 @@ class _ApplicationCard extends StatelessWidget {
   final GigApplication application;
   final bool showWorkerName;
 
+  Future<void> _review(BuildContext context, String status) async {
+    final accepted = status == 'accepted';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(accepted ? 'Accept applicant?' : 'Reject applicant?'),
+        content: Text(accepted
+            ? 'Accept ${application.workerName} for ${application.gigTitle}? This will allow both of you to chat.'
+            : 'Reject ${application.workerName}\'s application for ${application.gigTitle}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(accepted ? 'Accept' : 'Reject'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await context.read<MatchesViewModel>().reviewApplication(application.id, status);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not update this application. Please try again.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -261,6 +293,30 @@ class _ApplicationCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
+          ],
+          if (showWorkerName && application.status == 'pending') ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: context.read<MatchesViewModel>().isUpdating(application.id)
+                        ? null
+                        : () => _review(context, 'rejected'),
+                    child: const Text('Reject'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: context.read<MatchesViewModel>().isUpdating(application.id)
+                        ? null
+                        : () => _review(context, 'accepted'),
+                    child: const Text('Accept'),
+                  ),
+                ),
+              ],
+            ),
           ],
           Wrap(
             spacing: 14,
