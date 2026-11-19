@@ -65,10 +65,6 @@ class ChatScreen extends StatelessWidget {
                   ..sort((a, b) => (b.lastMessageAt ?? DateTime(2000))
                       .compareTo(a.lastMessageAt ?? DateTime(2000)));
 
-                final unreadCount = conversations
-                    .where((item) => item.isUnreadFor(service.currentUserId))
-                    .length;
-
                 if (conversations.isEmpty) {
                   return const _ChatEmptyState(
                     icon: Icons.chat_bubble_outline_rounded,
