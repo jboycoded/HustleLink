@@ -316,6 +316,9 @@ class SwipeViewModel extends ChangeNotifier {
   String _friendlyError(Object error) {
     final message = error.toString();
 
+    if (message.contains('30-second profile video')) {
+      return 'This gig requires a 30-second profile video. Add one in your Profile before applying.';
+    }
     if (message.contains('already applied')) {
       return 'You have already applied to this gig.';
     }
