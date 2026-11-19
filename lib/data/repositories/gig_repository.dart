@@ -11,6 +11,8 @@ class GigRepository {
 
   Future<List<Gig>> getMyGigs() => _service.fetchMyGigs();
 
+  Future<Gig?> getGigById(String gigId) => _service.fetchGigById(gigId);
+
   Future<String> createGig({
     required String title,
     required String description,
