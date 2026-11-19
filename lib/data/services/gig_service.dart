@@ -225,23 +225,20 @@ class GigService {
     if (snapshot.data()?['status'] != 'pending') {
       throw StateError('This application has already been reviewed.');
     }
-    await ref.update({
-      'status': status,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    final application = snapshot.data()!;
 
     if (status == 'accepted') {
-      final application = snapshot.data()!;
       final gigSnapshot = await _gigs.doc(application['gigId'] as String).get();
       final gigData = gigSnapshot.data() ?? <String, dynamic>{};
-      final workerSnapshot =
-          await _firestore.collection('users').doc(application['workerId'] as String).get();
-      final workerData = workerSnapshot.data() ?? <String, dynamic>{};
-      final conversationRef = _firestore
-          .collection('conversations')
-          .doc(applicationId);
+      final conversationRef =
+          _firestore.collection('conversations').doc(applicationId);
+      final batch = _firestore.batch();
 
-      await conversationRef.set({
+      batch.update(ref, {
+        'status': status,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      batch.set(conversationRef, {
         'applicationId': applicationId,
         'gigId': application['gigId'],
         'gigTitle': application['gigTitle'],
@@ -257,6 +254,12 @@ class GigService {
         'lastMessageAt': FieldValue.serverTimestamp(),
         'lastSenderId': '',
         'createdAt': FieldValue.serverTimestamp(),
+      });
+      await batch.commit();
+    } else {
+      await ref.update({
+        'status': status,
+        'updatedAt': FieldValue.serverTimestamp(),
       });
     }
   }
