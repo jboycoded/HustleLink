@@ -235,6 +235,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                           controller: _controller,
                           minLines: 1,
                           maxLines: 4,
+                          maxLength: 4000,
                           textCapitalization: TextCapitalization.sentences,
                           decoration: InputDecoration(
                             hintText: 'Type a message...',
