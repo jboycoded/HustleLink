@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -28,10 +27,7 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
     super.initState();
 
     _authService = AuthService();
-    _authRefresh = AuthRefreshNotifier(
-      _authService.authStateChanges,
-    );
-
+    _authRefresh = AuthRefreshNotifier(_authService.authStateChanges);
     _router = createAppRouter(
       authService: _authService,
       authRefresh: _authRefresh,
@@ -52,19 +48,19 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
       child: Provider<UserProfileRepository>(
         create: (_) => UserProfileRepository(),
         child: Provider<ChatService>(
-        create: (_) => ChatService(),
-        child: Provider<GigRepository>(
-          create: (_) => GigRepository(GigService()),
-          child: MaterialApp.router(
-            title: 'HUSTLELINK',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(),
-            darkTheme: AppTheme.dark(),
-            themeMode: ThemeMode.system,
-            routerConfig: _router,
+          create: (_) => ChatService(),
+          child: Provider<GigRepository>(
+            create: (_) => GigRepository(GigService()),
+            child: MaterialApp.router(
+              title: 'HUSTLELINK',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light(),
+              darkTheme: AppTheme.dark(),
+              themeMode: ThemeMode.system,
+              routerConfig: _router,
+            ),
           ),
         ),
-      ),
       ),
     );
   }
