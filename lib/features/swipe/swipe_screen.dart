@@ -581,7 +581,7 @@ class _PosterGigAction extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final colors = context.appColors;
-    final foreground = destructive ? scheme.error : AppPalette.ink;
+    final foreground = destructive ? scheme.error : scheme.onSurface;
     final background = destructive
         ? scheme.surface
         : theme.brightness == Brightness.dark
