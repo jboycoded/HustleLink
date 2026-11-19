@@ -31,7 +31,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     final vm = context.watch<MatchesViewModel>();
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final colors = context.appColors;
+    //final colors = context.appColors;
     final text = theme.textTheme;
 
     Widget body;
