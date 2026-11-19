@@ -138,7 +138,7 @@ class UserProfileRepository {
   }
 
   Future<void> updateProofVideoUrl(String? url) async {
-    final value = url == null ? FieldValue.delete() : url;
+    final value = url ?? FieldValue.delete();
     await _users.doc(_uid).update({
       'proofVideoUrl': value,
       'updatedAt': FieldValue.serverTimestamp(),
