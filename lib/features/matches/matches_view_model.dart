@@ -1,64 +1,75 @@
-import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import 'models/match_profile.dart';
-import '../../data/models/gig.dart';
+import '../../data/models/gig_application.dart';
 import '../../data/repositories/gig_repository.dart';
-
+import '../../data/repositories/user_profile_repository.dart';
 
 class MatchesViewModel extends ChangeNotifier {
-  MatchesViewModel(this._repo);
+  MatchesViewModel(this._repo, this._profiles);
 
   final GigRepository _repo;
+  final UserProfileRepository _profiles;
 
-  List<Gig> _matchedGigs = [];
-  List<MatchProfile> _newMatches = [];
+  List<GigApplication> _workerApplications = [];
+  Map<String, List<GigApplication>> _posterApplicationsByGig = {};
 
   bool isLoading = false;
   String? error;
+  String activeRole = 'worker';
 
-  // Getters for UI data binding
-  List<Gig> get matchedGigs => List.unmodifiable(_matchedGigs);
-  List<MatchProfile> get newMatches => List.unmodifiable(_newMatches);
+  bool get isPosterMode => activeRole == 'poster';
 
-  /// Fetches data for both horizontal new matches and vertical active matched gigs
+  List<GigApplication> get workerApplications =>
+      List.unmodifiable(_workerApplications);
+
+  Map<String, List<GigApplication>> get posterApplicationsByGig {
+    return Map.unmodifiable(
+      _posterApplicationsByGig.map(
+        (key, value) => MapEntry(key, List.unmodifiable(value)),
+      ),
+    );
+  }
+
+  int get applicationCount {
+    if (isPosterMode) {
+      return _posterApplicationsByGig.values
+          .fold(0, (total, applications) => total + applications.length);
+    }
+
+    return _workerApplications.length;
+  }
+
   Future<void> load() async {
     isLoading = true;
     error = null;
     notifyListeners();
 
     try {
-      // 1. Fetch available gigs from your repository layer
-      final allGigs = await _repo.getGigs();
-      
-      // For now, we display your gigs list. You can filter these later 
-      // (e.g., allGigs.where((g) => g.isMatched).toList()) depending on your logic
-      _matchedGigs = allGigs;
+      final profile = await _profiles.getMyProfile();
+      activeRole = profile.activeRole;
 
-      // 2. Fetch the horizontal round profile bubbles data structure
-      _newMatches = _getMockNewMatches();
+      if (isPosterMode) {
+        _workerApplications = [];
+        final applications = await _repo.getPosterApplications();
+
+        final grouped = <String, List<GigApplication>>{};
+
+        for (final application in applications) {
+          grouped.putIfAbsent(application.gigId, () => []);
+          grouped[application.gigId]!.add(application);
+        }
+
+        _posterApplicationsByGig = grouped;
+      } else {
+        _posterApplicationsByGig = {};
+        _workerApplications = await _repo.getWorkerApplications();
+      }
     } catch (e) {
-      error = 'Could not load matches. Check your network and try again.';
+      error = 'Could not load applications. Check your network and try again.';
     } finally {
       isLoading = false;
       notifyListeners();
     }
-  }
-
-  /// Action modifier to dismiss or clear a gig from the vertical match list
-  void removeMatch(String gigId) {
-    _matchedGigs.removeWhere((gig) => gig.id == gigId);
-    notifyListeners();
-  }
-
-  /// Generate local mock items matching your Figma layout: AO, TS, BC, SD
-  List<MatchProfile> _getMockNewMatches() {
-    return const [
-      MatchProfile(id: 'm1', name: 'Ada O.', initials: 'AO'),
-      MatchProfile(id: 'm2', name: 'Tunde S.', initials: 'TS'),
-      MatchProfile(id: 'm3', name: 'Blessing C.', initials: 'BC'),
-      MatchProfile(id: 'm4', name: 'Sodiq D.', initials: 'SD'),
-    ];
   }
 }
