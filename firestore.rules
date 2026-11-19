@@ -111,6 +111,7 @@ service cloud.firestore {
           'isAvailableForGigs',
           'rating',
           'completedGigs',
+          'proofVideoUrl',
           'updatedAt'
         ])
         && request.resource.data.uid == userId
