@@ -1,12 +1,15 @@
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../data/services/proof_video_service.dart';
 import 'profile_view_model.dart';
 import 'models/user_profile.dart';
+import 'widgets/profile_proof_video_player.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -356,6 +359,15 @@ class ProfileScreen extends StatelessWidget {
                       );
                     }).toList(),
                   ),
+                const SizedBox(height: 24),
+                _ProfileProofVideoSection(
+                  videoUrl: profile.proofVideoUrl,
+                  isBusy: vm.isSaving,
+                  onUpload: () => _chooseProofVideo(context, vm),
+                  onRemove: profile.proofVideoUrl == null
+                      ? null
+                      : () => _removeProofVideo(context, vm),
+                ),
                 if (vm.errorMessage != null) ...[
                   const SizedBox(height: 16),
                   Text(
@@ -369,6 +381,118 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _chooseProofVideo(
+    BuildContext context,
+    ProfileViewModel vm,
+  ) async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(sheetContext).colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.videocam_outlined),
+                title: const Text('Record a video'),
+                onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.video_library_outlined),
+                title: const Text('Choose from gallery'),
+                onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (source == null || !context.mounted) return;
+
+    try {
+      final url = await context.read<ProofVideoService>().pickAndUpload(source);
+      if (url == null || !context.mounted) return;
+      final saved = await vm.updateProofVideoUrl(url);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            saved
+                ? 'Your profile video has been saved.'
+                : vm.errorMessage ?? 'Could not save your profile video.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString().replaceFirst('Bad state: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _removeProofVideo(
+    BuildContext context,
+    ProfileViewModel vm,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove profile video?'),
+        content: const Text(
+          'Posters will no longer see a proof video on your public profile.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep video'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await context.read<ProofVideoService>().deleteProfileVideo();
+      final saved = await vm.updateProofVideoUrl(null);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            saved
+                ? 'Your profile video has been removed.'
+                : vm.errorMessage ?? 'Could not update your profile.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    }
   }
 
   Future<void> _editProfile(
@@ -474,6 +598,113 @@ class ProfileScreen extends StatelessWidget {
         SnackBar(content: Text(vm.errorMessage!)),
       );
     }
+  }
+}
+
+class _ProfileProofVideoSection extends StatelessWidget {
+  const _ProfileProofVideoSection({
+    required this.videoUrl,
+    required this.isBusy,
+    required this.onUpload,
+    required this.onRemove,
+  });
+
+  final String? videoUrl;
+  final bool isBusy;
+  final VoidCallback onUpload;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final hasVideo = videoUrl != null && videoUrl!.isNotEmpty;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(AppTokens.rLg),
+        border: Border.all(
+          color: scheme.outline,
+          width: AppTokens.borderWidth,
+        ),
+        boxShadow: AppTokens.hardShadow(scheme.outline, 3),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '30-SECOND PROFILE VIDEO',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: .7,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Add one short introduction or demonstration. Posters can view this same video when reviewing your applications.',
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          if (hasVideo) ...[
+            const SizedBox(height: 14),
+            ProfileProofVideoPlayer(videoUrl: videoUrl!),
+          ] else ...[
+            const SizedBox(height: 14),
+            Container(
+              height: 110,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.video_camera_back_outlined,
+                size: 42,
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: isBusy ? null : onUpload,
+                  icon: isBusy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(hasVideo
+                          ? Icons.refresh_rounded
+                          : Icons.video_call_outlined),
+                  label: Text(isBusy
+                      ? 'Please wait...'
+                      : hasVideo
+                          ? 'Replace video'
+                          : 'Add video'),
+                ),
+              ),
+              if (hasVideo) ...[
+                const SizedBox(width: 10),
+                IconButton(
+                  tooltip: 'Remove video',
+                  onPressed: isBusy ? null : onRemove,
+                  icon: const Icon(Icons.delete_outline_rounded),
+                ),
+              ],
+            ],
+          ),
+          Text(
+            'Maximum 30 seconds • Maximum 50 MB',
+            style: theme.textTheme.labelSmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
   }
 }
 
