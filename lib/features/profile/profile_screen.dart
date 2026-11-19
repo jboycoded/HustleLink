@@ -448,7 +448,7 @@ class ProfileScreen extends StatelessWidget {
         SnackBar(content: Text(error.toString().replaceFirst('Bad state: ', ''))),
       );
     } finally {
-      vm.setVideoUploading(false);
+      if (context.mounted) vm.setVideoUploading(false);
     }
   }
 
