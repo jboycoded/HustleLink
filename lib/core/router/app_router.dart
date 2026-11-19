@@ -11,7 +11,7 @@ import '../../data/repositories/user_profile_repository.dart';
 import '../../data/services/auth_service.dart';
 import '../../features/auth/auth_screen.dart';
 import '../../features/chat/chat_screen.dart';
-import '../../features/chat/chat_view_model.dart';
+import '../../features/chat/chat_conversation_screen.dart';
 import '../../features/matches/matches_screen.dart';
 import '../../features/matches/matches_view_model.dart';
 import '../../features/profile/profile_screen.dart';
@@ -99,10 +99,15 @@ GoRouter createAppRouter({
             routes: [
               GoRoute(
                 path: '/chat',
-                builder: (context, state) => ChangeNotifierProvider(
-                  create: (ctx) => ChatViewModel()..load(),
-                  child: const ChatScreen(),
-                ),
+                builder: (context, state) => const ChatScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':conversationId',
+                    builder: (context, state) => ChatConversationScreen(
+                      conversationId: state.pathParameters['conversationId']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
