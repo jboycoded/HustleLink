@@ -261,9 +261,9 @@ service cloud.firestore {
           request.resource.data.workerId,
           request.resource.data.posterId
         ])
-        && get(/databases/$(database)/documents/applications/$(conversationId)).data.status == 'accepted'
-        && get(/databases/$(database)/documents/applications/$(conversationId)).data.workerId == request.resource.data.workerId
-        && get(/databases/$(database)/documents/applications/$(conversationId)).data.posterId == request.resource.data.posterId
+        && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.status == 'accepted'
+        && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.workerId == request.resource.data.workerId
+        && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.posterId == request.resource.data.posterId
         && request.resource.data.createdAt == request.time
         && request.resource.data.lastMessageAt == request.time;
 
