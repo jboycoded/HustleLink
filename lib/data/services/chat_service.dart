@@ -15,6 +15,11 @@ class ChatService {
     return uid;
   }
 
+  String get currentUserId => _uid;
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> watchConversation(String id) =>
+      _conversations.doc(id).snapshots();
+
   CollectionReference<Map<String, dynamic>> get _conversations =>
       _firestore.collection('conversations');
 
