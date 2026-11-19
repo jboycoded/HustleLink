@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../data/repositories/user_profile_repository.dart';
 import 'models/user_profile.dart';
+import 'widgets/profile_proof_video_player.dart';
 
 class PublicProfileScreen extends StatelessWidget {
   const PublicProfileScreen({super.key, required this.userId});
@@ -132,6 +133,19 @@ class PublicProfileScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              if (profile.proofVideoUrl != null &&
+                  profile.proofVideoUrl!.isNotEmpty) ...[
+                const SizedBox(height: 22),
+                Text(
+                  '30-SECOND PROOF VIDEO',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: .8,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ProfileProofVideoPlayer(videoUrl: profile.proofVideoUrl!),
+              ],
               const SizedBox(height: 22),
               Text(
                 'SKILLS & SERVICES',
