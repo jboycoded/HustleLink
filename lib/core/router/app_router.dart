@@ -86,8 +86,10 @@ GoRouter createAppRouter({
               GoRoute(
                 path: '/matches',
                 builder: (context, state) => ChangeNotifierProvider(
-                  create: (ctx) =>
-                      MatchesViewModel(ctx.read<GigRepository>()),
+                  create: (ctx) => MatchesViewModel(
+  ctx.read<GigRepository>(),
+  ctx.read<UserProfileRepository>(),
+),
                   child: const MatchesScreen(),
                 ),
               ),
