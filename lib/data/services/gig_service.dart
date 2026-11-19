@@ -280,6 +280,9 @@ class GigService {
         'lastMessage': 'Application accepted. You can now chat.',
         'lastMessageAt': FieldValue.serverTimestamp(),
         'lastSenderId': '',
+        'lastReadAt': {
+          application['posterId'] as String: FieldValue.serverTimestamp(),
+        },
         'createdAt': FieldValue.serverTimestamp(),
       });
       await batch.commit();
