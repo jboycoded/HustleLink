@@ -44,6 +44,7 @@ class GigService {
       'isAvailableForGigs': profile['isAvailableForGigs'] as bool? ?? true,
       'rating': (profile['rating'] as num?)?.toDouble() ?? 0,
       'completedGigs': (profile['completedGigs'] as num?)?.toInt() ?? 0,
+      'proofVideoUrl': profile['proofVideoUrl'] as String?,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
