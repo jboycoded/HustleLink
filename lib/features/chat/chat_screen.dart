@@ -7,6 +7,15 @@ import '../../core/theme/app_tokens.dart';
 import '../../data/models/chat_conversation.dart';
 import '../../data/services/chat_service.dart';
 
+String _chatTime(BuildContext context, DateTime? date) {
+  if (date == null) return '';
+  final now = DateTime.now();
+  if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    return TimeOfDay.fromDateTime(date).format(context);
+  }
+  return MaterialLocalizations.of(context).formatShortDate(date);
+}
+
 class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
 
@@ -55,6 +64,10 @@ class ChatScreen extends StatelessWidget {
                     .toList()
                   ..sort((a, b) => (b.lastMessageAt ?? DateTime(2000))
                       .compareTo(a.lastMessageAt ?? DateTime(2000)));
+
+                final unreadCount = conversations
+                    .where((item) => item.isUnreadFor(service.currentUserId))
+                    .length;
 
                 if (conversations.isEmpty) {
                   return const _ChatEmptyState(
@@ -113,14 +126,30 @@ class ChatScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      recipientName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.titleSmall
-                                          ?.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            recipientName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: theme.textTheme.titleSmall?.copyWith(
+                                              fontWeight: conversation.isUnreadFor(service.currentUserId)
+                                                  ? FontWeight.w900
+                                                  : FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                        if (conversation.isUnreadFor(service.currentUserId))
+                                          Container(
+                                            width: 9,
+                                            height: 9,
+                                            decoration: BoxDecoration(
+                                              color: scheme.secondary,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                     const SizedBox(height: 3),
                                     Text(
@@ -138,18 +167,32 @@ class ChatScreen extends StatelessWidget {
                                       conversation.lastMessage,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
+                                      style: theme.textTheme.bodySmall?.copyWith(
                                         color: scheme.onSurfaceVariant,
+                                        fontWeight: conversation.isUnreadFor(service.currentUserId)
+                                            ? FontWeight.w700
+                                            : FontWeight.w400,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: scheme.onSurfaceVariant,
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _chatTime(context, conversation.lastMessageAt),
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 7),
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
