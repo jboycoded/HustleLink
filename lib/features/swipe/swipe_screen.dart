@@ -276,7 +276,7 @@ class SwipeScreen extends StatelessWidget {
           ),
         Expanded(
           child: vm.currentGig == null
-              ? _EmptyState(
+              ? const _EmptyState(
                   icon: Icons.explore_outlined,
                   title: 'No more gigs available.',
                   message: 'Check back soon for new opportunities.',
