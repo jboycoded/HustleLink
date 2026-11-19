@@ -38,6 +38,7 @@ class UserProfileRepository {
     required bool isAvailable,
     required double rating,
     required int completedGigs,
+    String? proofVideoUrl,
   }) =>
       {
         'uid': uid,
@@ -48,6 +49,7 @@ class UserProfileRepository {
         'isAvailableForGigs': isAvailable,
         'rating': rating,
         'completedGigs': completedGigs,
+        'proofVideoUrl': proofVideoUrl,
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -93,6 +95,7 @@ class UserProfileRepository {
         isAvailable: true,
         rating: 0,
         completedGigs: 0,
+        proofVideoUrl: null,
       ));
 
       return UserProfile.fromMap(user.uid, data);
@@ -108,6 +111,7 @@ class UserProfileRepository {
       isAvailable: data['isAvailableForGigs'] as bool? ?? true,
       rating: (data['rating'] as num?)?.toDouble() ?? 0,
       completedGigs: (data['completedGigs'] as num?)?.toInt() ?? 0,
+      proofVideoUrl: data['proofVideoUrl'] as String?,
     ), SetOptions(merge: true));
 
     return UserProfile.fromMap(document.id, data);
@@ -131,6 +135,18 @@ class UserProfileRepository {
       'skills': skills,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  Future<void> updateProofVideoUrl(String? url) async {
+    final value = url == null ? FieldValue.delete() : url;
+    await _users.doc(_uid).update({
+      'proofVideoUrl': value,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    await _publicProfile(_uid).update({
+      'proofVideoUrl': value,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Future<void> updateActiveRole(String role) async {
