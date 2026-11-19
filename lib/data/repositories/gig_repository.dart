@@ -1,4 +1,5 @@
 import '../models/gig.dart';
+import '../models/gig_application.dart';
 import '../services/gig_service.dart';
 
 class GigRepository {
@@ -6,10 +7,8 @@ class GigRepository {
 
   final GigService _service;
 
-  // Worker discovery.
   Future<List<Gig>> getGigs() => _service.fetchAvailableGigs();
 
-  // Poster management.
   Future<List<Gig>> getMyGigs() => _service.fetchMyGigs();
 
   Future<String> createGig({
@@ -54,12 +53,15 @@ class GigRepository {
     );
   }
 
-  Future<void> closeGig(String gigId) =>
-      _service.closeGig(gigId);
+  Future<void> closeGig(String gigId) => _service.closeGig(gigId);
 
-  Future<void> deleteGig(String gigId) =>
-      _service.deleteGig(gigId);
+  Future<void> deleteGig(String gigId) => _service.deleteGig(gigId);
 
-  // Swipe persistence will be implemented in Stage 4.
-  Future<void> recordSwipe(String gigId, {required bool liked}) async {}
+  Future<void> applyToGig(Gig gig) => _service.submitApplication(gig);
+
+  Future<List<GigApplication>> getWorkerApplications() =>
+      _service.fetchWorkerApplications();
+
+  Future<List<GigApplication>> getPosterApplications() =>
+      _service.fetchPosterApplications();
 }
