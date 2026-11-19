@@ -255,6 +255,7 @@ service cloud.firestore {
           'createdAt'
         ])
         && request.auth.uid == request.resource.data.posterId
+        && request.resource.data.applicationId == conversationId
         && request.resource.data.participants is list
         && request.resource.data.participants.size() == 2
         && request.resource.data.participants.hasAll([
