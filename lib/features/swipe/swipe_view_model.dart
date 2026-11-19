@@ -1,8 +1,10 @@
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
 import '../../data/models/gig.dart';
+import '../../data/models/gig_application.dart';
 import '../../data/repositories/gig_repository.dart';
 import '../../data/repositories/user_profile_repository.dart';
 import '../profile/models/user_profile.dart';
@@ -15,19 +17,23 @@ class SwipeViewModel extends ChangeNotifier {
 
   List<Gig> _gigs = [];
   final List<Gig> _savedGigs = [];
-  final Set<String> _processedGigIds = {};
+  final Set<String> _appliedGigIds = {};
+  final Set<String> _passedGigIds = {};
 
   StreamSubscription<UserProfile?>? _profileSubscription;
 
   bool isLoading = false;
   bool isSaving = false;
+  bool isApplying = false;
   String? error;
   String activeRole = 'worker';
 
   String _selectedCategory = 'All';
+  int _currentIndex = 0;
 
   bool get isPosterMode => activeRole == 'poster';
   String get selectedCategory => _selectedCategory;
+
   List<Gig> get gigs => List.unmodifiable(_gigs);
   List<Gig> get savedGigs => List.unmodifiable(_savedGigs);
 
@@ -37,19 +43,30 @@ class SwipeViewModel extends ChangeNotifier {
     return ['All', ...values];
   }
 
-  List<Gig> get visibleGigs {
+  List<Gig> get _discoveryGigs {
     return _gigs.where((gig) {
-      final notProcessed = !_processedGigIds.contains(gig.id);
+      final notApplied = !_appliedGigIds.contains(gig.id);
       final matchesCategory = _selectedCategory == 'All' ||
           gig.category.toLowerCase() == _selectedCategory.toLowerCase();
-      return notProcessed && matchesCategory;
+
+      return notApplied && matchesCategory && gig.isOpen;
     }).toList();
   }
 
-  Gig? get currentGig =>
-      visibleGigs.isEmpty ? null : visibleGigs.first;
+  List<Gig> get visibleGigs => List.unmodifiable(_discoveryGigs);
 
-  bool get hasMoreGigs => visibleGigs.isNotEmpty;
+  Gig? get currentGig {
+    final available = _discoveryGigs;
+    if (available.isEmpty) return null;
+
+    if (_currentIndex >= available.length) {
+      _currentIndex = 0;
+    }
+
+    return available[_currentIndex];
+  }
+
+  bool get hasMoreGigs => currentGig != null;
 
   Future<void> load() async {
     isLoading = true;
@@ -59,15 +76,19 @@ class SwipeViewModel extends ChangeNotifier {
     try {
       final profile = await _profiles.getMyProfile();
       activeRole = profile.activeRole;
+
       await _loadGigs();
 
       await _profileSubscription?.cancel();
       _profileSubscription = _profiles.watchMyProfile().listen(
         (profile) {
           if (profile == null || profile.activeRole == activeRole) return;
+
           activeRole = profile.activeRole;
-          _processedGigIds.clear();
           _selectedCategory = 'All';
+          _currentIndex = 0;
+          _passedGigIds.clear();
+
           unawaited(_loadGigs());
         },
         onError: (_) {
@@ -85,19 +106,31 @@ class SwipeViewModel extends ChangeNotifier {
 
   Future<void> _loadGigs() async {
     try {
-      _gigs = isPosterMode
-          ? await _repo.getMyGigs()
-          : await _repo.getGigs();
+      if (isPosterMode) {
+        _gigs = await _repo.getMyGigs();
+      } else {
+        final applications = await _repo.getWorkerApplications();
+        _appliedGigIds
+          ..clear()
+          ..addAll(applications.map((application) => application.gigId));
+
+        _gigs = await _repo.getGigs();
+      }
+
+      _currentIndex = 0;
       error = null;
     } catch (e) {
       error = _friendlyError(e);
     }
+
     notifyListeners();
   }
 
   Future<void> refresh() async {
     isLoading = true;
     error = null;
+    _passedGigIds.clear();
+    _currentIndex = 0;
     notifyListeners();
 
     await _loadGigs();
@@ -108,16 +141,71 @@ class SwipeViewModel extends ChangeNotifier {
 
   void selectCategory(String category) {
     if (_selectedCategory == category) return;
+
     _selectedCategory = category;
+    _currentIndex = 0;
     notifyListeners();
   }
 
-  void apply() {
-    _recordCurrentGig(liked: true);
+  void nextGig() {
+    final available = _discoveryGigs;
+    if (available.length < 2) return;
+
+    _currentIndex = (_currentIndex + 1) % available.length;
+    notifyListeners();
+  }
+
+  void previousGig() {
+    final available = _discoveryGigs;
+    if (available.length < 2) return;
+
+    _currentIndex = (_currentIndex - 1 + available.length) %
+        available.length;
+    notifyListeners();
   }
 
   void pass() {
-    _recordCurrentGig(liked: false);
+    final gig = currentGig;
+    if (gig == null) return;
+
+    _passedGigIds.add(gig.id);
+
+    final available = _discoveryGigs;
+    if (available.isEmpty) {
+      _currentIndex = 0;
+    } else {
+      _currentIndex %= available.length;
+    }
+
+    notifyListeners();
+  }
+
+  Future<bool> apply() async {
+    final gig = currentGig;
+    if (gig == null || isApplying) return false;
+
+    isApplying = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      await _repo.applyToGig(gig);
+      _appliedGigIds.add(gig.id);
+
+      final remaining = _discoveryGigs;
+      if (remaining.isEmpty || _currentIndex >= remaining.length) {
+        _currentIndex = 0;
+      }
+
+      isApplying = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      error = _friendlyError(e);
+      isApplying = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   void save() {
@@ -128,17 +216,7 @@ class SwipeViewModel extends ChangeNotifier {
       _savedGigs.add(gig);
     }
 
-    _processedGigIds.add(gig.id);
-    notifyListeners();
-  }
-
-  void _recordCurrentGig({required bool liked}) {
-    final gig = currentGig;
-    if (gig == null) return;
-
-    _processedGigIds.add(gig.id);
-    unawaited(_repo.recordSwipe(gig.id, liked: liked));
-    notifyListeners();
+    nextGig();
   }
 
   Future<bool> createGig({
@@ -238,12 +316,19 @@ class SwipeViewModel extends ChangeNotifier {
   String _friendlyError(Object error) {
     final message = error.toString();
 
+    if (message.contains('already applied')) {
+      return 'You have already applied to this gig.';
+    }
+    if (message.contains('no longer available')) {
+      return 'This gig is no longer available.';
+    }
     if (message.contains('permission-denied')) {
       return 'Access denied. Please check your Firestore security rules.';
     }
     if (message.contains('network')) {
       return 'Network error. Please check your connection.';
     }
+
     return 'Something went wrong. Please try again.';
   }
 
