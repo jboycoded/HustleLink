@@ -9,6 +9,7 @@ import 'data/repositories/user_profile_repository.dart';
 import 'data/services/auth_service.dart';
 import 'data/services/chat_service.dart';
 import 'data/services/gig_service.dart';
+import 'data/services/proof_video_service.dart';
 
 class HustleLinkApp extends StatefulWidget {
   const HustleLinkApp({super.key});
@@ -60,6 +61,7 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
               routerConfig: _router,
             ),
           ),
+        ),
         ),
       ),
     );
