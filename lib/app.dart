@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -50,7 +51,7 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
       child: Provider<UserProfileRepository>(
         create: (_) => UserProfileRepository(),
         child: Provider<GigRepository>(
-          create: (_) => GigRepository(const GigService()),
+          create: (_) => GigRepository(GigService()),
           child: MaterialApp.router(
             title: 'HUSTLELINK',
             debugShowCheckedModeBanner: false,
