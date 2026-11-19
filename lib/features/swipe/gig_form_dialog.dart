@@ -96,7 +96,7 @@ class _GigFormDialogState extends State<GigFormDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    //final scheme = theme.colorScheme;
 
     return AlertDialog(
       title: Text(widget.gig == null ? 'Post a gig' : 'Edit gig'),
