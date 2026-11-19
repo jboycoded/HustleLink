@@ -1,9 +1,11 @@
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
 import '../../data/models/gig_application.dart';
 import '../../data/repositories/gig_repository.dart';
 import '../../data/repositories/user_profile_repository.dart';
+import '../profile/models/user_profile.dart';
 
 class MatchesViewModel extends ChangeNotifier {
   MatchesViewModel(this._repo, this._profiles);
@@ -13,6 +15,7 @@ class MatchesViewModel extends ChangeNotifier {
 
   List<GigApplication> _workerApplications = [];
   Map<String, List<GigApplication>> _posterApplicationsByGig = {};
+  StreamSubscription<UserProfile?>? _profileSubscription;
 
   bool isLoading = false;
   String? error;
@@ -70,28 +73,64 @@ class MatchesViewModel extends ChangeNotifier {
     try {
       final profile = await _profiles.getMyProfile();
       activeRole = profile.activeRole;
-
-      if (isPosterMode) {
-        _workerApplications = [];
-        final applications = await _repo.getPosterApplications();
-
-        final grouped = <String, List<GigApplication>>{};
-
-        for (final application in applications) {
-          grouped.putIfAbsent(application.gigId, () => []);
-          grouped[application.gigId]!.add(application);
-        }
-
-        _posterApplicationsByGig = grouped;
-      } else {
-        _posterApplicationsByGig = {};
-        _workerApplications = await _repo.getWorkerApplications();
-      }
-    } catch (e) {
+      _profileSubscription ??= _profiles.watchMyProfile().listen(
+        _handleProfileUpdate,
+        onError: (_) {
+          error = 'Unable to monitor your account role.';
+          notifyListeners();
+        },
+      );
+      await _loadApplications();
+    } catch (_) {
       error = 'Could not load applications. Check your network and try again.';
     } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  void _handleProfileUpdate(UserProfile? profile) {
+    if (profile == null || profile.activeRole == activeRole) return;
+    activeRole = profile.activeRole;
+    unawaited(_reloadApplicationsForRole());
+  }
+
+  Future<void> _reloadApplicationsForRole() async {
+    isLoading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      await _loadApplications();
+    } catch (_) {
+      error = 'Could not load applications. Check your network and try again.';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadApplications() async {
+    if (isPosterMode) {
+      _workerApplications = [];
+      final applications = await _repo.getPosterApplications();
+      final grouped = <String, List<GigApplication>>{};
+
+      for (final application in applications) {
+        grouped.putIfAbsent(application.gigId, () => []);
+        grouped[application.gigId]!.add(application);
+      }
+
+      _posterApplicationsByGig = grouped;
+    } else {
+      _posterApplicationsByGig = {};
+      _workerApplications = await _repo.getWorkerApplications();
+    }
+  }
+
+  @override
+  void dispose() {
+    _profileSubscription?.cancel();
+    super.dispose();
   }
 }
