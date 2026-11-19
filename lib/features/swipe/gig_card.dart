@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_tokens.dart';
@@ -35,10 +34,9 @@ class GigCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Category, time and distance
           Row(
             children: [
-              _Tag(gig.category),
+              Flexible(child: _Tag(gig.category)),
               const SizedBox(width: 10),
               Flexible(
                 child: Text(
@@ -51,14 +49,14 @@ class GigCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              _Tag(
-                '${gig.distanceKm}km',
-                icon: Icons.place_outlined,
+              Flexible(
+                child: _Tag(
+                  gig.location,
+                  icon: Icons.place_outlined,
+                ),
               ),
             ],
           ),
-
-          // Gig title and poster
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -78,10 +76,19 @@ class GigCard extends StatelessWidget {
                   color: scheme.onSecondary.withValues(alpha: 0.75),
                 ),
               ),
+              if (gig.description.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  gig.description,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.bodyMedium?.copyWith(
+                    color: scheme.onSecondary.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
             ],
           ),
-
-          // Payment and proof requirement
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -93,11 +100,13 @@ class GigCard extends StatelessWidget {
                   color: scheme.onSecondary,
                 ),
               ),
-              const SizedBox(height: 12),
-              const _Tag(
-                '30-sec proof',
-                icon: Icons.videocam_outlined,
-              ),
+              if (gig.proofVideoRequired) ...[
+                const SizedBox(height: 12),
+                const _Tag(
+                  '30-sec proof',
+                  icon: Icons.videocam_outlined,
+                ),
+              ],
             ],
           ),
         ],
@@ -107,10 +116,7 @@ class GigCard extends StatelessWidget {
 }
 
 class _Tag extends StatelessWidget {
-  const _Tag(
-    this.label, {
-    this.icon,
-  });
+  const _Tag(this.label, {this.icon});
 
   final String label;
   final IconData? icon;
@@ -137,18 +143,17 @@ class _Tag extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(
-              icon,
-              size: 16,
-              color: scheme.onSurface,
-            ),
+            Icon(icon, size: 16, color: scheme.onSurface),
             const SizedBox(width: 6),
           ],
-          Text(
-            label,
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: scheme.onSurface,
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: scheme.onSurface,
+              ),
             ),
           ),
         ],
