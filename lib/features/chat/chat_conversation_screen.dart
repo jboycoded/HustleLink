@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_tokens.dart';
@@ -78,6 +79,9 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
 
             final workerId = data['workerId'] as String? ?? '';
             final isWorker = workerId == service.currentUserId;
+            final recipientId = isWorker
+                ? (data['posterId'] as String? ?? '')
+                : (data['workerId'] as String? ?? '');
             final recipientName = isWorker
                 ? (data['posterName'] as String? ?? 'Poster')
                 : (data['workerName'] as String? ?? 'Worker');
@@ -95,13 +99,9 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                       ),
                       InkWell(
                         borderRadius: BorderRadius.circular(30),
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Public profile view is coming in the next profile update.'),
-                            ),
-                          );
-                        },
+                        onTap: recipientId.isEmpty
+                            ? null
+                            : () => context.push('/profile/$recipientId'),
                         child: CircleAvatar(
                           backgroundColor: scheme.secondary,
                           foregroundColor: scheme.onSecondary,
