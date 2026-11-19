@@ -86,6 +86,38 @@ class SwipeScreen extends StatelessWidget {
         false;
   }
 
+  Future<void> _applyToGig(
+    BuildContext context,
+    SwipeViewModel vm,
+  ) async {
+    final gig = vm.currentGig;
+    if (gig == null || vm.isApplying) return;
+
+    final confirmed = await _confirm(
+      context,
+      title: 'Apply for this gig?',
+      message:
+          'Your application for "${gig.title}" will be sent to the poster. You can track its status in Matches.',
+      action: 'Confirm application',
+    );
+
+    if (!confirmed || !context.mounted) return;
+
+    final success = await vm.apply();
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Application submitted. You can track it in Matches.'
+              : (vm.error ?? 'Unable to submit your application.'),
+        ),
+      ),
+    );
+  }
+
   Future<void> _closeGig(
     BuildContext context,
     SwipeViewModel vm,
@@ -204,31 +236,41 @@ class SwipeScreen extends StatelessWidget {
                     onPressed: vm.isSaving
                         ? null
                         : () => _showGigForm(context, vm),
-                    icon: const Icon(Icons.add),
+                    style: IconButton.styleFrom(
+                      backgroundColor: scheme.primary,
+                      foregroundColor: scheme.onPrimary,
+                    ),
+                    icon: Icon(Icons.add, color: scheme.onPrimary),
                   ),
                 if (vm.isPosterMode) const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.peachSoft,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: scheme.outline,
-                      width: AppTokens.borderWidth,
+                if (vm.isPosterMode)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                  ),
-                  child: Text(
-                    vm.isPosterMode ? 'MY GIGS' : 'DISCOVER',
-                    style: text.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: scheme.onSurface,
-                      letterSpacing: 0.8,
+                    decoration: BoxDecoration(
+                      color: colors.peachSoft,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: scheme.outline,
+                        width: AppTokens.borderWidth,
+                      ),
                     ),
+                    child: Text(
+                      'MY GIGS',
+                      style: text.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onSurface,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  )
+                else
+                  TextButton(
+                    onPressed: vm.isLoading ? null : vm.refresh,
+                    child: const Text('DISCOVER'),
                   ),
-                ),
               ],
             ),
           ),
@@ -296,28 +338,16 @@ class SwipeScreen extends StatelessWidget {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 25, 12),
-            child: Dismissible(
-              key: ValueKey(gig.id),
-              direction: DismissDirection.horizontal,
-              onDismissed: (direction) {
-                if (direction == DismissDirection.startToEnd) {
-                  vm.apply();
-                } else {
-                  vm.pass();
+            child: GestureDetector(
+              onHorizontalDragEnd: (details) {
+                final velocity = details.primaryVelocity ?? 0;
+
+                if (velocity > 0) {
+                  vm.previousGig();
+                } else if (velocity < 0) {
+                  vm.nextGig();
                 }
               },
-              background: _SwipeBackground(
-                alignment: Alignment.centerLeft,
-                label: 'APPLY',
-                icon: Icons.check_circle_outline,
-                color: scheme.primary,
-              ),
-              secondaryBackground: _SwipeBackground(
-                alignment: Alignment.centerRight,
-                label: 'PASS',
-                icon: Icons.close_rounded,
-                color: scheme.error,
-              ),
               child: GigCard(gig: gig),
             ),
           ),
@@ -335,12 +365,16 @@ class SwipeScreen extends StatelessWidget {
               ),
               const SizedBox(width: 28),
               _RoundButton(
-                icon: Icons.check_rounded,
+                icon: vm.isApplying
+                    ? Icons.hourglass_top_rounded
+                    : Icons.check_rounded,
                 label: 'Apply',
                 size: 72,
                 fill: scheme.primary,
                 iconColor: scheme.onPrimary,
-                onPressed: vm.apply,
+                onPressed: vm.isApplying
+                    ? null
+                    : () => _applyToGig(context, vm),
               ),
             ],
           ),
@@ -375,11 +409,6 @@ class SwipeScreen extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(
-                height: 290,
-                child: GigCard(gig: gig),
-              ),
-              const SizedBox(height: 12),
               Row(
                 children: [
                   if (!gig.isOpen)
@@ -416,6 +445,11 @@ class SwipeScreen extends StatelessWidget {
                     color: Theme.of(context).colorScheme.error,
                   ),
                 ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 290,
+                child: GigCard(gig: gig),
               ),
             ],
           );
@@ -477,48 +511,6 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _SwipeBackground extends StatelessWidget {
-  const _SwipeBackground({
-    required this.alignment,
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
-
-  final Alignment alignment;
-  final String label;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppTokens.rLg),
-        border: Border.all(color: color, width: AppTokens.borderWidth),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 34, color: color),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _RoundButton extends StatelessWidget {
   const _RoundButton({
     required this.icon,
@@ -532,7 +524,7 @@ class _RoundButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final double size;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color? fill;
   final Color? iconColor;
 
