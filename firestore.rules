@@ -344,6 +344,9 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.status == 'accepted'
         && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.workerId == request.resource.data.workerId
         && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.posterId == request.resource.data.posterId
+        && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.gigId == request.resource.data.gigId
+        && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.gigTitle == request.resource.data.gigTitle
+        && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.workerName == request.resource.data.workerName
         && request.resource.data.createdAt == request.time
         && request.resource.data.lastMessageAt == request.time
         && request.resource.data.lastReadAt is map
