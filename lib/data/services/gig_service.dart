@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/gig.dart';
+import '../models/gig_application.dart';
 
 class GigService {
   GigService({
@@ -15,6 +16,9 @@ class GigService {
 
   CollectionReference<Map<String, dynamic>> get _gigs =>
       _firestore.collection('gigs');
+
+  CollectionReference<Map<String, dynamic>> get _applications =>
+      _firestore.collection('applications');
 
   String get _uid {
     final user = _auth.currentUser;
@@ -116,6 +120,97 @@ class GigService {
     });
 
     return gigs;
+  }
+
+  Future<void> submitApplication(Gig gig) async {
+    final uid = _uid;
+
+    if (gig.posterId == uid) {
+      throw StateError('You cannot apply to your own gig.');
+    }
+
+    final gigDocument = await _gigs.doc(gig.id).get();
+
+    if (!gigDocument.exists) {
+      throw StateError('This gig is no longer available.');
+    }
+
+    final gigData = gigDocument.data()!;
+
+    if (gigData['status'] != 'open') {
+      throw StateError('This gig is no longer accepting applications.');
+    }
+
+    final profileDocument =
+        await _firestore.collection('users').doc(uid).get();
+
+    final workerName =
+        (profileDocument.data()?['fullName'] as String?)?.trim();
+
+    final applicationId = '${gig.id}_$uid';
+    final applicationRef = _applications.doc(applicationId);
+
+    await _firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(applicationRef);
+
+      if (existing.exists) {
+        throw StateError('You have already applied to this gig.');
+      }
+
+      transaction.set(applicationRef, {
+        'gigId': gig.id,
+        'workerId': uid,
+        'posterId': gig.posterId,
+        'workerName':
+            workerName == null || workerName.isEmpty ? 'Worker' : workerName,
+        'gigTitle': gigData['title'] ?? gig.title,
+        'gigCategory': gigData['category'] ?? gig.category,
+        'gigPay': gigData['pay'] ?? gig.pay,
+        'gigLocation': gigData['location'] ?? gig.location,
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Future<List<GigApplication>> fetchWorkerApplications() async {
+    final snapshot = await _applications
+        .where('workerId', isEqualTo: _uid)
+        .get();
+
+    final applications = snapshot.docs
+        .map((document) => GigApplication.fromMap(
+              document.id,
+              document.data(),
+            ))
+        .toList();
+
+    applications.sort((a, b) {
+      return (b.createdAt ?? DateTime(2000))
+          .compareTo(a.createdAt ?? DateTime(2000));
+    });
+
+    return applications;
+  }
+
+  Future<List<GigApplication>> fetchPosterApplications() async {
+    final snapshot = await _applications
+        .where('posterId', isEqualTo: _uid)
+        .get();
+
+    final applications = snapshot.docs
+        .map((document) => GigApplication.fromMap(
+              document.id,
+              document.data(),
+            ))
+        .toList();
+
+    applications.sort((a, b) {
+      return (b.createdAt ?? DateTime(2000))
+          .compareTo(a.createdAt ?? DateTime(2000));
+    });
+
+    return applications;
   }
 
   Future<void> updateGig({
