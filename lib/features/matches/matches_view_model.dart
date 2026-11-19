@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../data/models/gig.dart';
 import '../../data/models/gig_application.dart';
 import '../../data/repositories/gig_repository.dart';
 import '../../data/repositories/user_profile_repository.dart';
@@ -14,6 +15,7 @@ class MatchesViewModel extends ChangeNotifier {
   final UserProfileRepository _profiles;
 
   List<GigApplication> _workerApplications = [];
+  List<Gig> _posterGigs = [];
   Map<String, List<GigApplication>> _posterApplicationsByGig = {};
   StreamSubscription<UserProfile?>? _profileSubscription;
 
@@ -25,6 +27,8 @@ class MatchesViewModel extends ChangeNotifier {
 
   List<GigApplication> get workerApplications =>
       List.unmodifiable(_workerApplications);
+
+  List<Gig> get posterGigs => List.unmodifiable(_posterGigs);
 
   Map<String, List<GigApplication>> get posterApplicationsByGig {
     return Map.unmodifiable(
@@ -113,8 +117,11 @@ class MatchesViewModel extends ChangeNotifier {
   Future<void> _loadApplications() async {
     if (isPosterMode) {
       _workerApplications = [];
+      _posterGigs = await _repo.getMyGigs();
       final applications = await _repo.getPosterApplications();
-      final grouped = <String, List<GigApplication>>{};
+      final grouped = <String, List<GigApplication>>{
+        for (final gig in _posterGigs) gig.id: <GigApplication>[],
+      };
 
       for (final application in applications) {
         grouped.putIfAbsent(application.gigId, () => []);
@@ -123,6 +130,7 @@ class MatchesViewModel extends ChangeNotifier {
 
       _posterApplicationsByGig = grouped;
     } else {
+      _posterGigs = [];
       _posterApplicationsByGig = {};
       _workerApplications = await _repo.getWorkerApplications();
     }
