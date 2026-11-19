@@ -50,18 +50,20 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
         create: (_) => UserProfileRepository(),
         child: Provider<ChatService>(
           create: (_) => ChatService(),
-          child: Provider<GigRepository>(
-            create: (_) => GigRepository(GigService()),
-            child: MaterialApp.router(
-              title: 'HUSTLELINK',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.light(),
-              darkTheme: AppTheme.dark(),
-              themeMode: ThemeMode.system,
-              routerConfig: _router,
+          child: Provider<ProofVideoService>(
+            create: (_) => ProofVideoService(),
+            child: Provider<GigRepository>(
+              create: (_) => GigRepository(GigService()),
+              child: MaterialApp.router(
+                title: 'HUSTLELINK',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.light(),
+                darkTheme: AppTheme.dark(),
+                themeMode: ThemeMode.system,
+                routerConfig: _router,
+              ),
             ),
           ),
-        ),
         ),
       ),
     );
