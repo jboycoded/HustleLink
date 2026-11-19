@@ -414,67 +414,39 @@ class SwipeScreen extends StatelessWidget {
                 child: GigCard(gig: gig),
               ),
               const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline,
-                    width: AppTokens.borderWidth,
+              Row(
+                children: [
+                  Expanded(
+                    child: _PosterGigAction(
+                      label: 'Edit',
+                      icon: Icons.edit_outlined,
+                      onTap: vm.isSaving
+                          ? null
+                          : () => _showGigForm(context, vm, gig: gig),
+                    ),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.tonalIcon(
-                        onPressed: vm.isSaving
-                            ? null
-                            : () => _showGigForm(context, vm, gig: gig),
-                        icon: const Icon(Icons.edit_outlined, size: 18),
-                        label: const Text('Edit'),
-                      ),
-                    ),
-                    if (gig.isOpen) ...[
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _closeGig(context, vm, gig),
-                          icon: const Icon(
-                            Icons.check_circle_outline,
-                            size: 18,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: gig.isOpen
+                        ? _PosterGigAction(
+                            label: 'Close',
+                            icon: Icons.check_circle_outline,
+                            onTap: () => _closeGig(context, vm, gig),
+                          )
+                        : const _PosterGigAction(
+                            label: 'Closed',
+                            icon: Icons.lock_outline_rounded,
+                            onTap: null,
                           ),
-                          label: const Text('Close'),
-                        ),
-                      ),
-                    ] else ...[
-                      const SizedBox(width: 6),
-                      const Expanded(
-                        child: Center(
-                          child: Text(
-                            'CLOSED',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(width: 4),
-                    IconButton.filledTonal(
-                      tooltip: 'Delete gig',
-                      onPressed: () => _deleteGig(context, vm, gig),
-                      style: IconButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.error,
-                      ),
-                      icon: const Icon(Icons.delete_outline),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 10),
+                  _PosterGigAction(
+                    label: 'Delete',
+                    icon: Icons.delete_outline_rounded,
+                    destructive: true,
+                    onTap: () => _deleteGig(context, vm, gig),
+                  ),
+                ],
               ),
             ],
           );
@@ -583,6 +555,70 @@ class _RoundButton extends StatelessWidget {
               size: size * 0.4,
               color: iconColor ?? scheme.onSurface,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class _PosterGigAction extends StatelessWidget {
+  const _PosterGigAction({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.destructive = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final colors = context.appColors;
+    final foreground = destructive ? scheme.error : scheme.onSurface;
+    final background = destructive ? scheme.surface : colors.peachSoft;
+
+    return Material(
+      color: background,
+      borderRadius: BorderRadius.circular(AppTokens.rMd),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTokens.rMd),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 46),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTokens.rMd),
+            border: Border.all(
+              color: scheme.outline,
+              width: AppTokens.borderWidth,
+            ),
+            boxShadow: AppTokens.hardShadow(scheme.outline, 3),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: foreground),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: foreground,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
