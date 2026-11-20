@@ -231,7 +231,10 @@ service cloud.firestore {
                     && request.resource.data.when is string
                     && request.resource.data.status in ['open', 'closed']
                     && (
-                      !('proofVideoRequired' in request.resource.data)
+                      (
+                        !('proofVideoRequired' in resource.data)
+                        && !('proofVideoRequired' in request.resource.data)
+                      )
                       || request.resource.data.proofVideoRequired is bool
                     )
                     && request.resource.data.updatedAt is timestamp;
