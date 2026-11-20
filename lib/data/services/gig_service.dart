@@ -279,10 +279,16 @@ class GigService {
       batch.set(conversationRef, {
         'applicationId': applicationId,
         'gigId': application['gigId'],
-        'gigTitle': application['gigTitle'],
+        'gigTitle': (application['gigTitle'] as String?)?.trim().isNotEmpty == true
+            ? (application['gigTitle'] as String).trim()
+            : ((gigData['title'] as String?)?.trim().isNotEmpty == true
+                ? (gigData['title'] as String).trim()
+                : 'Gig'),
         'workerId': application['workerId'],
         'posterId': application['posterId'],
-        'workerName': application['workerName'],
+        'workerName': (application['workerName'] as String?)?.trim().isNotEmpty == true
+            ? (application['workerName'] as String).trim()
+            : 'Worker',
         'posterName': (gigData['posterName'] as String?) ?? 'Poster',
         'participants': [
           application['workerId'],
