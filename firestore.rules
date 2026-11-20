@@ -230,7 +230,10 @@ service cloud.firestore {
                     && request.resource.data.location is string
                     && request.resource.data.when is string
                     && request.resource.data.status in ['open', 'closed']
-                    && request.resource.data.proofVideoRequired is bool
+                    && (
+                      !('proofVideoRequired' in request.resource.data)
+                      || request.resource.data.proofVideoRequired is bool
+                    )
                     && request.resource.data.updatedAt is timestamp;
 
       allow delete: if request.auth != null
@@ -353,8 +356,14 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.workerId == request.resource.data.workerId
         && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.posterId == request.resource.data.posterId
         && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.gigId == request.resource.data.gigId
-        && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.gigTitle == request.resource.data.gigTitle
-        && getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.workerName == request.resource.data.workerName
+        && (
+          !('gigTitle' in getAfter(/databases/$(database)/documents/applications/$(conversationId)).data)
+          || getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.gigTitle == request.resource.data.gigTitle
+        )
+        && (
+          !('workerName' in getAfter(/databases/$(database)/documents/applications/$(conversationId)).data)
+          || getAfter(/databases/$(database)/documents/applications/$(conversationId)).data.workerName == request.resource.data.workerName
+        )
         && request.resource.data.createdAt == request.time
         && request.resource.data.lastMessageAt == request.time
         && request.resource.data.lastReadAt is map
