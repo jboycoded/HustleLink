@@ -1,27 +1,63 @@
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
+
+import '../../core/config/supabase_config.dart';
 
 class ProofVideoService {
   ProofVideoService({
     FirebaseAuth? auth,
-    FirebaseStorage? storage,
     ImagePicker? picker,
+    SupabaseClient? supabase,
   })  : _auth = auth ?? FirebaseAuth.instance,
-        _storage = storage ?? FirebaseStorage.instance,
-        _picker = picker ?? ImagePicker();
+        _picker = picker ?? ImagePicker(),
+        _supabase = supabase;
+
+  static const String _bucket = SupabaseConfig.bucketName;
 
   final FirebaseAuth _auth;
-  final FirebaseStorage _storage;
   final ImagePicker _picker;
+  final SupabaseClient? _supabase;
+
+  SupabaseClient get _client {
+    if (!SupabaseConfig.isConfigured && _supabase == null) {
+      throw StateError(
+        'Profile video storage has not been configured for this build.',
+      );
+    }
+    return _supabase ?? Supabase.instance.client;
+  }
 
   String get _uid {
     final uid = _auth.currentUser?.uid;
     if (uid == null) throw StateError('You must be signed in.');
     return uid;
+  }
+
+  Future<Map<String, dynamic>> _invokeFunction(String action) async {
+    final user = _auth.currentUser;
+    if (user == null) throw StateError('You must be signed in.');
+
+    final idToken = await user.getIdToken();
+    if (idToken == null || idToken.isEmpty) {
+      throw StateError('Unable to obtain your sign-in token. Please sign in again.');
+    }
+
+    final response = await _client.functions.invoke(
+      'proof-video',
+      headers: {'Authorization': 'Bearer $idToken'},
+      body: {'action': action},
+    );
+
+    final data = response.data;
+    if (data is! Map) {
+      throw StateError('The video service returned an invalid response.');
+    }
+    return Map<String, dynamic>.from(data);
   }
 
   Future<String?> pickAndUpload(ImageSource source) async {
@@ -61,22 +97,26 @@ class ProofVideoService {
       _ => 'video/mp4',
     };
 
-    final reference =
-        _storage.ref().child('workerProofVideos/$_uid/profileVideo');
-    await reference.putFile(
-      file,
-      SettableMetadata(contentType: contentType),
-    );
-    return reference.getDownloadURL();
+    final permission = await _invokeFunction('create-upload');
+    final path = permission['path'] as String?;
+    final token = permission['token'] as String?;
+    if (path == null || token == null) {
+      throw StateError('The video service did not provide upload permission.');
+    }
+
+    await _client.storage.from(_bucket).uploadToSignedUrl(
+          path,
+          token,
+          file,
+          FileOptions(contentType: contentType),
+        );
+
+    return _client.storage.from(_bucket).getPublicUrl(path);
   }
 
   Future<void> deleteProfileVideo() async {
-    final reference =
-        _storage.ref().child('workerProofVideos/$_uid/profileVideo');
-    try {
-      await reference.delete();
-    } on FirebaseException catch (error) {
-      if (error.code != 'object-not-found') rethrow;
-    }
+    // The server derives the storage path from the verified Firebase UID.
+    // No client-supplied path is accepted by the Edge Function.
+    await _invokeFunction('delete');
   }
 }
