@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
@@ -32,19 +31,15 @@ class ProofVideoService {
     return _supabase ?? Supabase.instance.client;
   }
 
-  String get _uid {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) throw StateError('You must be signed in.');
-    return uid;
-  }
-
   Future<Map<String, dynamic>> _invokeFunction(String action) async {
     final user = _auth.currentUser;
     if (user == null) throw StateError('You must be signed in.');
 
     final idToken = await user.getIdToken();
     if (idToken == null || idToken.isEmpty) {
-      throw StateError('Unable to obtain your sign-in token. Please sign in again.');
+      throw StateError(
+        'Unable to obtain your sign-in token. Please sign in again.',
+      );
     }
 
     final response = await _client.functions.invoke(
