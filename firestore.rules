@@ -177,6 +177,7 @@ service cloud.firestore {
                   && (
                     resource.data.posterId == request.auth.uid
                     || resource.data.status == 'open'
+                    || resource.data.acceptedWorkerId == request.auth.uid
                   );
 
       allow create: if request.auth != null
