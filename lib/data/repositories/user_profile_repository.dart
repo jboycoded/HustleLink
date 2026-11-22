@@ -39,6 +39,7 @@ class UserProfileRepository {
     required double rating,
     required int completedGigs,
     String? proofVideoUrl,
+    String? photoUrl,
   }) =>
       {
         'uid': uid,
@@ -50,6 +51,7 @@ class UserProfileRepository {
         'rating': rating,
         'completedGigs': completedGigs,
         'proofVideoUrl': proofVideoUrl,
+        'photoUrl': photoUrl,
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -96,6 +98,7 @@ class UserProfileRepository {
         rating: 0,
         completedGigs: 0,
         proofVideoUrl: null,
+        photoUrl: null,
       ));
 
       return UserProfile.fromMap(user.uid, data);
@@ -112,6 +115,7 @@ class UserProfileRepository {
       rating: (data['rating'] as num?)?.toDouble() ?? 0,
       completedGigs: (data['completedGigs'] as num?)?.toInt() ?? 0,
       proofVideoUrl: data['proofVideoUrl'] as String?,
+      photoUrl: data['photoUrl'] as String?,
     ), SetOptions(merge: true));
 
     return UserProfile.fromMap(document.id, data);
@@ -135,6 +139,19 @@ class UserProfileRepository {
       'skills': skills,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  Future<void> updateProfilePhotoUrl(String? url) async {
+    final uid = _uid;
+    final batch = _firestore.batch();
+    final value = url ?? FieldValue.delete();
+    final update = {
+      'photoUrl': value,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    batch.update(_users.doc(uid), update);
+    batch.set(_publicProfile(uid), update, SetOptions(merge: true));
+    await batch.commit();
   }
 
   Future<void> updateProofVideoUrl(String? url) async {
