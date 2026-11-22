@@ -64,6 +64,8 @@ class ChatScreen extends StatelessWidget {
 
                 final conversations = (snapshot.data?.docs ?? [])
                     .map((doc) => ChatConversation.fromMap(doc.id, doc.data()))
+                    .where((conversation) =>
+                        !conversation.isHiddenFor(service.currentUserId))
                     .toList()
                   ..sort((a, b) => (b.lastMessageAt ?? DateTime(2000))
                       .compareTo(a.lastMessageAt ?? DateTime(2000)));
@@ -178,7 +180,32 @@ class ChatScreen extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 4),
+                              PopupMenuButton<String>(
+                                tooltip: 'Conversation options',
+                                onSelected: (value) {
+                                  if (value == 'remove') {
+                                    _confirmRemoveConversation(
+                                      context,
+                                      service,
+                                      conversation,
+                                      recipientName,
+                                    );
+                                  }
+                                },
+                                itemBuilder: (context) => const [
+                                  PopupMenuItem<String>(
+                                    value: 'remove',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.delete_outline_rounded),
+                                        SizedBox(width: 10),
+                                        Text('Remove conversation'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                               Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -208,6 +235,49 @@ class ChatScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+Future<void> _confirmRemoveConversation(
+  BuildContext context,
+  ChatService service,
+  ChatConversation conversation,
+  String recipientName,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Remove conversation?'),
+      content: Text(
+        'Remove your conversation with $recipientName from this chat list? '
+        'The other person will keep their conversation and messages.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: const Text('Remove'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+  try {
+    await service.removeConversation(conversation.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Conversation removed from your chat list.')),
+      );
+    }
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not remove conversation. Please try again.')),
+      );
+    }
   }
 }
 
