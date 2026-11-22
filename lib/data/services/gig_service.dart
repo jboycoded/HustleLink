@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -92,18 +94,51 @@ class GigService {
   }
 
   Stream<List<Gig>> watchAvailableGigs() {
-    return _gigs.where('status', isEqualTo: 'open').snapshots().asyncMap((snapshot) async {
-      final blocked = await _firestore.collection('users').doc(_uid)
-          .collection('blockedUsers').get();
-      final blockedIds = blocked.docs.map((doc) => doc.id).toSet();
+    late StreamController<List<Gig>> controller;
+    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? gigsSubscription;
+    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? blockedSubscription;
+    QuerySnapshot<Map<String, dynamic>>? latestGigs;
+    Set<String> blockedIds = {};
+
+    void emit() {
+      final snapshot = latestGigs;
+      if (snapshot == null || controller.isClosed) return;
       final gigs = snapshot.docs
-          .where((document) => document.data()['posterId'] != _uid && !blockedIds.contains(document.data()['posterId']))
+          .where((document) =>
+              document.data()['posterId'] != _uid &&
+              !blockedIds.contains(document.data()['posterId']))
           .map((document) => Gig.fromMap(document.id, document.data()))
           .toList();
       gigs.sort((a, b) => (b.createdAt ?? DateTime(2000))
           .compareTo(a.createdAt ?? DateTime(2000)));
-      return gigs;
-    });
+      controller.add(gigs);
+    }
+
+    controller = StreamController<List<Gig>>(
+      onListen: () {
+        gigsSubscription = _gigs
+            .where('status', isEqualTo: 'open')
+            .snapshots()
+            .listen((snapshot) {
+          latestGigs = snapshot;
+          emit();
+        }, onError: controller.addError);
+        blockedSubscription = _firestore
+            .collection('users')
+            .doc(_uid)
+            .collection('blockedUsers')
+            .snapshots()
+            .listen((snapshot) {
+          blockedIds = snapshot.docs.map((doc) => doc.id).toSet();
+          emit();
+        }, onError: controller.addError);
+      },
+      onCancel: () async {
+        await gigsSubscription?.cancel();
+        await blockedSubscription?.cancel();
+      },
+    );
+    return controller.stream;
   }
 
   Future<List<Gig>> fetchAvailableGigs() async {
