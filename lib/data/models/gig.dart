@@ -19,6 +19,7 @@ class Gig {
     this.workerCompletionConfirmed = false,
     this.posterCompletionConfirmed = false,
     this.completedAt,
+    this.posterPhotoUrl,
   });
 
   final String id;
@@ -40,6 +41,7 @@ class Gig {
   final bool workerCompletionConfirmed;
   final bool posterCompletionConfirmed;
   final DateTime? completedAt;
+  final String? posterPhotoUrl;
 
   bool get isOpen => status == 'open';
 
@@ -68,6 +70,7 @@ class Gig {
       workerCompletionConfirmed: data['workerCompletionConfirmed'] as bool? ?? false,
       posterCompletionConfirmed: data['posterCompletionConfirmed'] as bool? ?? false,
       completedAt: readDate(data['completedAt']),
+      posterPhotoUrl: data['posterPhotoUrl'] as String?,
     );
   }
 
