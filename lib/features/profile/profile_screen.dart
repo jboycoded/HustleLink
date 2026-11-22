@@ -429,7 +429,7 @@ class ProfileScreen extends StatelessWidget {
                       final user = users[index];
                       return ListTile(
                         title: Text(user['name'] ?? 'HustleLink member'),
-                        subtitle: Text('Blocked account'),
+                        subtitle: const Text('Blocked account'),
                         trailing: TextButton(
                           onPressed: () async {
                             await service.unblockUser(user['id']!);
