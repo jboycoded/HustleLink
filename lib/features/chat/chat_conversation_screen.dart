@@ -114,6 +114,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                 ? (data['posterName'] as String? ?? 'Poster')
                 : (data['workerName'] as String? ?? 'Worker');
             final gigTitle = data['gigTitle'] as String? ?? 'Gig';
+            final recipientPhoto = isWorker ? data['posterPhotoUrl'] as String? : data['workerPhotoUrl'] as String?;
 
             return Column(
               children: [
@@ -133,7 +134,8 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                         child: CircleAvatar(
                           backgroundColor: scheme.secondary,
                           foregroundColor: scheme.onSecondary,
-                          child: Text(_initials(recipientName)),
+                          backgroundImage: recipientPhoto != null && recipientPhoto.isNotEmpty ? NetworkImage(recipientPhoto) : null,
+                          child: recipientPhoto == null || recipientPhoto.isEmpty ? Text(_initials(recipientName)) : null,
                         ),
                       ),
                       const SizedBox(width: 11),
