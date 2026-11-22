@@ -82,6 +82,7 @@ class GigService {
       'when': when.trim(),
       'status': 'open',
       'proofVideoRequired': proofVideoRequired,
+      'posterPhotoUrl': profileData?['photoUrl'],
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
@@ -396,7 +397,7 @@ class GigService {
             : 'Worker',
         'posterName': (gigData['posterName'] as String?) ?? 'Poster',
         'workerPhotoUrl': application['workerPhotoUrl'],
-        'posterPhotoUrl': (await transaction.get(_firestore.collection('users').doc(_uid))).data()?['photoUrl'],
+        'posterPhotoUrl': gigData['posterPhotoUrl'],
         'participants': [application['workerId'], application['posterId']],
         'lastMessage': 'Application accepted. You can now chat.',
         'lastMessageAt': FieldValue.serverTimestamp(),
