@@ -58,7 +58,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
       // TEMPORARY DIAGNOSTIC: replace the complete poster-specific subtree
       // with a static widget to determine whether the failure is above or
       // below this branch in the Matches screen widget tree.
-      body = _buildPosterDiagnostic(context);
+      body = _buildPosterDiagnostic(context, vm);
     } else if (vm.applicationCount == 0) {
       body = const _EmptyState(
         icon: Icons.favorite_border_rounded,
@@ -116,51 +116,67 @@ class _MatchesScreenState extends State<MatchesScreen> {
     );
   }
 
-  Widget _buildPosterDiagnostic(BuildContext context) {
+  Widget _buildPosterDiagnostic(
+    BuildContext context,
+    MatchesViewModel vm,
+  ) {
     final scheme = Theme.of(context).colorScheme;
+    final gigs = vm.posterGigs;
 
-    // DIAGNOSTIC STAGE 2: test a plain scrollable list with static content.
-    // No repository data, custom gig cards, refresh control, or tap handlers.
-    return ListView(
+    // DIAGNOSTIC STAGE 3: keep the plain ListView, but feed it actual gig data.
+    // Still excludes custom cards, RefreshIndicator, and tap handlers.
+    return ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: scheme.surface,
-            border: Border.all(color: scheme.outline),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Text(
-            'POSTER LIST DIAGNOSTIC',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: scheme.onSurface,
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        for (var index = 1; index <= 3; index++) ...[
-          Container(
-            height: 88,
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: gigs.length + 1,
+      itemBuilder: (listContext, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text(
+              'POSTER DATA DIAGNOSTIC • ${gigs.length} gigs',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+          );
+        }
+
+        final gig = gigs[index - 1];
+        final applications =
+            vm.posterApplicationsByGig[gig.id] ?? const <GigApplication>[];
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Container(
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: scheme.surface,
               border: Border.all(color: scheme.outline),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Text(
-              'Static poster list item $index',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: scheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  gig.title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: scheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${applications.length} applicants',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
             ),
           ),
-          if (index != 3) const SizedBox(height: 12),
-        ],
-      ],
+        );
+      },
     );
   }
 
