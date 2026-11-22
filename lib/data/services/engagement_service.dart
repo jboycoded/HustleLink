@@ -62,13 +62,13 @@ class EngagementService {
   Future<void> markAllNotificationsRead() async {
     final snapshot = await _notifications
         .where('recipientId', isEqualTo: _uid)
-        .where('isRead', isEqualTo: false)
         .get();
     final batch = _db.batch();
-    for (final doc in snapshot.docs) {
+    final unread = snapshot.docs.where((doc) => doc.data()['isRead'] != true).toList();
+    for (final doc in unread) {
       batch.update(doc.reference, {'isRead': true});
     }
-    if (snapshot.docs.isNotEmpty) await batch.commit();
+    if (unread.isNotEmpty) await batch.commit();
   }
 
   Future<void> blockUser(String targetId) async {
@@ -146,6 +146,11 @@ class EngagementService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
     });
+  }
+
+  Future<bool> hasReviewed(String gigId) async {
+    final snapshot = await _db.collection('reviews').doc('${gigId}_${_uid}').get();
+    return snapshot.exists;
   }
 
   Future<void> submitReview({
