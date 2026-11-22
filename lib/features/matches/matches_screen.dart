@@ -637,6 +637,38 @@ class _ApplicationCard extends StatelessWidget {
     }
   }
 
+  Future<void> _removeRejected(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove rejected application?'),
+        content: const Text(
+          'This will remove the rejected application from your Matches list. It will not delete the poster\'s gig.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await context.read<MatchesViewModel>()
+          .removeRejectedApplication(application.id);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to remove this application.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -722,6 +754,17 @@ class _ApplicationCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ],
+          if (!showWorkerName && application.status == 'rejected') ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _removeRejected(context),
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: const Text('Remove'),
+              ),
             ),
           ],
           Wrap(
