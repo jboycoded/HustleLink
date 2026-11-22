@@ -9,6 +9,8 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/proof_video_service.dart';
 import '../../../data/services/profile_photo_service.dart';
+import '../../../data/services/engagement_service.dart';
+import '../../../data/models/gig_review.dart';
 import 'profile_view_model.dart';
 import 'models/user_profile.dart';
 import 'widgets/profile_proof_video_player.dart';
@@ -380,6 +382,8 @@ class ProfileScreen extends StatelessWidget {
                     }).toList(),
                   ),
                 const SizedBox(height: 24),
+                _OwnProfileReviews(userId: profile.id),
+                const SizedBox(height: 24),
                 _ProfileProofVideoSection(
                   videoUrl: profile.proofVideoUrl,
                   isBusy: vm.isSaving || vm.isVideoUploading,
@@ -744,6 +748,33 @@ class _ProfileProofVideoSection extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _OwnProfileReviews extends StatelessWidget {
+  const _OwnProfileReviews({required this.userId});
+  final String userId;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<GigReview>>(
+      stream: context.read<EngagementService>().watchReviewsFor(userId),
+      builder: (context, snapshot) {
+        final reviews = snapshot.data ?? const <GigReview>[];
+        final average = reviews.isEmpty ? 0.0 : reviews.fold<int>(0, (s, r) => s + r.rating) / reviews.length;
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('YOUR REVIEWS', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 6),
+          Text(reviews.isEmpty ? 'No reviews yet.' : '${average.toStringAsFixed(1)} ★ from ${reviews.length} reviews'),
+          ...reviews.take(5).map((r) => ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(r.reviewerName),
+            subtitle: r.comment.isEmpty ? null : Text(r.comment),
+            trailing: Text('${r.rating} ★'),
+          )),
+        ]);
+      },
     );
   }
 }
