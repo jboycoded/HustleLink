@@ -80,6 +80,11 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   ),
                 ),
                 const Spacer(),
+                IconButton(
+                  tooltip: 'Notifications',
+                  onPressed: () => context.push('/notifications'),
+                  icon: const Icon(Icons.notifications_none_rounded),
+                ),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
