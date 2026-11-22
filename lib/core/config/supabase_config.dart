@@ -8,6 +8,7 @@ class SupabaseConfig {
       String.fromEnvironment('SUPABASE_ANON_KEY');
 
   static const String bucketName = 'worker-proof-videos';
+  static const String profilePhotoBucketName = 'profile-photos';
 
   static bool get isConfigured => url.isNotEmpty && publishableKey.isNotEmpty;
 }
