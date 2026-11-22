@@ -571,20 +571,30 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
     return RefreshIndicator(
       onRefresh: vm.load,
-      child: ListView.separated(
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         itemCount: gigs.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 24),
-        itemBuilder: (context, index) {
+        itemBuilder: (listContext, index) {
           final gig = gigs[index];
           final applications =
               vm.posterApplicationsByGig[gig.id] ?? const <GigApplication>[];
 
-          return _GigApplicationsCard(
-            gigTitle: gig.title,
-            applications: applications,
-            onTap: () =>
-                _showGigDetails(context, gig.id, gig.title, applications),
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index == gigs.length - 1 ? 0 : 20,
+            ),
+            child: _GigApplicationsCard(
+              key: ValueKey(gig.id),
+              gigTitle: gig.title,
+              applications: applications,
+              onTap: () => _showGigDetails(
+                listContext,
+                gig.id,
+                gig.title,
+                applications,
+              ),
+            ),
           );
         },
       ),
@@ -781,6 +791,7 @@ class _DetailRow extends StatelessWidget {
 
 class _GigApplicationsCard extends StatelessWidget {
   const _GigApplicationsCard({
+    super.key,
     required this.gigTitle,
     required this.applications,
     required this.onTap,
@@ -792,57 +803,72 @@ class _GigApplicationsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final pending = applications.where((item) => item.status == 'pending').length;
-    return Material(
-      color: scheme.surface,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: scheme.outline,
-              width: AppTokens.borderWidth,
-            ),
-            boxShadow: AppTokens.hardShadow(scheme.outline, 3),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      gigTitle,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${applications.length} applicants • $pending pending',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'VIEW GIG DETAILS',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.8,
-                            color: scheme.secondary,
-                          ),
-                    ),
-                  ],
+    final radius = BorderRadius.circular(18);
+
+    // Keep the visible surface and its tap target in the same clipped Material.
+    // The outer decoration owns the border and hard shadow; InkWell paints its
+    // feedback on the Material instead of behind an opaque decorated Container.
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: radius,
+        border: Border.all(
+          color: scheme.outline,
+          width: AppTokens.borderWidth,
+        ),
+        boxShadow: AppTokens.hardShadow(scheme.outline, 3),
+      ),
+      child: Material(
+        color: scheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        gigTitle,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: scheme.onSurface,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${applications.length} applicants • $pending pending',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'VIEW GIG DETAILS',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.secondary,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
-            ],
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ],
+            ),
           ),
         ),
       ),
