@@ -304,6 +304,10 @@ service cloud.firestore {
                     && exists(/databases/$(database)/documents/gigs/$(request.resource.data.gigId))
                     && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.status == 'open'
                     && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.posterId == request.resource.data.posterId
+                    && request.resource.data.gigTitle == get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.title
+                    && request.resource.data.gigCategory == get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.category
+                    && request.resource.data.gigPay == get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.pay
+                    && request.resource.data.gigLocation == get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.location
                     && (
                       get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.proofVideoRequired == false
                       || (
