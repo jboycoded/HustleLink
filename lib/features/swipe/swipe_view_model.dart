@@ -46,10 +46,11 @@ class SwipeViewModel extends ChangeNotifier {
   List<Gig> get _discoveryGigs {
     return _gigs.where((gig) {
       final notApplied = !_appliedGigIds.contains(gig.id);
+      final notPassed = !_passedGigIds.contains(gig.id);
       final matchesCategory = _selectedCategory == 'All' ||
           gig.category.toLowerCase() == _selectedCategory.toLowerCase();
 
-      return notApplied && matchesCategory && gig.isOpen;
+      return notApplied && notPassed && matchesCategory && gig.isOpen;
     }).toList();
   }
 
