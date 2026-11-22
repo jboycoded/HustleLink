@@ -251,6 +251,8 @@ service cloud.firestore {
                     && request.resource.data.updatedAt is timestamp;
 
       allow delete: if request.auth != null
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.activeRole == 'poster'
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['poster'])
                     && resource.data.posterId == request.auth.uid;
     }
 
@@ -289,6 +291,7 @@ service cloud.firestore {
                       'status',
                       'createdAt'
                     ])
+                    && applicationId == request.resource.data.gigId + '_' + request.auth.uid
                     && request.resource.data.workerId == request.auth.uid
                     && request.resource.data.posterId != request.auth.uid
                     && request.resource.data.status == 'pending'
