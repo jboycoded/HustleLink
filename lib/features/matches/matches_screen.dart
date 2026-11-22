@@ -714,6 +714,10 @@ class _ApplicationCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              if (showWorkerName && application.workerPhotoUrl != null && application.workerPhotoUrl!.isNotEmpty) ...[
+                CircleAvatar(radius: 20, backgroundImage: NetworkImage(application.workerPhotoUrl!)),
+                const SizedBox(width: 10),
+              ],
               Expanded(
                 child: Text(
                   showWorkerName ? application.workerName : application.gigTitle,
