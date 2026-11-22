@@ -120,36 +120,63 @@ class _MatchesScreenState extends State<MatchesScreen> {
     BuildContext context,
     MatchesViewModel vm,
   ) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final gigs = vm.posterGigs;
 
-    // DIAGNOSTIC STAGE 4: preserve the real list length, but do not read
-    // any gig fields or application data inside the item builder.
+    // Diagnostic: render real gig data in plain Containers. This deliberately
+    // avoids SizedBox, Material, InkWell, overlays, and custom card widgets.
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       itemCount: gigs.length + 1,
       itemBuilder: (listContext, index) {
         if (index == 0) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
             child: Text(
-              'POSTER ITEM DIAGNOSTIC • ${gigs.length} gigs',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: scheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
+              'POSTER CONTAINER DIAGNOSTIC • ${gigs.length} gigs',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: scheme.onSurface,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           );
         }
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Text(
-            'STATIC GIG ITEM $index',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        final gig = gigs[index - 1];
+        final applications =
+            vm.posterApplicationsByGig[gig.id] ?? const <GigApplication>[];
+        final pending =
+            applications.where((item) => item.status == 'pending').length;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            border: Border.all(color: scheme.outline, width: 1.5),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                gig.title,
+                style: theme.textTheme.titleMedium?.copyWith(
                   color: scheme.onSurface,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                 ),
+              ),
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '${applications.length} applicants • $pending pending',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },
