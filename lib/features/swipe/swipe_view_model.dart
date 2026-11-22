@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../data/models/gig.dart';
-//import '../../data/models/gig_application.dart';
+import '../../data/models/gig_application.dart';
 import '../../data/repositories/gig_repository.dart';
 import '../../data/repositories/user_profile_repository.dart';
 import '../profile/models/user_profile.dart';
@@ -22,7 +22,7 @@ class SwipeViewModel extends ChangeNotifier {
 
   StreamSubscription<UserProfile?>? _profileSubscription;
   StreamSubscription<List<Gig>>? _availableGigsSubscription;
-  StreamSubscription<List<dynamic>>? _workerApplicationsSubscription;
+  StreamSubscription<List<GigApplication>>? _workerApplicationsSubscription;
 
   bool isLoading = false;
   bool isSaving = false;
