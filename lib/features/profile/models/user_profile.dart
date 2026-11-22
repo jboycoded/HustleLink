@@ -12,6 +12,7 @@ class UserProfile {
   final double rating;
   final int completedGigs;
   final String? proofVideoUrl;
+  final String? photoUrl;
 
   const UserProfile({
     required this.id,
@@ -27,6 +28,7 @@ class UserProfile {
     required this.rating,
     required this.completedGigs,
     this.proofVideoUrl,
+    this.photoUrl,
   });
 
   String get initials {
@@ -63,6 +65,7 @@ class UserProfile {
       rating: (data['rating'] as num?)?.toDouble() ?? 0,
       completedGigs: (data['completedGigs'] as num?)?.toInt() ?? 0,
       proofVideoUrl: data['proofVideoUrl'] as String?,
+      photoUrl: data['photoUrl'] as String?,
     );
   }
 
@@ -80,6 +83,7 @@ class UserProfile {
       'rating': rating,
       'completedGigs': completedGigs,
       'proofVideoUrl': proofVideoUrl,
+      'photoUrl': photoUrl,
     };
   }
 }
