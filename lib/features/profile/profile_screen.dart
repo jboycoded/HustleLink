@@ -444,7 +444,6 @@ class ProfileScreen extends StatelessWidget {
                           onPressed: () async {
                             await service.unblockUser(user['id']!);
                             if (sheetContext.mounted) Navigator.pop(sheetContext);
-                            if (context.mounted) _manageBlockedAccounts(context);
                           },
                           child: const Text('Unblock'),
                         ),
