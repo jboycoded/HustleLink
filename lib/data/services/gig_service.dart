@@ -45,6 +45,7 @@ class GigService {
       'rating': (profile['rating'] as num?)?.toDouble() ?? 0,
       'completedGigs': (profile['completedGigs'] as num?)?.toInt() ?? 0,
       'proofVideoUrl': profile['proofVideoUrl'] as String?,
+      'photoUrl': profile['photoUrl'] as String?,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
