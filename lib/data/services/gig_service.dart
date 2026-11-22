@@ -207,6 +207,37 @@ class GigService {
     });
   }
 
+  Stream<List<Gig>> watchMyGigs() {
+    return _gigs.where('posterId', isEqualTo: _uid).snapshots().map((snapshot) {
+      final gigs = snapshot.docs
+          .map((document) => Gig.fromMap(document.id, document.data()))
+          .toList();
+      gigs.sort((a, b) => (b.createdAt ?? DateTime(2000))
+          .compareTo(a.createdAt ?? DateTime(2000)));
+      return gigs;
+    });
+  }
+
+  Stream<List<GigApplication>> watchWorkerApplications() {
+    return _applications.where('workerId', isEqualTo: _uid).snapshots().map(
+      (snapshot) => snapshot.docs
+          .map((document) => GigApplication.fromMap(document.id, document.data()))
+          .toList()
+        ..sort((a, b) => (b.createdAt ?? DateTime(2000))
+            .compareTo(a.createdAt ?? DateTime(2000))),
+    );
+  }
+
+  Stream<List<GigApplication>> watchPosterApplications() {
+    return _applications.where('posterId', isEqualTo: _uid).snapshots().map(
+      (snapshot) => snapshot.docs
+          .map((document) => GigApplication.fromMap(document.id, document.data()))
+          .toList()
+        ..sort((a, b) => (b.createdAt ?? DateTime(2000))
+            .compareTo(a.createdAt ?? DateTime(2000))),
+    );
+  }
+
   Future<List<GigApplication>> fetchWorkerApplications() async {
     final snapshot = await _applications
         .where('workerId', isEqualTo: _uid)
