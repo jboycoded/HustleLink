@@ -280,7 +280,7 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['workerCompletionConfirmed', 'status', 'completedAt', 'updatedAt'])
             && request.resource.data.workerCompletionConfirmed == true
-            && request.resource.data.posterCompletionConfirmed == resource.data.posterCompletionConfirmed
+            && request.resource.data.get('posterCompletionConfirmed', false) == resource.data.get('posterCompletionConfirmed', false)
           )
           ||
           (
@@ -288,19 +288,19 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['posterCompletionConfirmed', 'status', 'completedAt', 'updatedAt'])
             && request.resource.data.posterCompletionConfirmed == true
-            && request.resource.data.workerCompletionConfirmed == resource.data.workerCompletionConfirmed
+            && request.resource.data.get('workerCompletionConfirmed', false) == resource.data.get('workerCompletionConfirmed', false)
           )
         )
         && resource.data.status == 'filled'
         && request.resource.data.status in ['filled', 'completed']
         && (
-          (request.resource.data.workerCompletionConfirmed == true
-            && request.resource.data.posterCompletionConfirmed == true
+          (request.resource.data.get('workerCompletionConfirmed', false) == true
+            && request.resource.data.get('posterCompletionConfirmed', false) == true
             && request.resource.data.status == 'completed'
             && request.resource.data.completedAt == request.time)
           ||
           (request.resource.data.status == 'filled'
-            && request.resource.data.completedAt == resource.data.completedAt)
+            && request.resource.data.get('completedAt', null) == resource.data.get('completedAt', null))
         )
         && request.resource.data.updatedAt == request.time;
 
