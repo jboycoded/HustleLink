@@ -173,6 +173,13 @@ class GigService {
     if (gig.posterId == uid) {
       throw StateError('You cannot apply to your own gig.');
     }
+    final blockedByMe = await _firestore.collection('users').doc(uid)
+        .collection('blockedUsers').doc(gig.posterId).get();
+    final blockedMe = await _firestore.collection('users').doc(gig.posterId)
+        .collection('blockedUsers').doc(uid).get();
+    if (blockedByMe.exists || blockedMe.exists) {
+      throw StateError('You cannot apply to this account.');
+    }
 
     final gigDocument = await _gigs.doc(gig.id).get();
 
