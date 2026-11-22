@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../data/models/gig_application.dart';
 import '../../data/models/gig.dart';
@@ -177,11 +178,12 @@ class _MatchesScreenState extends State<MatchesScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (sheetContext) => SafeArea(
+      builder: (sheetContext) => _ThemeAwareBottomSheet(
+        child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
           child: SizedBox(
@@ -279,6 +281,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -290,11 +293,12 @@ class _MatchesScreenState extends State<MatchesScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (sheetContext) => SafeArea(
+      builder: (sheetContext) => _ThemeAwareBottomSheet(
+        child: SafeArea(
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             20,
@@ -386,6 +390,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -396,11 +401,12 @@ class _MatchesScreenState extends State<MatchesScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (sheetContext) => SafeArea(
+      builder: (sheetContext) => _ThemeAwareBottomSheet(
+        child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           child: SingleChildScrollView(
@@ -532,6 +538,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -1164,6 +1171,33 @@ class _EmptyState extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+class _ThemeAwareBottomSheet extends StatelessWidget {
+  const _ThemeAwareBottomSheet({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    // Modal routes capture the Theme that existed when they were opened.
+    // Read platform brightness independently so an already-open sheet can
+    // rebuild with the current app theme when the system theme changes.
+    final theme = MediaQuery.platformBrightnessOf(context) == Brightness.dark
+        ? AppTheme.dark()
+        : AppTheme.light();
+
+    return Theme(
+      data: theme,
+      child: Material(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        clipBehavior: Clip.antiAlias,
+        child: child,
       ),
     );
   }
