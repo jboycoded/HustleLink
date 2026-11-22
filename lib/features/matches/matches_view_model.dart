@@ -18,17 +18,18 @@ class MatchesViewModel extends ChangeNotifier {
   List<Gig> _posterGigs = [];
   Map<String, List<GigApplication>> _posterApplicationsByGig = {};
   StreamSubscription<UserProfile?>? _profileSubscription;
+  StreamSubscription<List<GigApplication>>? _workerApplicationsSubscription;
+  StreamSubscription<List<GigApplication>>? _posterApplicationsSubscription;
+  StreamSubscription<List<Gig>>? _posterGigsSubscription;
 
   bool isLoading = false;
   String? error;
   String activeRole = 'worker';
-
   bool get isPosterMode => activeRole == 'poster';
 
   List<GigApplication> get workerApplications =>
-      List.unmodifiable(_workerApplications);
-
-  List<Gig> get posterGigs => List.unmodifiable(_posterGigs);
+      List<GigApplication>.unmodifiable(_workerApplications);
+  List<Gig> get posterGigs => List<Gig>.unmodifiable(_posterGigs);
 
   Map<String, List<GigApplication>> get posterApplicationsByGig {
     final grouped = <String, List<GigApplication>>{};
@@ -38,22 +39,15 @@ class MatchesViewModel extends ChangeNotifier {
     return Map<String, List<GigApplication>>.unmodifiable(grouped);
   }
 
-  int get applicationCount {
-    if (isPosterMode) {
-      return _posterApplicationsByGig.values
-          .fold(0, (total, applications) => total + applications.length);
-    }
-
-    return _workerApplications.length;
-  }
+  int get applicationCount => isPosterMode
+      ? _posterApplicationsByGig.values.fold(
+          0, (total, applications) => total + applications.length)
+      : _workerApplications.length;
 
   final Set<String> _updatingApplicationIds = {};
   bool isUpdating(String id) => _updatingApplicationIds.contains(id);
 
-  Future<void> reviewApplication(
-    String applicationId,
-    String status,
-  ) async {
+  Future<void> reviewApplication(String applicationId, String status) async {
     if (_updatingApplicationIds.contains(applicationId)) return;
     _updatingApplicationIds.add(applicationId);
     notifyListeners();
@@ -62,18 +56,20 @@ class MatchesViewModel extends ChangeNotifier {
         applicationId: applicationId,
         status: status,
       );
-      await load();
     } finally {
       _updatingApplicationIds.remove(applicationId);
       notifyListeners();
     }
   }
 
+  Future<void> removeRejectedApplication(String applicationId) async {
+    await _repo.deleteWorkerApplication(applicationId);
+  }
+
   Future<void> load() async {
     isLoading = true;
     error = null;
     notifyListeners();
-
     try {
       final profile = await _profiles.getMyProfile();
       activeRole = profile.activeRole;
@@ -84,11 +80,10 @@ class MatchesViewModel extends ChangeNotifier {
           notifyListeners();
         },
       );
-      await _loadApplications();
+      await _listenToRoleData();
     } catch (_) {
-      error = 'Could not load applications. Check your network and try again.';
-    } finally {
       isLoading = false;
+      error = 'Could not load applications. Check your network and try again.';
       notifyListeners();
     }
   }
@@ -96,49 +91,83 @@ class MatchesViewModel extends ChangeNotifier {
   void _handleProfileUpdate(UserProfile? profile) {
     if (profile == null || profile.activeRole == activeRole) return;
     activeRole = profile.activeRole;
-    unawaited(_reloadApplicationsForRole());
+    unawaited(_listenToRoleData());
   }
 
-  Future<void> _reloadApplicationsForRole() async {
+  Future<void> _listenToRoleData() async {
+    await _workerApplicationsSubscription?.cancel();
+    await _posterApplicationsSubscription?.cancel();
+    await _posterGigsSubscription?.cancel();
+    _workerApplications = [];
+    _posterGigs = [];
+    _posterApplicationsByGig = {};
     isLoading = true;
     error = null;
     notifyListeners();
 
-    try {
-      await _loadApplications();
-    } catch (_) {
-      error = 'Could not load applications. Check your network and try again.';
-    } finally {
+    var receivedFirstSnapshot = false;
+    void firstSnapshotReceived() {
+      if (receivedFirstSnapshot) return;
+      receivedFirstSnapshot = true;
       isLoading = false;
       notifyListeners();
     }
+
+    void streamFailed(Object _) {
+      error = 'Could not load applications. Check your network and try again.';
+      isLoading = false;
+      notifyListeners();
+    }
+
+    if (isPosterMode) {
+      _posterGigsSubscription = _repo.watchMyGigs().listen((gigs) {
+        _posterGigs = gigs;
+        _rebuildPosterApplicationGroups();
+        firstSnapshotReceived();
+        notifyListeners();
+      }, onError: streamFailed);
+
+      _posterApplicationsSubscription =
+          _repo.watchPosterApplications().listen((applications) {
+        // Rejected applicants remain in Firestore for history, but are removed
+        // from the poster's active applicant list.
+        _posterApplicationsByGig = {};
+        for (final application in applications.where(
+          (item) => item.status != 'rejected',
+        )) {
+          _posterApplicationsByGig
+              .putIfAbsent(application.gigId, () => <GigApplication>[])
+              .add(application);
+        }
+        _rebuildPosterApplicationGroups();
+        firstSnapshotReceived();
+        notifyListeners();
+      }, onError: streamFailed);
+    } else {
+      _workerApplicationsSubscription =
+          _repo.watchWorkerApplications().listen((applications) {
+        _workerApplications = applications;
+        firstSnapshotReceived();
+        notifyListeners();
+      }, onError: streamFailed);
+    }
   }
 
-  Future<void> _loadApplications() async {
-    if (isPosterMode) {
-      _workerApplications = [];
-      _posterGigs = await _repo.getMyGigs();
-      final applications = await _repo.getPosterApplications();
-      final grouped = <String, List<GigApplication>>{
-        for (final gig in _posterGigs) gig.id: <GigApplication>[],
-      };
-
-      for (final application in applications) {
-        grouped.putIfAbsent(application.gigId, () => []);
-        grouped[application.gigId]!.add(application);
-      }
-
-      _posterApplicationsByGig = grouped;
-    } else {
-      _posterGigs = [];
-      _posterApplicationsByGig = {};
-      _workerApplications = await _repo.getWorkerApplications();
+  void _rebuildPosterApplicationGroups() {
+    for (final gig in _posterGigs) {
+      _posterApplicationsByGig.putIfAbsent(gig.id, () => <GigApplication>[]);
     }
+    _posterApplicationsByGig.removeWhere(
+      (gigId, _) => !_posterGigs.any((gig) => gig.id == gigId),
+    );
   }
 
   @override
   void dispose() {
     _profileSubscription?.cancel();
+    _workerApplicationsSubscription?.cancel();
+    _posterApplicationsSubscription?.cancel();
+    _posterGigsSubscription?.cancel();
     super.dispose();
   }
 }
