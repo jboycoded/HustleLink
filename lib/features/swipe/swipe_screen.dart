@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../data/services/engagement_service.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
@@ -116,6 +117,34 @@ class SwipeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _reportGig(BuildContext context, Gig gig) async {
+    const reasons = ['spam', 'fraud', 'harassment', 'unsafe', 'inappropriate', 'other'];
+    var reason = reasons.first;
+    final details = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Report gig'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            DropdownButtonFormField<String>(value: reason, items: reasons.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(), onChanged: (v) { if (v != null) setState(() => reason = v); }),
+            const SizedBox(height: 12),
+            TextField(controller: details, maxLines: 3, maxLength: 500, decoration: const InputDecoration(labelText: 'Additional details (optional)')),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Submit report')),
+          ],
+        ),
+      ),
+    );
+    if (submitted == true && context.mounted) {
+      await context.read<EngagementService>().report(targetType: 'gig', targetId: gig.id, reason: reason, details: details.text);
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted. Thank you.')));
+    }
+    details.dispose();
   }
 
   Future<void> _closeGig(
@@ -348,7 +377,7 @@ class SwipeScreen extends StatelessWidget {
                   vm.nextGig();
                 }
               },
-              child: GigCard(gig: gig),
+              child: GigCard(gig: gig, onReport: () => _reportGig(context, gig)),
             ),
           ),
         ),
