@@ -813,18 +813,17 @@ class _GigApplicationsCard extends StatelessWidget {
     // feedback on the Material instead of behind an opaque decorated Container.
     return Container(
       decoration: BoxDecoration(
-        color: scheme.surface,
         borderRadius: radius,
-        border: Border.all(
-          color: scheme.outline,
-          width: AppTokens.borderWidth,
-        ),
         boxShadow: AppTokens.hardShadow(scheme.outline, 3),
       ),
       child: Material(
         color: scheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: radius,
+          side: BorderSide(
+            color: scheme.outline,
+            width: AppTokens.borderWidth,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
