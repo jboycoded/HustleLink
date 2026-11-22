@@ -137,6 +137,7 @@ service cloud.firestore {
           || request.resource.data.proofVideoUrl == null
           || request.resource.data.proofVideoUrl is string
         )
+        && (!('photoUrl' in request.resource.data) || request.resource.data.photoUrl == null || request.resource.data.photoUrl is string)
         && request.resource.data.updatedAt == request.time;
 
       allow update: if request.auth != null
@@ -157,6 +158,7 @@ service cloud.firestore {
         && request.resource.data.location is string
         && request.resource.data.skills is list
         && request.resource.data.isAvailableForGigs is bool
+        && (!('photoUrl' in request.resource.data) || request.resource.data.photoUrl == null || request.resource.data.photoUrl is string)
         && (
           !('proofVideoUrl' in request.resource.data)
           || request.resource.data.proofVideoUrl == null
@@ -215,6 +217,7 @@ service cloud.firestore {
                     && request.resource.data.pay is int
                     && request.resource.data.pay > 0
                     && request.resource.data.posterName is string
+        && (!('posterPhotoUrl' in request.resource.data) || request.resource.data.posterPhotoUrl == null || request.resource.data.posterPhotoUrl is string)
                     && request.resource.data.location is string
                     && request.resource.data.when is string
                     && request.resource.data.status == 'open'
@@ -353,6 +356,7 @@ service cloud.firestore {
                     && request.resource.data.gigCategory is string
                     && request.resource.data.gigPay is int
                     && request.resource.data.gigLocation is string
+                    && (!('workerPhotoUrl' in request.resource.data) || request.resource.data.workerPhotoUrl == null || request.resource.data.workerPhotoUrl is string)
                     && request.resource.data.createdAt == request.time
                     && exists(/databases/$(database)/documents/gigs/$(request.resource.data.gigId))
                     && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.status == 'open'
