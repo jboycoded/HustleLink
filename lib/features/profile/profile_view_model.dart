@@ -70,6 +70,23 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> updateProfilePhotoUrl(String? url) async {
+    _isSaving = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _repository.updateProfilePhotoUrl(url);
+      _profile = await _repository.getMyProfile();
+      return true;
+    } catch (error) {
+      _errorMessage = _friendlyError(error);
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> updateProofVideoUrl(String? url) async {
     _isSaving = true;
     _errorMessage = null;
