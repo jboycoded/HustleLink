@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../data/repositories/user_profile_repository.dart';
 import '../../data/services/engagement_service.dart';
+import '../../data/models/gig_review.dart';
 import 'models/user_profile.dart';
 import 'widgets/profile_proof_video_player.dart';
 
@@ -233,6 +234,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 ProfileProofVideoPlayer(videoUrl: profile.proofVideoUrl!),
               ],
               const SizedBox(height: 22),
+              _ProfileReviews(userId: profile.id),
+              const SizedBox(height: 22),
               Text(
                 'SKILLS & SERVICES',
                 style: theme.textTheme.titleSmall
@@ -261,6 +264,60 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+class _ProfileReviews extends StatelessWidget {
+  const _ProfileReviews({required this.userId});
+  final String userId;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return StreamBuilder<List<GigReview>>(
+      stream: context.read<EngagementService>().watchReviewsFor(userId),
+      builder: (context, snapshot) {
+        final reviews = snapshot.data ?? const <GigReview>[];
+        final average = reviews.isEmpty ? 0.0 :
+            reviews.fold<int>(0, (sum, review) => sum + review.rating) / reviews.length;
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Expanded(child: Text('RATINGS & REVIEWS',
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: .7))),
+            Text(reviews.isEmpty ? 'No reviews' : '${average.toStringAsFixed(1)} ★  •  ${reviews.length}',
+              style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
+          ]),
+          const SizedBox(height: 10),
+          if (snapshot.hasError)
+            Text('Reviews could not be loaded.', style: TextStyle(color: scheme.onSurfaceVariant))
+          else if (reviews.isEmpty)
+            Text('Reviews from completed gigs will appear here.',
+              style: TextStyle(color: scheme.onSurfaceVariant))
+          else
+            ...reviews.take(8).map((review) => Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 9),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(child: Text(review.reviewerName,
+                    style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800))),
+                  Text('${review.rating} ★', style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800)),
+                ]),
+                if (review.comment.isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  Text(review.comment),
+                ],
+              ]),
+            )),
+        ]);
+      },
     );
   }
 }
