@@ -138,15 +138,17 @@ class UserProfileRepository {
   }
 
   Future<void> updateProofVideoUrl(String? url) async {
+    final uid = _uid;
+    final batch = _firestore.batch();
     final value = url ?? FieldValue.delete();
-    await _users.doc(_uid).update({
+    final update = {
       'proofVideoUrl': value,
       'updatedAt': FieldValue.serverTimestamp(),
-    });
-    await _publicProfile(_uid).update({
-      'proofVideoUrl': value,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    };
+
+    batch.update(_users.doc(uid), update);
+    batch.set(_publicProfile(uid), update, SetOptions(merge: true));
+    await batch.commit();
   }
 
   Future<void> updateActiveRole(String role) async {
