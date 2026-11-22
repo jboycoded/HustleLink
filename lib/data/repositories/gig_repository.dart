@@ -70,6 +70,17 @@ class GigRepository {
         status: status,
       );
 
+  Stream<List<Gig>> watchMyGigs() => _service.watchMyGigs();
+
+  Stream<List<GigApplication>> watchWorkerApplications() =>
+      _service.watchWorkerApplications();
+
+  Stream<List<GigApplication>> watchPosterApplications() =>
+      _service.watchPosterApplications();
+
+  Future<void> deleteWorkerApplication(String applicationId) =>
+      _service.deleteWorkerApplication(applicationId);
+
   Future<List<GigApplication>> getWorkerApplications() =>
       _service.fetchWorkerApplications();
 
