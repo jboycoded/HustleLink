@@ -23,6 +23,15 @@ class MatchesViewModel extends ChangeNotifier {
   StreamSubscription<List<Gig>>? _posterGigsSubscription;
 
   bool isLoading = false;
+  String statusFilter = 'all';
+
+  void setStatusFilter(String value) {
+    statusFilter = value;
+    notifyListeners();
+  }
+
+  List<GigApplication> get filteredWorkerApplications =>
+      _workerApplications.where((item) => statusFilter == 'all' || item.status == statusFilter).toList();
   String? error;
   String activeRole = 'worker';
   bool get isPosterMode => activeRole == 'poster';
@@ -34,7 +43,8 @@ class MatchesViewModel extends ChangeNotifier {
   Map<String, List<GigApplication>> get posterApplicationsByGig {
     final grouped = <String, List<GigApplication>>{};
     _posterApplicationsByGig.forEach((key, value) {
-      grouped[key] = List<GigApplication>.unmodifiable(value);
+      final visible = value.where((item) => statusFilter == 'all' || item.status == statusFilter).toList();
+      if (visible.isNotEmpty) grouped[key] = List<GigApplication>.unmodifiable(visible);
     });
     return Map<String, List<GigApplication>>.unmodifiable(grouped);
   }
@@ -129,12 +139,9 @@ class MatchesViewModel extends ChangeNotifier {
 
       _posterApplicationsSubscription =
           _repo.watchPosterApplications().listen((applications) {
-        // Rejected applicants remain in Firestore for history, but are removed
-        // from the poster's active applicant list.
+        // Keep all statuses; the UI filter exposes rejected applications as history.
         _posterApplicationsByGig = {};
-        for (final application in applications.where(
-          (item) => item.status != 'rejected',
-        )) {
+        for (final application in applications) {
           _posterApplicationsByGig
               .putIfAbsent(application.gigId, () => <GigApplication>[])
               .add(application);
