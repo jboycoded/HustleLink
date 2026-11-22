@@ -4,9 +4,10 @@ import '../../core/theme/app_tokens.dart';
 import '../../data/models/gig.dart';
 
 class GigCard extends StatelessWidget {
-  const GigCard({super.key, required this.gig});
+  const GigCard({super.key, required this.gig, this.onReport});
 
   final Gig gig;
+  final VoidCallback? onReport;
 
   static String _naira(int value) => '₦${value.toString().replaceAllMapped(
         RegExp(r'\B(?=(\d{3})+(?!\d))'),
@@ -51,6 +52,13 @@ class GigCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
+              if (onReport != null)
+                PopupMenuButton<String>(
+                  tooltip: 'Gig options',
+                  onSelected: (value) { if (value == 'report') onReport!(); },
+                  itemBuilder: (_) => const [PopupMenuItem(value: 'report', child: Text('Report gig'))],
+                  icon: Icon(Icons.more_vert_rounded, color: scheme.onSecondary),
+                ),
               Flexible(
                 child: _Tag(
                   gig.location,
