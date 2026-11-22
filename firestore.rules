@@ -541,7 +541,7 @@ service cloud.firestore {
         && request.resource.data.recipientId != request.auth.uid
         && request.resource.data.type in [
           'application_received', 'application_accepted',
-          'application_rejected', 'new_message'
+          'application_rejected', 'new_message', 'gig_completion_confirmed'
         ]
         && request.resource.data.title is string
         && request.resource.data.body is string
