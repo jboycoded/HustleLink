@@ -74,7 +74,7 @@ class ProfilePhotoService {
           path,
           token,
           file,
-          fileOptions: FileOptions(contentType: contentType, upsert: true),
+          FileOptions(contentType: contentType, upsert: true),
         );
     return _client.storage
         .from(SupabaseConfig.profilePhotoBucketName)
