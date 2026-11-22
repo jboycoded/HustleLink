@@ -85,6 +85,7 @@ class ChatScreen extends StatelessWidget {
                     final recipientName = isWorker
                         ? conversation.posterName
                         : conversation.workerName;
+                    final recipientPhoto = isWorker ? conversation.posterPhotoUrl : conversation.workerPhotoUrl;
                     final initials = recipientName
                         .trim()
                         .split(RegExp(r'\s+'))
@@ -115,7 +116,8 @@ class ChatScreen extends StatelessWidget {
                                 radius: 25,
                                 backgroundColor: scheme.secondary,
                                 foregroundColor: scheme.onSecondary,
-                                child: Text(initials.isEmpty ? '?' : initials),
+                                backgroundImage: recipientPhoto != null && recipientPhoto.isNotEmpty ? NetworkImage(recipientPhoto) : null,
+                                child: recipientPhoto == null || recipientPhoto.isEmpty ? Text(initials.isEmpty ? '?' : initials) : null,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
