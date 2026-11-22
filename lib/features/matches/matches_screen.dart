@@ -9,6 +9,7 @@ import '../../data/models/gig.dart';
 import '../../data/repositories/gig_repository.dart';
 import '../../data/services/engagement_service.dart';
 import 'matches_view_model.dart';
+import '../notifications/notification_bell.dart';
 
 class MatchesScreen extends StatefulWidget {
   const MatchesScreen({super.key});
@@ -81,11 +82,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   ),
                 ),
                 const Spacer(),
-                IconButton(
-                  tooltip: 'Notifications',
-                  onPressed: () => context.push('/notifications'),
-                  icon: const Icon(Icons.notifications_none_rounded),
-                ),
+                const NotificationBell(),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
