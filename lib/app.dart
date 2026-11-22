@@ -8,10 +8,10 @@ import 'data/repositories/gig_repository.dart';
 import 'data/repositories/user_profile_repository.dart';
 import 'data/services/auth_service.dart';
 import 'data/services/chat_service.dart';
-import 'data/services/gig_service.dart';
-import 'data/services/proof_video_service.dart';
-import 'data/services/profile_photo_service.dart';
 import 'data/services/engagement_service.dart';
+import 'data/services/gig_service.dart';
+import 'data/services/profile_photo_service.dart';
+import 'data/services/proof_video_service.dart';
 
 class HustleLinkApp extends StatefulWidget {
   const HustleLinkApp({super.key});
@@ -28,7 +28,6 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
   @override
   void initState() {
     super.initState();
-
     _authService = AuthService();
     _authRefresh = AuthRefreshNotifier(_authService.authStateChanges);
     _router = createAppRouter(
@@ -59,15 +58,15 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
               child: Provider<EngagementService>(
                 create: (_) => EngagementService(),
                 child: Provider<GigRepository>(
-              create: (_) => GigRepository(GigService()),
-              child: MaterialApp.router(
-                title: 'HUSTLELINK',
-                debugShowCheckedModeBanner: false,
-                theme: AppTheme.light(),
-                darkTheme: AppTheme.dark(),
-                themeMode: ThemeMode.system,
-                routerConfig: _router,
-              ),
+                  create: (_) => GigRepository(GigService()),
+                  child: MaterialApp.router(
+                    title: 'HUSTLELINK',
+                    debugShowCheckedModeBanner: false,
+                    theme: AppTheme.light(),
+                    darkTheme: AppTheme.dark(),
+                    themeMode: ThemeMode.system,
+                    routerConfig: _router,
+                  ),
                 ),
               ),
             ),
