@@ -130,7 +130,7 @@ class SwipeScreen extends StatelessWidget {
         builder: (context, setState) => AlertDialog(
           title: const Text('Report gig'),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
-            DropdownButtonFormField<String>(value: reason, items: reasons.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(), onChanged: (v) { if (v != null) setState(() => reason = v); }),
+            DropdownButtonFormField<String>(initialValue: reason, items: reasons.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(), onChanged: (v) { if (v != null) setState(() => reason = v); }),
             const SizedBox(height: 12),
             TextField(controller: details, maxLines: 3, maxLength: 500, decoration: const InputDecoration(labelText: 'Additional details (optional)')),
           ]),
