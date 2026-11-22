@@ -14,6 +14,7 @@ import '../../features/chat/chat_screen.dart';
 import '../../features/chat/chat_conversation_screen.dart';
 import '../../features/matches/matches_screen.dart';
 import '../../features/matches/matches_view_model.dart';
+import '../../features/notifications/notifications_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/public_profile_screen.dart';
 import '../../features/profile/profile_view_model.dart';
@@ -59,6 +60,10 @@ GoRouter createAppRouter({
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
+      ),
       GoRoute(
         path: '/auth',
         builder: (context, state) => AuthScreen(
