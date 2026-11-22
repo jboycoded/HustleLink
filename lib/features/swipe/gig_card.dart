@@ -4,10 +4,11 @@ import '../../core/theme/app_tokens.dart';
 import '../../data/models/gig.dart';
 
 class GigCard extends StatelessWidget {
-  const GigCard({super.key, required this.gig, this.onReport});
+  const GigCard({super.key, required this.gig, this.onReport, this.onPosterTap});
 
   final Gig gig;
   final VoidCallback? onReport;
+  final VoidCallback? onPosterTap;
 
   static String _naira(int value) => '₦${value.toString().replaceAllMapped(
         RegExp(r'\B(?=(\d{3})+(?!\d))'),
@@ -79,11 +80,15 @@ class GigCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
-                gig.posterName,
-                style: text.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: scheme.onSecondary.withValues(alpha: 0.75),
+              InkWell(
+                onTap: onPosterTap,
+                child: Text(
+                  gig.posterName,
+                  style: text.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: scheme.onSecondary.withValues(alpha: 0.75),
+                    decoration: onPosterTap == null ? null : TextDecoration.underline,
+                  ),
                 ),
               ),
               if (gig.description.isNotEmpty) ...[
