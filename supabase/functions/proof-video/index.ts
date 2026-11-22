@@ -19,6 +19,7 @@ try {
   console.error("Supabase secret-key environment variable is not valid JSON.");
 }
 const BUCKET = "worker-proof-videos";
+const PHOTO_BUCKET = "profile-photos";
 
 const firebaseJwks = createRemoteJWKSet(
   new URL(
@@ -80,11 +81,13 @@ Deno.serve(async (request: Request) => {
     const body = await request.json().catch(() => ({}));
     const action = body?.action;
     const path = `workerProofVideos/${uid}/profileVideo`;
+    const photoPath = `profilePhotos/${uid}/profilePhoto`;
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const storage = admin.storage.from(BUCKET);
+    const photoStorage = admin.storage.from(PHOTO_BUCKET);
 
     if (action === "create-upload") {
       const { data, error } = await storage.createSignedUploadUrl(path, {
@@ -102,6 +105,24 @@ Deno.serve(async (request: Request) => {
       if (error) {
         console.error("Could not delete profile video.");
         return jsonResponse({ error: "Unable to delete the profile video." }, 500);
+      }
+      return jsonResponse({ success: true });
+    }
+
+    if (action === "create-profile-photo-upload") {
+      const { data, error } = await photoStorage.createSignedUploadUrl(photoPath, { upsert: true });
+      if (error) {
+        console.error("Could not create profile-photo upload permission.");
+        return jsonResponse({ error: "Unable to prepare the photo upload." }, 500);
+      }
+      return jsonResponse({ path: photoPath, token: data.token });
+    }
+
+    if (action === "delete-profile-photo") {
+      const { error } = await photoStorage.remove([photoPath]);
+      if (error) {
+        console.error("Could not delete profile photo.");
+        return jsonResponse({ error: "Unable to delete the profile photo." }, 500);
       }
       return jsonResponse({ success: true });
     }
