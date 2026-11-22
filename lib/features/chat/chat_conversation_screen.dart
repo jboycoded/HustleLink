@@ -277,6 +277,18 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                       const SizedBox(width: 10),
                       IconButton.filled(
                         onPressed: _sending ? null : () => _send(service),
+                        style: IconButton.styleFrom(
+                          backgroundColor: scheme.secondary,
+                          foregroundColor: scheme.onSecondary,
+                          disabledBackgroundColor:
+                              scheme.secondary.withValues(alpha: .55),
+                          disabledForegroundColor:
+                              scheme.onSecondary.withValues(alpha: .7),
+                          side: BorderSide(
+                            color: scheme.outline,
+                            width: AppTokens.borderWidth,
+                          ),
+                        ),
                         icon: _sending
                             ? const SizedBox(
                                 width: 18,
