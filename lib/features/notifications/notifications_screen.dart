@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_tokens.dart';
@@ -65,9 +66,15 @@ class NotificationsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppTokens.rMd),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(AppTokens.rMd),
-                  onTap: item.isRead
-                      ? null
-                      : () => service.markNotificationRead(item.id),
+                  onTap: () async {
+                    if (!item.isRead) await service.markNotificationRead(item.id);
+                    if (!context.mounted || item.relatedId.isEmpty) return;
+                    if (item.type == 'new_message') {
+                      context.push('/chat/${item.relatedId}');
+                    } else {
+                      context.push('/matches');
+                    }
+                  },
                   child: Container(
                     padding: const EdgeInsets.all(15),
                     decoration: BoxDecoration(
