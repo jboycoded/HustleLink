@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../data/models/chat_conversation.dart';
 import '../../data/services/chat_service.dart';
+import '../notifications/notification_bell.dart';
 
 String _chatTime(BuildContext context, DateTime? date) {
   if (date == null) return '';
@@ -39,6 +40,8 @@ class ChatScreen extends StatelessWidget {
                     letterSpacing: 1.1,
                   ),
                 ),
+                const Spacer(),
+                const NotificationBell(),
               ],
             ),
           ),
