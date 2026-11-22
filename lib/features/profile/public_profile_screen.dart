@@ -179,22 +179,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       ),
                     ],
                     const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _ProfileStat(
-                            label: 'RATING',
-                            value: '${profile.rating} ★',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _ProfileStat(
-                            label: 'COMPLETED',
-                            value: '${profile.completedGigs} GIGS',
-                          ),
-                        ),
-                      ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: _ProfileStat(
+                        label: 'COMPLETED',
+                        value: '${profile.completedGigs} GIGS',
+                      ),
                     ),
                     if (profile.activeRole == 'worker') ...[
                       const SizedBox(height: 16),
