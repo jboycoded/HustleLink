@@ -80,6 +80,9 @@ service cloud.firestore {
                       !('isAvailableForGigs' in request.resource.data)
                       || request.resource.data.isAvailableForGigs is bool
                     )
+                    && (!('photoUrl' in request.resource.data)
+                        || request.resource.data.photoUrl == null
+                        || request.resource.data.photoUrl is string)
                     && (
                       !('proofVideoUrl' in request.resource.data)
                       || request.resource.data.proofVideoUrl == null
