@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
-import 'package:tus_client/tus_client.dart';
 
 import '../../core/config/supabase_config.dart';
 
@@ -22,7 +21,6 @@ class ProofVideoService {
   final FirebaseAuth _auth;
   final ImagePicker _picker;
   final SupabaseClient? _supabase;
-  final TusMemoryStore _uploadStore = TusMemoryStore();
 
   SupabaseClient get _client {
     if (!SupabaseConfig.isConfigured && _supabase == null) {
@@ -101,29 +99,12 @@ class ProofVideoService {
       throw StateError('The video service did not provide upload permission.');
     }
 
-    final projectUri = Uri.parse(SupabaseConfig.url);
-    final storageHost = projectUri.host.replaceFirst(
-      '.supabase.co',
-      '.storage.supabase.co',
-    );
-    final tusClient = TusClient(
-      Uri.https(storageHost, '/storage/v1/upload/resumable'),
-      selected,
-      headers: {
-        'apikey': SupabaseConfig.anonKey,
-        'x-signature': token,
-        'x-upsert': 'true',
-      },
-      metadata: {
-        'bucketName': _bucket,
-        'objectName': path,
-        'contentType': contentType,
-      },
-      maxChunkSize: 6 * 1024 * 1024,
-      store: _uploadStore,
-    );
-
-    await tusClient.upload();
+    await _client.storage.from(_bucket).uploadToSignedUrl(
+          path,
+          token,
+          file,
+          FileOptions(contentType: contentType),
+        );
 
     return _client.storage.from(_bucket).getPublicUrl(path);
   }
