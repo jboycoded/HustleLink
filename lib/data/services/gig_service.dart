@@ -285,31 +285,61 @@ class GigService {
     if (status != 'accepted' && status != 'rejected') {
       throw ArgumentError('Application status must be accepted or rejected.');
     }
-    final ref = _applications.doc(applicationId);
-    final snapshot = await ref.get();
-    if (!snapshot.exists) throw StateError('Application not found.');
-    if (snapshot.data()?['posterId'] != _uid) {
-      throw StateError('Only the poster can review this application.');
-    }
-    if (snapshot.data()?['status'] != 'pending') {
-      throw StateError('This application has already been reviewed.');
-    }
-    final application = snapshot.data()!;
 
-    if (status == 'accepted') {
-      final gigSnapshot = await _gigs.doc(application['gigId'] as String).get();
-      final gigData = gigSnapshot.data() ?? <String, dynamic>{};
-      final conversationRef =
-          _firestore.collection('conversations').doc(applicationId);
-      final batch = _firestore.batch();
-
-      batch.update(ref, {
-        'status': status,
+    final applicationRef = _applications.doc(applicationId);
+    if (status == 'rejected') {
+      final snapshot = await applicationRef.get();
+      if (!snapshot.exists) throw StateError('Application not found.');
+      final data = snapshot.data()!;
+      if (data['posterId'] != _uid) {
+        throw StateError('Only the poster can review this application.');
+      }
+      if (data['status'] != 'pending') {
+        throw StateError('This application has already been reviewed.');
+      }
+      await applicationRef.update({
+        'status': 'rejected',
         'updatedAt': FieldValue.serverTimestamp(),
       });
-      batch.set(conversationRef, {
+      return;
+    }
+
+    await _firestore.runTransaction((transaction) async {
+      final applicationSnapshot = await transaction.get(applicationRef);
+      if (!applicationSnapshot.exists) {
+        throw StateError('Application not found.');
+      }
+      final application = applicationSnapshot.data()!;
+      if (application['posterId'] != _uid) {
+        throw StateError('Only the poster can review this application.');
+      }
+      if (application['status'] != 'pending') {
+        throw StateError('This application has already been reviewed.');
+      }
+
+      final gigId = application['gigId'] as String;
+      final gigRef = _gigs.doc(gigId);
+      final gigSnapshot = await transaction.get(gigRef);
+      if (!gigSnapshot.exists || gigSnapshot.data()?['status'] != 'open') {
+        throw StateError('This gig is no longer available for acceptance.');
+      }
+      final gigData = gigSnapshot.data()!;
+      final conversationRef =
+          _firestore.collection('conversations').doc(applicationId);
+
+      transaction.update(applicationRef, {
+        'status': 'accepted',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      transaction.update(gigRef, {
+        'status': 'filled',
+        'acceptedApplicationId': applicationId,
+        'acceptedWorkerId': application['workerId'],
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      transaction.set(conversationRef, {
         'applicationId': applicationId,
-        'gigId': application['gigId'],
+        'gigId': gigId,
         'gigTitle': (application['gigTitle'] as String?)?.trim().isNotEmpty == true
             ? (application['gigTitle'] as String).trim()
             : ((gigData['title'] as String?)?.trim().isNotEmpty == true
@@ -321,10 +351,7 @@ class GigService {
             ? (application['workerName'] as String).trim()
             : 'Worker',
         'posterName': (gigData['posterName'] as String?) ?? 'Poster',
-        'participants': [
-          application['workerId'],
-          application['posterId'],
-        ],
+        'participants': [application['workerId'], application['posterId']],
         'lastMessage': 'Application accepted. You can now chat.',
         'lastMessageAt': FieldValue.serverTimestamp(),
         'lastSenderId': '',
@@ -333,13 +360,21 @@ class GigService {
         },
         'createdAt': FieldValue.serverTimestamp(),
       });
-      await batch.commit();
-    } else {
-      await ref.update({
-        'status': status,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+    });
+  }
+
+  Future<void> deleteWorkerApplication(String applicationId) async {
+    final ref = _applications.doc(applicationId);
+    final snapshot = await ref.get();
+    if (!snapshot.exists) return;
+    final data = snapshot.data()!;
+    if (data['workerId'] != _uid) {
+      throw StateError('You can only remove your own applications.');
     }
+    if (data['status'] != 'rejected') {
+      throw StateError('Only rejected applications can be removed.');
+    }
+    await ref.delete();
   }
 
   Future<void> updateGig({
