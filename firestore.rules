@@ -231,6 +231,8 @@ service cloud.firestore {
                          'when',
                          'status',
                          'proofVideoRequired',
+                         'acceptedApplicationId',
+                         'acceptedWorkerId',
                          'updatedAt'
                        ])
                     && request.resource.data.title is string
@@ -240,7 +242,17 @@ service cloud.firestore {
                     && request.resource.data.pay > 0
                     && request.resource.data.location is string
                     && request.resource.data.when is string
-                    && request.resource.data.status in ['open', 'closed']
+                    && request.resource.data.status in ['open', 'closed', 'filled']
+                    && (
+                      request.resource.data.status != 'filled'
+                      || (
+                        request.resource.data.acceptedApplicationId is string
+                        && request.resource.data.acceptedWorkerId is string
+                        && getAfter(/databases/$(database)/documents/applications/$(request.resource.data.acceptedApplicationId)).data.status == 'accepted'
+                        && getAfter(/databases/$(database)/documents/applications/$(request.resource.data.acceptedApplicationId)).data.gigId == gigId
+                        && getAfter(/databases/$(database)/documents/applications/$(request.resource.data.acceptedApplicationId)).data.workerId == request.resource.data.acceptedWorkerId
+                      )
+                    )
                     && (
                       (
                         !('proofVideoRequired' in resource.data)
@@ -326,9 +338,19 @@ service cloud.firestore {
                        .affectedKeys()
                        .hasOnly(['status', 'updatedAt'])
                     && request.resource.data.status in ['accepted', 'rejected']
+                    && (
+                      request.resource.data.status != 'accepted'
+                      || (
+                        getAfter(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.status == 'filled'
+                        && getAfter(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.acceptedApplicationId == applicationId
+                        && getAfter(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.acceptedWorkerId == resource.data.workerId
+                      )
+                    )
                     && request.resource.data.updatedAt == request.time;
 
-      allow delete: if false;
+      allow delete: if request.auth != null
+                    && resource.data.workerId == request.auth.uid
+                    && resource.data.status == 'rejected';
     }
 
     match /conversations/{conversationId} {
