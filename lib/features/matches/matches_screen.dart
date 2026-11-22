@@ -54,13 +54,10 @@ class _MatchesScreenState extends State<MatchesScreen> {
         ),
       );
     } else if (vm.isPosterMode) {
-      body = vm.posterGigs.isEmpty
-          ? const _EmptyState(
-              icon: Icons.work_outline_rounded,
-              title: 'No gigs yet.',
-              message: 'Gigs you create will appear here so you can manage their applicants.',
-            )
-          : _buildPosterApplications(context, vm);
+      // TEMPORARY DIAGNOSTIC: replace the complete poster-specific subtree
+      // with a static widget to determine whether the failure is above or
+      // below this branch in the Matches screen widget tree.
+      body = _buildPosterDiagnostic(context);
     } else if (vm.applicationCount == 0) {
       body = const _EmptyState(
         icon: Icons.favorite_border_rounded,
@@ -114,6 +111,59 @@ class _MatchesScreenState extends State<MatchesScreen> {
           ),
           Expanded(child: body),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPosterDiagnostic(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Card(
+          color: scheme.surface,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: BorderSide(
+              color: scheme.outline,
+              width: AppTokens.borderWidth,
+            ),
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 48,
+                    color: scheme.secondary,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'POSTER DIAGNOSTIC VIEW',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: scheme.onSurface,
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'If this card is visible, the parent Matches layout is rendering and the fault is inside the original poster content subtree.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
