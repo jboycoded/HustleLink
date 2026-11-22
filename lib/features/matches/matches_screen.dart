@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -882,7 +883,10 @@ class _CompletionPanelState extends State<_CompletionPanel> {
     if (submitted == true && mounted) {
       try {
         await service.submitReview(gigId: gig.id, rating: rating, comment: comment.text);
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review submitted.')));
+        if (mounted) {
+          setState(() {});
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review submitted.')));
+        }
       } catch (error) {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
       }
@@ -893,10 +897,11 @@ class _CompletionPanelState extends State<_CompletionPanel> {
   @override
   Widget build(BuildContext context) {
     final service = context.read<EngagementService>();
-    return FutureBuilder<Gig?>(
-      future: context.read<GigRepository>().getGigById(widget.application.gigId),
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('gigs').doc(widget.application.gigId).snapshots(),
       builder: (context, snapshot) {
-        final gig = snapshot.data;
+        final data = snapshot.data?.data();
+        final gig = data == null ? null : Gig.fromMap(widget.application.gigId, data);
         if (gig == null || widget.application.status != 'accepted') return const SizedBox.shrink();
         final uid = service.currentUserId;
         final isWorker = uid == widget.application.workerId;
