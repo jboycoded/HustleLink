@@ -748,6 +748,63 @@ class _ProfileProofVideoSection extends StatelessWidget {
   }
 }
 
+class _ProfileCompleteness extends StatelessWidget {
+  const _ProfileCompleteness({required this.profile});
+  final UserProfile profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final checks = <String, bool>{
+      'Add your full name': profile.fullName.trim().isNotEmpty,
+      'Add your location': profile.location.trim().isNotEmpty,
+      'List your skills or services': profile.skills.isNotEmpty,
+      'Upload a profile photo': profile.photoUrl?.isNotEmpty == true,
+      'Add your 30-second introduction video': profile.proofVideoUrl?.isNotEmpty == true,
+    };
+    final completed = checks.values.where((value) => value).length;
+    final progress = completed / checks.length;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(AppTokens.rLg),
+        border: Border.all(color: scheme.outline, width: AppTokens.borderWidth),
+        boxShadow: AppTokens.hardShadow(scheme.outline, 3),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Expanded(child: Text('PROFILE COMPLETENESS',
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800))),
+            Text('${(progress * 100).round()}%',
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900)),
+          ]),
+          const SizedBox(height: 10),
+          LinearProgressIndicator(value: progress, minHeight: 8,
+              borderRadius: BorderRadius.circular(20)),
+          const SizedBox(height: 10),
+          ...checks.entries.map((entry) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(children: [
+              Icon(entry.value ? Icons.check_circle_rounded : Icons.circle_outlined,
+                  size: 17, color: entry.value ? Colors.green : scheme.onSurfaceVariant),
+              const SizedBox(width: 8),
+              Expanded(child: Text(entry.key,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: entry.value ? scheme.onSurfaceVariant : scheme.onSurface,
+                    decoration: entry.value ? TextDecoration.lineThrough : null,
+                  ))),
+            ]),
+          )),
+        ],
+      ),
+    );
+  }
+}
+
 class _RoleButton extends StatelessWidget {
   const _RoleButton({
     required this.label,
