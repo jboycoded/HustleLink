@@ -67,6 +67,7 @@ service cloud.firestore {
                          'activeRole',
                          'isAvailableForGigs',
                          'proofVideoUrl',
+                         'photoUrl',
                          'updatedAt'
                        ])
                     && request.resource.data.activeRole in resource.data.roles
@@ -102,6 +103,7 @@ service cloud.firestore {
           'rating',
           'completedGigs',
           'proofVideoUrl',
+          'photoUrl',
           'updatedAt'
         ])
         && request.resource.data.keys().hasOnly([
@@ -184,6 +186,7 @@ service cloud.firestore {
                       'when',
                       'status',
                       'proofVideoRequired',
+                      'posterPhotoUrl',
                       'createdAt',
                       'updatedAt'
                     ])
@@ -288,6 +291,7 @@ service cloud.firestore {
                       'gigCategory',
                       'gigPay',
                       'gigLocation',
+                      'workerPhotoUrl',
                       'status',
                       'createdAt'
                     ])
@@ -370,6 +374,8 @@ service cloud.firestore {
           'posterId',
           'workerName',
           'posterName',
+          'workerPhotoUrl',
+          'posterPhotoUrl',
           'participants',
           'lastMessage',
           'lastMessageAt',
@@ -385,6 +391,8 @@ service cloud.firestore {
           'posterId',
           'workerName',
           'posterName',
+          'workerPhotoUrl',
+          'posterPhotoUrl',
           'participants',
           'lastMessage',
           'lastMessageAt',
@@ -468,5 +476,102 @@ service cloud.firestore {
         allow update, delete: if false;
       }
     }
+
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null
+        && resource.data.recipientId == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll([
+          'recipientId', 'actorId', 'type', 'title', 'body',
+          'relatedId', 'isRead', 'createdAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'recipientId', 'actorId', 'type', 'title', 'body',
+          'relatedId', 'isRead', 'createdAt'
+        ])
+        && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.recipientId is string
+        && request.resource.data.recipientId != request.auth.uid
+        && request.resource.data.type in [
+          'application_received', 'application_accepted',
+          'application_rejected', 'new_message'
+        ]
+        && request.resource.data.title is string
+        && request.resource.data.body is string
+        && request.resource.data.relatedId is string
+        && request.resource.data.isRead == false
+        && request.resource.data.createdAt == request.time;
+      allow update: if request.auth != null
+        && resource.data.recipientId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead'])
+        && request.resource.data.isRead == true;
+      allow delete: if request.auth != null
+        && resource.data.recipientId == request.auth.uid;
+    }
+
+    match /reports/{reportId} {
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll([
+          'reporterId', 'targetType', 'targetId', 'reason',
+          'details', 'status', 'createdAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'reporterId', 'targetType', 'targetId', 'reason',
+          'details', 'status', 'createdAt'
+        ])
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.targetType in ['user', 'gig']
+        && request.resource.data.targetId is string
+        && request.resource.data.reason in [
+          'spam', 'fraud', 'harassment', 'unsafe', 'inappropriate', 'other'
+        ]
+        && request.resource.data.details is string
+        && request.resource.data.status == 'open'
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if false;
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll([
+          'gigId', 'reviewerId', 'revieweeId', 'reviewerName',
+          'rating', 'comment', 'createdAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'gigId', 'reviewerId', 'revieweeId', 'reviewerName',
+          'rating', 'comment', 'createdAt'
+        ])
+        && request.resource.data.reviewerId == request.auth.uid
+        && reviewId == request.resource.data.gigId + '_' + request.auth.uid
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() <= 500
+        && request.resource.data.createdAt == request.time
+        && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.status == 'completed'
+        && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.workerCompletionConfirmed == true
+        && get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.posterCompletionConfirmed == true
+        && request.auth.uid in [
+          get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.posterId,
+          get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.acceptedWorkerId
+        ]
+        && request.resource.data.revieweeId in [
+          get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.posterId,
+          get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.acceptedWorkerId
+        ]
+        && request.resource.data.revieweeId != request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /users/{userId}/blockedUsers/{blockedUserId} {
+      allow read, create, delete: if request.auth != null
+        && request.auth.uid == userId
+        && (request.method != 'create'
+            || request.resource.data.userId == blockedUserId);
+      allow update: if false;
+    }
+
   }
 }
