@@ -21,6 +21,8 @@ class SwipeViewModel extends ChangeNotifier {
   final Set<String> _passedGigIds = {};
 
   StreamSubscription<UserProfile?>? _profileSubscription;
+  StreamSubscription<List<Gig>>? _availableGigsSubscription;
+  StreamSubscription<List<dynamic>>? _workerApplicationsSubscription;
 
   bool isLoading = false;
   bool isSaving = false;
@@ -79,6 +81,7 @@ class SwipeViewModel extends ChangeNotifier {
       activeRole = profile.activeRole;
 
       await _loadGigs();
+      await _startDiscoveryStreams();
 
       await _profileSubscription?.cancel();
       _profileSubscription = _profiles.watchMyProfile().listen(
@@ -90,7 +93,7 @@ class SwipeViewModel extends ChangeNotifier {
           _currentIndex = 0;
           _passedGigIds.clear();
 
-          unawaited(_loadGigs());
+          unawaited(_reloadForRole());
         },
         onError: (_) {
           error = 'Unable to monitor your account role.';
@@ -103,6 +106,38 @@ class SwipeViewModel extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _reloadForRole() async {
+    await _loadGigs();
+    await _startDiscoveryStreams();
+  }
+
+  Future<void> _startDiscoveryStreams() async {
+    await _availableGigsSubscription?.cancel();
+    await _workerApplicationsSubscription?.cancel();
+    if (isPosterMode) return;
+
+    _availableGigsSubscription = _repo.watchAvailableGigs().listen((gigs) {
+      _gigs = gigs;
+      if (_currentIndex >= _discoveryGigs.length) _currentIndex = 0;
+      notifyListeners();
+    }, onError: (Object error) {
+      this.error = _friendlyError(error);
+      notifyListeners();
+    });
+
+    _workerApplicationsSubscription =
+        _repo.watchWorkerApplications().listen((applications) {
+      _appliedGigIds
+        ..clear()
+        ..addAll(applications.map((application) => application.gigId));
+      if (_currentIndex >= _discoveryGigs.length) _currentIndex = 0;
+      notifyListeners();
+    }, onError: (Object error) {
+      this.error = _friendlyError(error);
+      notifyListeners();
+    });
   }
 
   Future<void> _loadGigs() async {
@@ -339,6 +374,8 @@ class SwipeViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _profileSubscription?.cancel();
+    _availableGigsSubscription?.cancel();
+    _workerApplicationsSubscription?.cancel();
     super.dispose();
   }
 }
