@@ -11,6 +11,7 @@ import 'data/services/chat_service.dart';
 import 'data/services/gig_service.dart';
 import 'data/services/proof_video_service.dart';
 import 'data/services/profile_photo_service.dart';
+import 'data/services/engagement_service.dart';
 
 class HustleLinkApp extends StatefulWidget {
   const HustleLinkApp({super.key});
@@ -55,7 +56,9 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
             create: (_) => ProofVideoService(),
             child: Provider<ProfilePhotoService>(
               create: (_) => ProfilePhotoService(),
-              child: Provider<GigRepository>(
+              child: Provider<EngagementService>(
+                create: (_) => EngagementService(),
+                child: Provider<GigRepository>(
               create: (_) => GigRepository(GigService()),
               child: MaterialApp.router(
                 title: 'HUSTLELINK',
@@ -65,6 +68,7 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
                 themeMode: ThemeMode.system,
                 routerConfig: _router,
               ),
+                ),
               ),
             ),
           ),
