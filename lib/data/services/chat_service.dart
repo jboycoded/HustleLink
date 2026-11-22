@@ -39,6 +39,12 @@ class ChatService {
         .snapshots();
   }
 
+  Future<void> removeConversation(String conversationId) async {
+    await _conversations.doc(conversationId).update({
+      'hiddenFor': FieldValue.arrayUnion([_uid]),
+    });
+  }
+
   Future<void> markAsRead(String conversationId) async {
     final uid = _uid;
     await _conversations.doc(conversationId).update({
@@ -71,6 +77,7 @@ class ChatService {
       'lastMessage': cleanText,
       'lastMessageAt': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
+      'hiddenFor': FieldValue.arrayRemove([recipientId]),
     });
     await batch.commit();
     await _firestore.collection('notifications').add({
