@@ -573,9 +573,19 @@ service cloud.firestore {
           ||
           (
             request.resource.data.type == 'gig_completion_confirmed'
-            && get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterId in [request.auth.uid, request.resource.data.recipientId]
-            && get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.acceptedWorkerId in [request.auth.uid, request.resource.data.recipientId]
-            && request.auth.uid != request.resource.data.recipientId
+            && (
+              (
+                request.auth.uid == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterId
+                && request.resource.data.recipientId == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.acceptedWorkerId
+                && get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterCompletionConfirmed == true
+              )
+              ||
+              (
+                request.auth.uid == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.acceptedWorkerId
+                && request.resource.data.recipientId == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterId
+                && get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.workerCompletionConfirmed == true
+              )
+            )
           )
         )
         && request.resource.data.title is string
