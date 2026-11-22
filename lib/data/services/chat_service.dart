@@ -54,6 +54,12 @@ class ChatService {
     if (cleanText.isEmpty) return;
     final uid = _uid;
     final conversation = _conversations.doc(conversationId);
+    final conversationSnapshot = await conversation.get();
+    if (!conversationSnapshot.exists) throw StateError('Conversation not found.');
+    final conversationData = conversationSnapshot.data()!;
+    final recipientId = conversationData['workerId'] == uid
+        ? conversationData['posterId'] as String
+        : conversationData['workerId'] as String;
     final message = conversation.collection('messages').doc();
     final batch = _firestore.batch();
     batch.set(message, {
@@ -67,5 +73,15 @@ class ChatService {
       'lastSenderId': uid,
     });
     await batch.commit();
+    await _firestore.collection('notifications').add({
+      'recipientId': recipientId,
+      'actorId': uid,
+      'type': 'new_message',
+      'title': 'New message',
+      'body': cleanText.length > 90 ? '${cleanText.substring(0, 87)}...' : cleanText,
+      'relatedId': conversationId,
+      'isRead': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 }
