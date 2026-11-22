@@ -214,7 +214,18 @@ class GigService {
       'gigCategory': gigData['category'] ?? gig.category,
       'gigPay': gigData['pay'] ?? gig.pay,
       'gigLocation': gigData['location'] ?? gig.location,
+      'workerPhotoUrl': workerProfile?['photoUrl'],
       'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    await _firestore.collection('notifications').add({
+      'recipientId': gig.posterId,
+      'actorId': uid,
+      'type': 'application_received',
+      'title': 'New gig application',
+      'body': '${workerName == null || workerName.isEmpty ? 'A worker' : workerName} applied for ${gig.title}.',
+      'relatedId': applicationId,
+      'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -313,6 +324,16 @@ class GigService {
         'status': 'rejected',
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      await _firestore.collection('notifications').add({
+        'recipientId': data['workerId'],
+        'actorId': _uid,
+        'type': 'application_rejected',
+        'title': 'Application update',
+        'body': 'Your application for ${data['gigTitle'] ?? 'a gig'} was not selected.',
+        'relatedId': applicationId,
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
       return;
     }
 
@@ -349,6 +370,17 @@ class GigService {
         'acceptedWorkerId': application['workerId'],
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      final notificationRef = _firestore.collection('notifications').doc();
+      transaction.set(notificationRef, {
+        'recipientId': application['workerId'],
+        'actorId': _uid,
+        'type': 'application_accepted',
+        'title': 'You got the gig!',
+        'body': 'Your application for ${application['gigTitle'] ?? 'the gig'} was accepted. You can now chat with the poster.',
+        'relatedId': applicationId,
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
       transaction.set(conversationRef, {
         'applicationId': applicationId,
         'gigId': gigId,
@@ -363,6 +395,8 @@ class GigService {
             ? (application['workerName'] as String).trim()
             : 'Worker',
         'posterName': (gigData['posterName'] as String?) ?? 'Poster',
+        'workerPhotoUrl': application['workerPhotoUrl'],
+        'posterPhotoUrl': (await transaction.get(_firestore.collection('users').doc(_uid))).data()?['photoUrl'],
         'participants': [application['workerId'], application['posterId']],
         'lastMessage': 'Application accepted. You can now chat.',
         'lastMessageAt': FieldValue.serverTimestamp(),
