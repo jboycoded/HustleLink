@@ -83,6 +83,7 @@ class MatchesViewModel extends ChangeNotifier {
     try {
       final profile = await _profiles.getMyProfile();
       activeRole = profile.activeRole;
+      statusFilter = activeRole == 'poster' ? 'pending' : 'all';
       _profileSubscription ??= _profiles.watchMyProfile().listen(
         _handleProfileUpdate,
         onError: (_) {
@@ -101,6 +102,7 @@ class MatchesViewModel extends ChangeNotifier {
   void _handleProfileUpdate(UserProfile? profile) {
     if (profile == null || profile.activeRole == activeRole) return;
     activeRole = profile.activeRole;
+    statusFilter = activeRole == 'poster' ? 'pending' : 'all';
     unawaited(_listenToRoleData());
   }
 
