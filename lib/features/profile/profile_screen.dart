@@ -181,7 +181,21 @@ class ProfileScreen extends StatelessWidget {
                               tooltip: 'Change profile photo',
                               onPressed: vm.isSaving ? null : () => _chooseProfilePhoto(context, vm),
                               icon: const Icon(Icons.camera_alt_rounded, size: 17),
-                              style: IconButton.styleFrom(minimumSize: const Size(34, 34), padding: EdgeInsets.zero),
+                              style: IconButton.styleFrom(
+                                minimumSize: const Size(34, 34),
+                                padding: EdgeInsets.zero,
+                                backgroundColor: scheme.secondary,
+                                foregroundColor: scheme.onSecondary,
+                                disabledBackgroundColor:
+                                    scheme.secondary.withValues(alpha: .55),
+                                disabledForegroundColor:
+                                    scheme.onSecondary.withValues(alpha: .7),
+                                side: BorderSide(
+                                  color: scheme.outline,
+                                  width: AppTokens.borderWidth,
+                                ),
+                                shape: const CircleBorder(),
+                              ),
                             ),
                           ),
                         ],
