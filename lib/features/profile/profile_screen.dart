@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/proof_video_service.dart';
+import '../../../data/services/profile_photo_service.dart';
 import 'profile_view_model.dart';
 import 'models/user_profile.dart';
 import 'widgets/profile_proof_video_player.dart';
@@ -146,7 +147,10 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      Container(
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
                         width: 76,
                         height: 76,
                         decoration: BoxDecoration(
@@ -162,13 +166,21 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                         alignment: Alignment.center,
-                        child: Text(
-                          profile.initials,
-                          style: text.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: scheme.onSecondary,
+                        child: profile.photoUrl != null && profile.photoUrl!.isNotEmpty
+                            ? ClipOval(child: Image.network(profile.photoUrl!, width: 76, height: 76, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Text(profile.initials, style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w700, color: scheme.onSecondary)))))
+                            : Text(profile.initials, style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w700, color: scheme.onSecondary)),
+                      ),
+                          Positioned(
+                            right: -4,
+                            bottom: -4,
+                            child: IconButton.filled(
+                              tooltip: 'Change profile photo',
+                              onPressed: vm.isSaving ? null : () => _chooseProfilePhoto(context, vm),
+                              icon: const Icon(Icons.camera_alt_rounded, size: 17),
+                              style: IconButton.styleFrom(minimumSize: const Size(34, 34), padding: EdgeInsets.zero),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -381,6 +393,19 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _chooseProfilePhoto(BuildContext context, ProfileViewModel vm) async {
+    try {
+      final url = await context.read<ProfilePhotoService>().pickAndUpload();
+      if (url == null || !context.mounted) return;
+      final saved = await vm.updateProfilePhotoUrl(url);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(saved ? 'Profile photo updated.' : vm.errorMessage ?? 'Could not save profile photo.')));
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Bad state: ', ''))));
+    }
   }
 
   Future<void> _chooseProofVideo(
