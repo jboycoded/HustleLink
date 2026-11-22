@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_tokens.dart';
 import '../../data/repositories/user_profile_repository.dart';
+import '../../data/services/engagement_service.dart';
 import 'models/user_profile.dart';
 import 'widgets/profile_proof_video_player.dart';
 
@@ -30,6 +32,34 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     if (oldWidget.userId != widget.userId) _loadProfile();
   }
 
+  Future<void> _reportProfile(BuildContext context, EngagementService service) async {
+    const reasons = ['spam', 'fraud', 'harassment', 'unsafe', 'inappropriate', 'other'];
+    var reason = reasons.first;
+    final details = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Report profile'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            DropdownButtonFormField<String>(value: reason, items: reasons.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(), onChanged: (v) { if (v != null) setState(() => reason = v); }),
+            const SizedBox(height: 12),
+            TextField(controller: details, maxLines: 3, maxLength: 500, decoration: const InputDecoration(labelText: 'Additional details (optional)')),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Submit report')),
+          ],
+        ),
+      ),
+    );
+    if (submitted == true && context.mounted) {
+      await service.report(targetType: 'user', targetId: widget.userId, reason: reason, details: details.text);
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted. Thank you.')));
+    }
+    details.dispose();
+  }
+
   void _loadProfile() {
     _profileFuture =
         context.read<UserProfileRepository>().getPublicProfile(widget.userId);
@@ -41,7 +71,39 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final scheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('PUBLIC PROFILE')),
+      appBar: AppBar(
+        title: const Text('PUBLIC PROFILE'),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              final engagement = context.read<EngagementService>();
+              if (value == 'block') {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: const Text('Block this account?'),
+                    content: const Text('You will no longer see this person’s gigs, and the two accounts will not be able to apply to or message each other.'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+                      FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Block')),
+                    ],
+                  ),
+                );
+                if (confirmed == true && context.mounted) {
+                  await engagement.blockUser(widget.userId);
+                  if (context.mounted) context.pop();
+                }
+              } else if (value == 'report') {
+                await _reportProfile(context, engagement);
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'report', child: Text('Report profile')),
+              PopupMenuItem(value: 'block', child: Text('Block account')),
+            ],
+          ),
+        ],
+      ),
       body: FutureBuilder<UserProfile?>(
         future: _profileFuture,
         builder: (context, snapshot) {
