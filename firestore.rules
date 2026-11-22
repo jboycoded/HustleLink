@@ -403,9 +403,7 @@ service cloud.firestore {
     match /conversations/{conversationId} {
       function isParticipant() {
         return request.auth != null
-          && request.auth.uid in resource.data.participants
-          && !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blockedUsers/$(resource.data.workerId == request.auth.uid ? resource.data.posterId : resource.data.workerId))
-          && !exists(/databases/$(database)/documents/users/$(resource.data.workerId == request.auth.uid ? resource.data.posterId : resource.data.workerId)/blockedUsers/$(request.auth.uid));
+          && request.auth.uid in resource.data.participants;
       }
 
       allow read: if isParticipant();
@@ -497,8 +495,8 @@ service cloud.firestore {
             && request.auth.uid in get(
               /databases/$(database)/documents/conversations/$(conversationId)
             ).data.participants
-            && !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blockedUsers/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.workerId == request.auth.uid ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.posterId : get(/databases/$(database)/documents/conversations/$(conversationId)).data.workerId))
-            && !exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.workerId == request.auth.uid ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.posterId : get(/databases/$(database)/documents/conversations/$(conversationId)).data.workerId)/blockedUsers/$(request.auth.uid));
+            && !exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.workerId)/blockedUsers/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.posterId))
+            && !exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.posterId)/blockedUsers/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.workerId));
         }
 
         allow read: if canAccessConversation();
