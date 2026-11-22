@@ -10,7 +10,14 @@ const corsHeaders = {
 
 const FIREBASE_PROJECT_ID = Deno.env.get("FIREBASE_PROJECT_ID") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
+// Supabase injects named secret API keys as a JSON object.
+const secretKeysJson = Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}";
+let SUPABASE_SECRET_KEY = "";
+try {
+  SUPABASE_SECRET_KEY = JSON.parse(secretKeysJson)["default"] ?? "";
+} catch {
+  console.error("Supabase secret-key environment variable is not valid JSON.");
+}
 const BUCKET = "worker-proof-videos";
 
 const firebaseJwks = createRemoteJWKSet(
