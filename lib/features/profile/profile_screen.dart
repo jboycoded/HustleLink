@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -63,6 +64,11 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
+                IconButton(
+                  tooltip: 'Notifications',
+                  onPressed: () => context.push('/notifications'),
+                  icon: const Icon(Icons.notifications_none_rounded),
+                ),
                 if (profile.isVerified)
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -263,6 +269,8 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 20),
+                _ProfileCompleteness(profile: profile),
                 const SizedBox(height: 20),
 
                 // Availability
