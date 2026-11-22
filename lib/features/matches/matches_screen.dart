@@ -118,54 +118,49 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
   Widget _buildPosterDiagnostic(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Card(
-          color: scheme.surface,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: BorderSide(
-              color: scheme.outline,
-              width: AppTokens.borderWidth,
-            ),
+
+    // DIAGNOSTIC STAGE 2: test a plain scrollable list with static content.
+    // No repository data, custom gig cards, refresh control, or tap handlers.
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            border: Border.all(color: scheme.outline),
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: SizedBox(
-            width: double.infinity,
-            child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 48,
-                    color: scheme.secondary,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'POSTER DIAGNOSTIC VIEW',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: scheme.onSurface,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'If this card is visible, the parent Matches layout is rendering and the fault is inside the original poster content subtree.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
-            ),
+          child: Text(
+            'POSTER LIST DIAGNOSTIC',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: scheme.onSurface,
+                  fontWeight: FontWeight.w800,
+                ),
           ),
         ),
-      ),
+        const SizedBox(height: 16),
+        for (var index = 1; index <= 3; index++) ...[
+          Container(
+            height: 88,
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              border: Border.all(color: scheme.outline),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              'Static poster list item $index',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+          if (index != 3) const SizedBox(height: 12),
+        ],
+      ],
     );
   }
 
