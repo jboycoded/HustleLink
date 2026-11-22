@@ -730,12 +730,16 @@ class _ApplicationCard extends StatelessWidget {
                 const SizedBox(width: 10),
               ],
               Expanded(
-                child: Text(
+                child: InkWell(
+                  onTap: showWorkerName ? () => context.push('/profile/${application.workerId}') : null,
+                  child: Text(
                   showWorkerName ? application.workerName : application.gigTitle,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: scheme.onSurface,
+                    decoration: showWorkerName ? TextDecoration.underline : null,
                   ),
+                ),
                 ),
               ),
               Container(
