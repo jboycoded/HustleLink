@@ -172,7 +172,7 @@ class EngagementService {
   }
 
   Future<bool> hasReviewed(String gigId) async {
-    final snapshot = await _db.collection('reviews').doc('${gigId}_${_uid}').get();
+    final snapshot = await _db.collection('reviews').doc('$gigId\_${_uid}').get();
     return snapshot.exists;
   }
 
@@ -200,7 +200,7 @@ class EngagementService {
       throw StateError('Only the gig participants can leave a review.');
     }
     final revieweeId = uid == workerId ? posterId : workerId;
-    final id = '${gigId}_${uid}';
+    final id = '$gigId\_${uid}';
     final ref = _db.collection('reviews').doc(id);
     final reviewer = await _db.collection('users').doc(uid).get();
     await _db.runTransaction((transaction) async {
