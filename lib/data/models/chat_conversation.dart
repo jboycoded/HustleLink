@@ -16,6 +16,7 @@ class ChatConversation {
     this.lastMessageAt,
     this.workerPhotoUrl,
     this.posterPhotoUrl,
+    this.hiddenFor = const [],
   });
 
   final String id;
@@ -32,6 +33,9 @@ class ChatConversation {
   final DateTime? lastMessageAt;
   final String? workerPhotoUrl;
   final String? posterPhotoUrl;
+  final List<String> hiddenFor;
+
+  bool isHiddenFor(String userId) => hiddenFor.contains(userId);
 
   bool isUnreadFor(String userId) {
     if (lastSenderId.isEmpty || lastSenderId == userId || lastMessageAt == null) {
@@ -65,6 +69,7 @@ class ChatConversation {
       lastMessageAt: timestamp is Timestamp ? timestamp.toDate() : null,
       workerPhotoUrl: data['workerPhotoUrl'] as String?,
       posterPhotoUrl: data['posterPhotoUrl'] as String?,
+      hiddenFor: List<String>.from(data['hiddenFor'] as List? ?? const []),
     );
   }
 }
