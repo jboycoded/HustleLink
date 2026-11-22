@@ -89,6 +89,18 @@ class GigService {
     return document.id;
   }
 
+  Stream<List<Gig>> watchAvailableGigs() {
+    return _gigs.where('status', isEqualTo: 'open').snapshots().map((snapshot) {
+      final gigs = snapshot.docs
+          .where((document) => document.data()['posterId'] != _uid)
+          .map((document) => Gig.fromMap(document.id, document.data()))
+          .toList();
+      gigs.sort((a, b) => (b.createdAt ?? DateTime(2000))
+          .compareTo(a.createdAt ?? DateTime(2000)));
+      return gigs;
+    });
+  }
+
   Future<List<Gig>> fetchAvailableGigs() async {
     final snapshot = await _gigs
         .where('status', isEqualTo: 'open')
