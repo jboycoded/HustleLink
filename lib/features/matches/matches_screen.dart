@@ -614,7 +614,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
     }
   }
 
-  // ignore: unused_element
   // Retained for the next diagnostic stage; the poster subtree is bypassed for now.
   Widget _buildPosterApplications(
     BuildContext context,
