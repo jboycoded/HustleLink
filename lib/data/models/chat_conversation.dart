@@ -14,6 +14,8 @@ class ChatConversation {
     required this.lastSenderId,
     required this.lastReadAt,
     this.lastMessageAt,
+    this.workerPhotoUrl,
+    this.posterPhotoUrl,
   });
 
   final String id;
@@ -28,6 +30,8 @@ class ChatConversation {
   final String lastSenderId;
   final Map<String, DateTime?> lastReadAt;
   final DateTime? lastMessageAt;
+  final String? workerPhotoUrl;
+  final String? posterPhotoUrl;
 
   bool isUnreadFor(String userId) {
     if (lastSenderId.isEmpty || lastSenderId == userId || lastMessageAt == null) {
@@ -59,6 +63,8 @@ class ChatConversation {
       lastSenderId: data['lastSenderId'] as String? ?? '',
       lastReadAt: readAt,
       lastMessageAt: timestamp is Timestamp ? timestamp.toDate() : null,
+      workerPhotoUrl: data['workerPhotoUrl'] as String?,
+      posterPhotoUrl: data['posterPhotoUrl'] as String?,
     );
   }
 }
