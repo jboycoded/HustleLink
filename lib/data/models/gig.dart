@@ -16,6 +16,9 @@ class Gig {
     this.createdAt,
     this.updatedAt,
     this.distanceKm,
+    this.workerCompletionConfirmed = false,
+    this.posterCompletionConfirmed = false,
+    this.completedAt,
   });
 
   final String id;
@@ -34,6 +37,9 @@ class Gig {
 
   // Reserved for a future real distance calculation.
   final double? distanceKm;
+  final bool workerCompletionConfirmed;
+  final bool posterCompletionConfirmed;
+  final DateTime? completedAt;
 
   bool get isOpen => status == 'open';
 
@@ -59,6 +65,9 @@ class Gig {
           data['proofVideoRequired'] as bool? ?? true,
       createdAt: readDate(data['createdAt']),
       updatedAt: readDate(data['updatedAt']),
+      workerCompletionConfirmed: data['workerCompletionConfirmed'] as bool? ?? false,
+      posterCompletionConfirmed: data['posterCompletionConfirmed'] as bool? ?? false,
+      completedAt: readDate(data['completedAt']),
     );
   }
 
