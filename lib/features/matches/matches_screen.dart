@@ -110,6 +110,24 @@ class _MatchesScreenState extends State<MatchesScreen> {
               ],
             ),
           ),
+          if (!vm.isLoading && vm.error == null && vm.applicationCount > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(children: [
+                  for (final filter in ['all', 'pending', 'accepted', 'rejected'])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(filter == 'all' ? 'All' : filter[0].toUpperCase() + filter.substring(1)),
+                        selected: vm.statusFilter == filter,
+                        onSelected: (_) => vm.setStatusFilter(filter),
+                      ),
+                    ),
+                ]),
+              ),
+            ),
           Expanded(child: body),
         ],
       ),
@@ -124,10 +142,10 @@ class _MatchesScreenState extends State<MatchesScreen> {
       onRefresh: vm.load,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        itemCount: vm.workerApplications.length,
+        itemCount: vm.filteredWorkerApplications.length,
         separatorBuilder: (_, __) => const SizedBox(height: 14),
         itemBuilder: (context, index) {
-          final application = vm.workerApplications[index];
+          final application = vm.filteredWorkerApplications[index];
 
           return _ApplicationCard(
             application: application,
