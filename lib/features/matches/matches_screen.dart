@@ -875,6 +875,7 @@ class _CompletionPanelState extends State<_CompletionPanel> {
   Future<void> _review(Gig gig) async {
     final service = context.read<EngagementService>();
     if (await service.hasReviewed(gig.id)) return;
+    if (!mounted) return;
     var rating = 5;
     final comment = TextEditingController();
     final submitted = await showDialog<bool>(
