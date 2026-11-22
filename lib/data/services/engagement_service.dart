@@ -12,6 +12,8 @@ class EngagementService {
   final FirebaseFirestore _db;
   final FirebaseAuth _auth;
 
+  String get currentUserId => _uid;
+
   String get _uid {
     final value = _auth.currentUser?.uid;
     if (value == null) throw StateError('You must be signed in.');
@@ -146,6 +148,16 @@ class EngagementService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
     });
+    final updated = await gigRef.get();
+    final data = updated.data() ?? {};
+    final otherId = uid == data['acceptedWorkerId'] ? data['posterId'] as String : data['acceptedWorkerId'] as String;
+    await notifyUser(
+      recipientId: otherId,
+      type: 'gig_completion_confirmed',
+      title: 'Completion confirmed',
+      body: 'The other party confirmed completion of $gigTitle.',
+      relatedId: gigId,
+    );
   }
 
   Future<bool> hasReviewed(String gigId) async {
