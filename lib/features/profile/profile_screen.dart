@@ -247,22 +247,12 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _StatBox(
-                              label: 'RATING',
-                              value: '${profile.rating} ★',
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _StatBox(
-                              label: 'COMPLETED',
-                              value: '${profile.completedGigs} GIGS',
-                            ),
-                          ),
-                        ],
+                      SizedBox(
+                        width: double.infinity,
+                        child: _StatBox(
+                          label: 'COMPLETED',
+                          value: '${profile.completedGigs} GIGS',
+                        ),
                       ),
                     ],
                   ),
