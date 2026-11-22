@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../data/services/engagement_service.dart';
 
@@ -377,7 +378,11 @@ class SwipeScreen extends StatelessWidget {
                   vm.nextGig();
                 }
               },
-              child: GigCard(gig: gig, onReport: () => _reportGig(context, gig)),
+              child: GigCard(
+                gig: gig,
+                onReport: () => _reportGig(context, gig),
+                onPosterTap: () => context.push('/profile/${gig.posterId}'),
+              ),
             ),
           ),
         ),
