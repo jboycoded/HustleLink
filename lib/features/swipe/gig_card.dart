@@ -36,6 +36,8 @@ class GigCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              if (gig.posterPhotoUrl != null && gig.posterPhotoUrl!.isNotEmpty)
+                CircleAvatar(radius: 16, backgroundImage: NetworkImage(gig.posterPhotoUrl!)),
               Flexible(child: _Tag(gig.category)),
               const SizedBox(width: 10),
               Flexible(
