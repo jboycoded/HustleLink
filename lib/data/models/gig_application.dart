@@ -13,6 +13,7 @@ class GigApplication {
     required this.gigLocation,
     required this.status,
     this.createdAt,
+    this.workerPhotoUrl,
   });
 
   final String id;
@@ -26,6 +27,7 @@ class GigApplication {
   final String gigLocation;
   final String status;
   final DateTime? createdAt;
+  final String? workerPhotoUrl;
 
   factory GigApplication.fromMap(
     String id,
@@ -45,6 +47,7 @@ class GigApplication {
       gigLocation: data['gigLocation'] as String? ?? '',
       status: data['status'] as String? ?? 'pending',
       createdAt: timestamp is Timestamp ? timestamp.toDate() : null,
+      workerPhotoUrl: data['workerPhotoUrl'] as String?,
     );
   }
 }
