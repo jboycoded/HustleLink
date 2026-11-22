@@ -36,11 +36,14 @@ ID token. The Supabase secret key is used only by the Edge Function and must nev
 the Flutter app or repository.
 
 Deploy `supabase/functions/proof-video/index.ts` as an Edge Function named `proof-video`.
-Set these Edge Function secrets in the Supabase Dashboard:
+Set this custom Edge Function secret in the Supabase Dashboard:
 
 - `FIREBASE_PROJECT_ID`: `hustlelink-483a9`
-- `SUPABASE_URL`: the Supabase project URL
-- `SUPABASE_SECRET_KEY`: the project's secret key (server-side only)
+
+Supabase automatically provides `SUPABASE_URL` and the project's named secret API keys
+through `SUPABASE_SECRET_KEYS`. The function reads the `default` key from that JSON value;
+you do not need to add a custom `SUPABASE_SECRET_KEY` secret. If you need to view or create
+the key, open **Settings → API Keys → Secret keys**. Keep it server-side only.
 
 The function's `verify_jwt = false` setting is intentional: it validates Firebase ID tokens
 itself rather than expecting Supabase Auth tokens. Keep that verification in place.
