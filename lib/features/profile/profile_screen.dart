@@ -383,7 +383,16 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 const SizedBox(height: 24),
                 _OwnProfileReviews(userId: profile.id),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => _manageBlockedAccounts(context),
+                    icon: const Icon(Icons.block_outlined),
+                    label: const Text('Manage blocked accounts'),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 _ProfileProofVideoSection(
                   videoUrl: profile.proofVideoUrl,
                   isBusy: vm.isSaving || vm.isVideoUploading,
@@ -403,6 +412,54 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _manageBlockedAccounts(BuildContext context) async {
+    final service = context.read<EngagementService>();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: SizedBox(
+            height: MediaQuery.of(sheetContext).size.height * .55,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('BLOCKED ACCOUNTS', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+              const SizedBox(height: 12),
+              Expanded(child: FutureBuilder<List<Map<String, String>>>(
+                future: service.getBlockedUsers(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  final users = snapshot.data!;
+                  if (users.isEmpty) return const Center(child: Text('You have not blocked any accounts.'));
+                  return ListView.separated(
+                    itemCount: users.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final user = users[index];
+                      return ListTile(
+                        title: Text(user['name'] ?? 'HustleLink member'),
+                        subtitle: Text('Blocked account'),
+                        trailing: TextButton(
+                          onPressed: () async {
+                            await service.unblockUser(user['id']!);
+                            if (sheetContext.mounted) Navigator.pop(sheetContext);
+                            if (context.mounted) _manageBlockedAccounts(context);
+                          },
+                          child: const Text('Unblock'),
+                        ),
+                      );
+                    },
+                  );
+                },
+              )),
+            ]),
+          ),
+        ),
       ),
     );
   }
