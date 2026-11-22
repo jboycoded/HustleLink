@@ -316,7 +316,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     width: 42,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Theme.of(sheetContext).colorScheme.outlineVariant,
+                      color: _themeFor(sheetContext).colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(99),
                     ),
                   ),
@@ -324,14 +324,14 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 const SizedBox(height: 20),
                 Text(
                   gigTitle,
-                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                  style: _themeFor(sheetContext).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${applications.length} applicants',
-                  style: Theme.of(sheetContext).textTheme.bodySmall,
+                  style: _themeFor(sheetContext).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 16),
                 Expanded(
@@ -419,7 +419,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     width: 42,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Theme.of(sheetContext).colorScheme.outlineVariant,
+                      color: _themeFor(sheetContext).colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(99),
                     ),
                   ),
@@ -430,9 +430,9 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     CircleAvatar(
                       radius: 28,
                       backgroundColor:
-                          Theme.of(sheetContext).colorScheme.secondary,
+                          _themeFor(sheetContext).colorScheme.secondary,
                       foregroundColor:
-                          Theme.of(sheetContext).colorScheme.onSecondary,
+                          _themeFor(sheetContext).colorScheme.onSecondary,
                       child: Text(
                         application.workerName
                             .trim()
@@ -451,7 +451,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                         children: [
                           Text(
                             application.workerName,
-                            style: Theme.of(sheetContext)
+                            style: _themeFor(sheetContext)
                                 .textTheme
                                 .titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w800),
@@ -465,7 +465,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 const SizedBox(height: 22),
                 Text(
                   'APPLICATION DETAILS',
-                  style: Theme.of(sheetContext).textTheme.labelSmall?.copyWith(
+                  style: _themeFor(sheetContext).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1,
                       ),
@@ -1187,9 +1187,7 @@ class _ThemeAwareBottomSheet extends StatelessWidget {
     // Modal routes capture the Theme that existed when they were opened.
     // Read platform brightness independently so an already-open sheet can
     // rebuild with the current app theme when the system theme changes.
-    final theme = MediaQuery.platformBrightnessOf(context) == Brightness.dark
-        ? AppTheme.dark()
-        : AppTheme.light();
+    final theme = _themeFor(context);
 
     return Theme(
       data: theme,
@@ -1201,4 +1199,11 @@ class _ThemeAwareBottomSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+
+ThemeData _themeFor(BuildContext context) {
+  return MediaQuery.platformBrightnessOf(context) == Brightness.dark
+      ? AppTheme.dark()
+      : AppTheme.light();
 }
