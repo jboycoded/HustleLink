@@ -83,11 +83,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       radius: 42,
                       backgroundColor: scheme.secondary,
                       foregroundColor: scheme.onSecondary,
-                      child: Text(
-                        profile.initials,
-                        style: theme.textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
+                      backgroundImage: profile.photoUrl != null && profile.photoUrl!.isNotEmpty
+                          ? NetworkImage(profile.photoUrl!)
+                          : null,
+                      child: profile.photoUrl == null || profile.photoUrl!.isEmpty
+                          ? Text(profile.initials, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800))
+                          : null,
                     ),
                     const SizedBox(height: 14),
                     Text(
