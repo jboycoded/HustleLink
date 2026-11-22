@@ -14,6 +14,7 @@ import '../../../data/models/gig_review.dart';
 import 'profile_view_model.dart';
 import 'models/user_profile.dart';
 import 'widgets/profile_proof_video_player.dart';
+import '../notifications/notification_bell.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -66,11 +67,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                IconButton(
-                  tooltip: 'Notifications',
-                  onPressed: () => context.push('/notifications'),
-                  icon: const Icon(Icons.notifications_none_rounded),
-                ),
+                const NotificationBell(),
                 if (profile.isVerified)
                   Container(
                     padding: const EdgeInsets.symmetric(
