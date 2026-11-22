@@ -123,8 +123,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
     final scheme = Theme.of(context).colorScheme;
     final gigs = vm.posterGigs;
 
-    // DIAGNOSTIC STAGE 3: keep the plain ListView, but feed it actual gig data.
-    // Still excludes custom cards, RefreshIndicator, and tap handlers.
+    // DIAGNOSTIC STAGE 4: preserve the real list length, but do not read
+    // any gig fields or application data inside the item builder.
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       itemCount: gigs.length + 1,
@@ -133,7 +133,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: Text(
-              'POSTER DATA DIAGNOSTIC • ${gigs.length} gigs',
+              'POSTER ITEM DIAGNOSTIC • ${gigs.length} gigs',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: scheme.onSurface,
                     fontWeight: FontWeight.w800,
@@ -142,38 +142,14 @@ class _MatchesScreenState extends State<MatchesScreen> {
           );
         }
 
-        final gig = gigs[index - 1];
-        final applications =
-            vm.posterApplicationsByGig[gig.id] ?? const <GigApplication>[];
-
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: scheme.surface,
-              border: Border.all(color: scheme.outline),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  gig.title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: scheme.onSurface,
-                        fontWeight: FontWeight.w700,
-                      ),
+          child: Text(
+            'STATIC GIG ITEM $index',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: scheme.onSurface,
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '${applications.length} applicants',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
-            ),
           ),
         );
       },
