@@ -7,6 +7,7 @@ import '../../core/theme/app_tokens.dart';
 import '../../data/models/gig_application.dart';
 import '../../data/models/gig.dart';
 import '../../data/repositories/gig_repository.dart';
+import '../../data/services/engagement_service.dart';
 import 'matches_view_model.dart';
 
 class MatchesScreen extends StatefulWidget {
@@ -794,6 +795,8 @@ class _ApplicationCard extends StatelessWidget {
               ),
             ),
           ],
+          if (application.status == 'accepted')
+            _CompletionPanel(application: application),
           Wrap(
             spacing: 14,
             runSpacing: 8,
@@ -816,6 +819,131 @@ class _ApplicationCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CompletionPanel extends StatefulWidget {
+  const _CompletionPanel({required this.application});
+  final GigApplication application;
+
+  @override
+  State<_CompletionPanel> createState() => _CompletionPanelState();
+}
+
+class _CompletionPanelState extends State<_CompletionPanel> {
+  bool _busy = false;
+
+  Future<void> _confirm(Gig gig) async {
+    final service = context.read<EngagementService>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirm gig completion?'),
+        content: const Text('Confirm only if the work has actually been completed. The gig will be marked completed after both the worker and poster confirm.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Not yet')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Confirm completion')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await service.confirmGigCompletion(gigId: gig.id, gigTitle: gig.title);
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _review(Gig gig) async {
+    final service = context.read<EngagementService>();
+    if (await service.hasReviewed(gig.id)) return;
+    var rating = 5;
+    final comment = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Leave a review'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('Rating: $rating / 5 stars'),
+            Slider(value: rating.toDouble(), min: 1, max: 5, divisions: 4,
+              onChanged: (value) => setDialogState(() => rating = value.round())),
+            TextField(controller: comment, maxLines: 3, maxLength: 500,
+              decoration: const InputDecoration(labelText: 'Comment (optional)')),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Submit review')),
+          ],
+        ),
+      ),
+    );
+    if (submitted == true && mounted) {
+      try {
+        await service.submitReview(gigId: gig.id, rating: rating, comment: comment.text);
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review submitted.')));
+      } catch (error) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    }
+    comment.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final service = context.read<EngagementService>();
+    return FutureBuilder<Gig?>(
+      future: context.read<GigRepository>().getGigById(widget.application.gigId),
+      builder: (context, snapshot) {
+        final gig = snapshot.data;
+        if (gig == null || widget.application.status != 'accepted') return const SizedBox.shrink();
+        final uid = service.currentUserId;
+        final isWorker = uid == widget.application.workerId;
+        final confirmed = isWorker ? gig.workerCompletionConfirmed : gig.posterCompletionConfirmed;
+        if (gig.status == 'completed') {
+          return FutureBuilder<bool>(
+            future: service.hasReviewed(gig.id),
+            builder: (context, reviewSnapshot) {
+              if (reviewSnapshot.data == true) {
+                return const Padding(
+                  padding: EdgeInsets.only(top: 12),
+                  child: Text('Gig completed • Review submitted'),
+                );
+              }
+              return Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: SizedBox(width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _review(gig),
+                    icon: const Icon(Icons.star_outline_rounded),
+                    label: const Text('Leave a review'),
+                  )),
+              );
+            },
+          );
+        }
+        if (gig.status != 'filled') return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Completion: Worker ${gig.workerCompletionConfirmed ? 'confirmed' : 'waiting'} • Poster ${gig.posterCompletionConfirmed ? 'confirmed' : 'waiting'}',
+              style: Theme.of(context).textTheme.bodySmall),
+            if (!confirmed)
+              SizedBox(width: double.infinity,
+                child: FilledButton.tonalIcon(
+                  onPressed: _busy ? null : () => _confirm(gig),
+                  icon: _busy ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.task_alt_rounded),
+                  label: const Text('Confirm completion'),
+                ))
+            else
+              const Text('You confirmed completion. Waiting for the other party.'),
+          ]),
+        );
+      },
     );
   }
 }
