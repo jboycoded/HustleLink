@@ -1,5 +1,3 @@
-// ignore_for_file: unused_element
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -55,10 +53,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
         ),
       );
     } else if (vm.isPosterMode) {
-      // TEMPORARY DIAGNOSTIC: replace the complete poster-specific subtree
-      // with a static widget to determine whether the failure is above or
-      // below this branch in the Matches screen widget tree.
-      body = _buildPosterDiagnostic(context, vm);
+      body = _buildPosterApplications(context, vm);
     } else if (vm.applicationCount == 0) {
       body = const _EmptyState(
         icon: Icons.favorite_border_rounded,
@@ -113,73 +108,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
           Expanded(child: body),
         ],
       ),
-    );
-  }
-
-  Widget _buildPosterDiagnostic(
-    BuildContext context,
-    MatchesViewModel vm,
-  ) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final gigs = vm.posterGigs;
-
-    // Diagnostic: render real gig data in plain Containers. This deliberately
-    // avoids SizedBox, Material, InkWell, overlays, and custom card widgets.
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      itemCount: gigs.length + 1,
-      itemBuilder: (listContext, index) {
-        if (index == 0) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: Text(
-              'POSTER CONTAINER DIAGNOSTIC • ${gigs.length} gigs',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: scheme.onSurface,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          );
-        }
-
-        final gig = gigs[index - 1];
-        final applications =
-            vm.posterApplicationsByGig[gig.id] ?? const <GigApplication>[];
-        final pending =
-            applications.where((item) => item.status == 'pending').length;
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: scheme.surface,
-            border: Border.all(color: scheme.outline, width: 1.5),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                gig.title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: scheme.onSurface,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                child: Text(
-                  '${applications.length} applicants • $pending pending',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
