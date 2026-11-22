@@ -9,6 +9,8 @@ class GigRepository {
 
   Future<List<Gig>> getGigs() => _service.fetchAvailableGigs();
 
+  Stream<List<Gig>> watchAvailableGigs() => _service.watchAvailableGigs();
+
   Future<List<Gig>> getMyGigs() => _service.fetchMyGigs();
 
   Future<Gig?> getGigById(String gigId) => _service.fetchGigById(gigId);
