@@ -55,6 +55,12 @@ class _MatchesScreenState extends State<MatchesScreen> {
           child: const Text('Try again'),
         ),
       );
+    } else if (vm.isPosterMode && vm.statusFilter != 'all' && vm.posterApplicationsByGig.isEmpty) {
+      body = const _EmptyState(
+        icon: Icons.filter_list_off_rounded,
+        title: 'No applications in this status.',
+        message: 'Choose another filter to see more applications.',
+      );
     } else if (vm.isPosterMode) {
       body = _buildPosterApplications(context, vm);
     } else if (vm.applicationCount == 0) {
@@ -62,6 +68,12 @@ class _MatchesScreenState extends State<MatchesScreen> {
         icon: Icons.favorite_border_rounded,
         title: 'No applications yet.',
         message: 'Gigs you apply for will appear here so you can track their status.',
+      );
+    } else if (vm.filteredWorkerApplications.isEmpty) {
+      body = const _EmptyState(
+        icon: Icons.filter_list_off_rounded,
+        title: 'No applications in this status.',
+        message: 'Choose another filter to see more applications.',
       );
     } else {
       body = _buildWorkerApplications(context, vm);
