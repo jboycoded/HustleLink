@@ -91,9 +91,12 @@ class GigService {
   }
 
   Stream<List<Gig>> watchAvailableGigs() {
-    return _gigs.where('status', isEqualTo: 'open').snapshots().map((snapshot) {
+    return _gigs.where('status', isEqualTo: 'open').snapshots().asyncMap((snapshot) async {
+      final blocked = await _firestore.collection('users').doc(_uid)
+          .collection('blockedUsers').get();
+      final blockedIds = blocked.docs.map((doc) => doc.id).toSet();
       final gigs = snapshot.docs
-          .where((document) => document.data()['posterId'] != _uid)
+          .where((document) => document.data()['posterId'] != _uid && !blockedIds.contains(document.data()['posterId']))
           .map((document) => Gig.fromMap(document.id, document.data()))
           .toList();
       gigs.sort((a, b) => (b.createdAt ?? DateTime(2000))
@@ -107,8 +110,11 @@ class GigService {
         .where('status', isEqualTo: 'open')
         .get();
 
+    final blocked = await _firestore.collection('users').doc(_uid)
+        .collection('blockedUsers').get();
+    final blockedIds = blocked.docs.map((doc) => doc.id).toSet();
     final gigs = snapshot.docs
-        .where((document) => document.data()['posterId'] != _uid)
+        .where((document) => document.data()['posterId'] != _uid && !blockedIds.contains(document.data()['posterId']))
         .map((document) => Gig.fromMap(
               document.id,
               document.data(),
