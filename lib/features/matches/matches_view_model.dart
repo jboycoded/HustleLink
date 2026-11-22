@@ -31,11 +31,11 @@ class MatchesViewModel extends ChangeNotifier {
   List<Gig> get posterGigs => List.unmodifiable(_posterGigs);
 
   Map<String, List<GigApplication>> get posterApplicationsByGig {
-    return Map.unmodifiable(
-      _posterApplicationsByGig.map(
-        (key, value) => MapEntry(key, List.unmodifiable(value)),
-      ),
-    );
+    final grouped = <String, List<GigApplication>>{};
+    _posterApplicationsByGig.forEach((key, value) {
+      grouped[key] = List<GigApplication>.unmodifiable(value);
+    });
+    return Map<String, List<GigApplication>>.unmodifiable(grouped);
   }
 
   int get applicationCount {
