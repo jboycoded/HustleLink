@@ -220,6 +220,12 @@ class EngagementService {
       if (data['paid'] == true) {
         throw StateError('This gig has already been marked as paid.');
       }
+      final alreadyConfirmed = uid == posterId
+          ? data['posterPaymentConfirmed'] == true
+          : data['workerPaymentConfirmed'] == true;
+      if (alreadyConfirmed) {
+        throw StateError('You have already confirmed this payment step.');
+      }
       if (uid == workerId && data['posterPaymentConfirmed'] != true) {
         throw StateError('The poster must mark the gig as paid before you confirm receipt.');
       }
@@ -235,6 +241,23 @@ class EngagementService {
           'paidAt': FieldValue.serverTimestamp(),
         },
         'updatedAt': FieldValue.serverTimestamp(),
+      });
+      final recipientId = uid == posterId ? workerId : posterId;
+      final notificationId = uid == posterId
+          ? '${gigId}_payment_marked'
+          : '${gigId}_payment_received';
+      final notificationRef = _notifications.doc(notificationId);
+      transaction.set(notificationRef, {
+        'recipientId': recipientId,
+        'actorId': uid,
+        'type': uid == posterId ? 'payment_marked' : 'payment_received',
+        'title': uid == posterId ? 'Payment marked' : 'Payment receipt confirmed',
+        'body': uid == posterId
+            ? 'The poster marked this gig as paid. Confirm receipt once you receive the payment.'
+            : 'The worker confirmed receipt of payment.',
+        'relatedId': gigId,
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
       });
     });
   }
