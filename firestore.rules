@@ -308,6 +308,46 @@ service cloud.firestore {
         )
         && request.resource.data.updatedAt == request.time;
 
+      allow update: if request.auth != null
+        && resource.data.status == 'completed'
+        && request.resource.data.status == 'completed'
+        && (
+          (
+            request.auth.uid == resource.data.posterId
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['posterPaymentConfirmed', 'paid', 'paidAt', 'updatedAt'])
+            && request.resource.data.posterPaymentConfirmed == true
+            && request.resource.data.get('workerPaymentConfirmed', false)
+                == resource.data.get('workerPaymentConfirmed', false)
+          )
+          ||
+          (
+            request.auth.uid == resource.data.acceptedWorkerId
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['workerPaymentConfirmed', 'paid', 'paidAt', 'updatedAt'])
+            && request.resource.data.workerPaymentConfirmed == true
+            && request.resource.data.get('posterPaymentConfirmed', false)
+                == resource.data.get('posterPaymentConfirmed', false)
+          )
+        )
+        && (
+          (
+            request.resource.data.get('posterPaymentConfirmed', false) == true
+            && request.resource.data.get('workerPaymentConfirmed', false) == true
+            && request.resource.data.paid == true
+            && request.resource.data.paidAt == request.time
+          )
+          ||
+          (
+            request.resource.data.get('posterPaymentConfirmed', false) != true
+            || request.resource.data.get('workerPaymentConfirmed', false) != true
+            ? request.resource.data.get('paid', false) == resource.data.get('paid', false)
+                && request.resource.data.get('paidAt', null) == resource.data.get('paidAt', null)
+            : false
+          )
+        )
+        && request.resource.data.updatedAt == request.time;
+
       allow delete: if request.auth != null
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.activeRole == 'poster'
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['poster'])
@@ -397,6 +437,17 @@ service cloud.firestore {
                         && getAfter(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.acceptedWorkerId == resource.data.workerId
                       )
                     )
+                    && request.resource.data.updatedAt == request.time;
+
+      allow update: if request.auth != null
+                    && resource.data.status == 'accepted'
+                    && request.resource.data.status == 'completed'
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['status', 'updatedAt'])
+                    && request.auth.uid in [resource.data.workerId, resource.data.posterId]
+                    && getAfter(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.status == 'completed'
+                    && getAfter(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.workerCompletionConfirmed == true
+                    && getAfter(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.posterCompletionConfirmed == true
                     && request.resource.data.updatedAt == request.time;
 
       allow delete: if request.auth != null
