@@ -194,6 +194,8 @@ class MatchesViewModel extends ChangeNotifier {
         error = null;
       } else if (recordCount == 0) {
         error = 'You are offline and there are no saved applications to display.';
+      } else {
+        error = null;
       }
       notifyListeners();
     }
