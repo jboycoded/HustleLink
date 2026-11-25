@@ -470,9 +470,7 @@ class SwipeScreen extends StatelessWidget {
                         : _PosterGigAction(
                             label: gig.status == 'completed'
                                 ? 'Completed'
-                                : gig.status == 'filled'
-                                    ? 'Filled'
-                                    : 'Closed',
+                                : 'Closed',
                             icon: gig.status == 'completed'
                                 ? Icons.task_alt_rounded
                                 : Icons.lock_outline_rounded,
