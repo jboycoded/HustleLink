@@ -173,12 +173,8 @@ service cloud.firestore {
     }
 
     match /gigs/{gigId} {
-      allow read: if request.auth != null
-                  && (
-                    resource.data.posterId == request.auth.uid
-                    || resource.data.status == 'open'
-                    || resource.data.acceptedWorkerId == request.auth.uid
-                  );
+      // Gig listings and their lifecycle status are public marketplace information.
+      allow read: if request.auth != null;
 
       allow create: if request.auth != null
                     && exists(/databases/$(database)/documents/users/$(request.auth.uid))
