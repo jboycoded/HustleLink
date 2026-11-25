@@ -212,6 +212,9 @@ class EngagementService {
       if (data['paid'] == true) {
         throw StateError('This gig has already been marked as paid.');
       }
+      if (uid == workerId && data['posterPaymentConfirmed'] != true) {
+        throw StateError('The poster must mark the gig as paid before you confirm receipt.');
+      }
       final posterConfirmed =
           data['posterPaymentConfirmed'] == true || uid == posterId;
       final workerConfirmed =
