@@ -249,6 +249,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 title: profile.activeRole == 'poster'
                     ? 'CREDIBILITY RATING'
                     : 'RATINGS & REVIEWS',
+                paidGigs: profile.activeRole == 'poster'
+                    ? profile.paidGigs
+                    : null,
               ),
               if (profile.activeRole == 'worker') ...[
               const SizedBox(height: 22),
@@ -286,9 +289,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 }
 
 class _ProfileReviews extends StatelessWidget {
-  const _ProfileReviews({required this.userId, required this.title});
+  const _ProfileReviews({required this.userId, required this.title, this.paidGigs});
   final String userId;
   final String title;
+  final int? paidGigs;
 
   @override
   Widget build(BuildContext context) {
@@ -304,8 +308,15 @@ class _ProfileReviews extends StatelessWidget {
           Row(children: [
             Expanded(child: Text(title,
               style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: .7))),
-            Text(reviews.isEmpty ? 'No reviews' : '${average.toStringAsFixed(1)} ★  •  ${reviews.length}',
-              style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
+            Text(
+              [
+                reviews.isEmpty
+                    ? 'No reviews'
+                    : '${average.toStringAsFixed(1)} ★  •  ${reviews.length} reviews',
+                if (paidGigs != null) '$paidGigs verified paid',
+              ].join('  •  '),
+              style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
           ]),
           const SizedBox(height: 10),
           if (snapshot.hasError)
