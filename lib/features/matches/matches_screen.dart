@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_tokens.dart';
+import '../../core/widgets/profile_avatar.dart';
 import '../../data/models/gig_application.dart';
 import '../../data/models/gig.dart';
 import '../../data/repositories/gig_repository.dart';
@@ -122,6 +123,30 @@ class _MatchesScreenState extends State<MatchesScreen> {
               ],
             ),
           ),
+          if (vm.offlineMessage != null)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: scheme.outline),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.wifi_off_rounded, size: 17, color: scheme.onSurfaceVariant),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      vm.offlineMessage!,
+                      style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ),
+                  TextButton(onPressed: vm.load, child: const Text('Retry')),
+                ],
+              ),
+            ),
           if (!vm.isLoading && vm.error == null && vm.recordCount > 0)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
@@ -272,6 +297,10 @@ class _MatchesScreenState extends State<MatchesScreen> {
                             const SizedBox(height: 16),
                           ],
                           _DetailRow(
+                            label: 'Gig status',
+                            value: _gigStatusLabel(gig?.status),
+                          ),
+                          _DetailRow(
                             label: 'Category',
                             value: gig?.category ??
                                 (applications.isNotEmpty ? applications.first.gigCategory : ''),
@@ -404,12 +433,11 @@ class _MatchesScreenState extends State<MatchesScreen> {
                             color: Theme.of(itemContext).colorScheme.outline,
                           ),
                         ),
-                        leading: CircleAvatar(
-                          backgroundColor:
-                              Theme.of(itemContext).colorScheme.secondary,
-                          foregroundColor:
-                              Theme.of(itemContext).colorScheme.onSecondary,
-                          child: Text(initials.isEmpty ? '?' : initials),
+                        leading: ProfileAvatar(
+                          userId: application.workerId,
+                          name: application.workerName,
+                          radius: 22,
+                          fallbackPhotoUrl: application.workerPhotoUrl,
                         ),
                         title: Text(
                           application.workerName,
@@ -469,22 +497,13 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 const SizedBox(height: 22),
                 Row(
                   children: [
-                    CircleAvatar(
+                    ProfileAvatar(
+                      userId: application.workerId,
+                      name: application.workerName,
                       radius: 28,
-                      backgroundColor:
-                          _themeFor(sheetContext).colorScheme.secondary,
-                      foregroundColor:
-                          _themeFor(sheetContext).colorScheme.onSecondary,
-                      child: Text(
-                        application.workerName
-                            .trim()
-                            .split(RegExp(r'\s+'))
-                            .where((part) => part.isNotEmpty)
-                            .take(2)
-                            .map((part) => part[0].toUpperCase())
-                            .join(),
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
+                      fallbackPhotoUrl: application.workerPhotoUrl,
+                      backgroundColor: _themeFor(sheetContext).colorScheme.secondary,
+                      foregroundColor: _themeFor(sheetContext).colorScheme.onSecondary,
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -528,9 +547,10 @@ class _MatchesScreenState extends State<MatchesScreen> {
                           .formatMediumDate(application.createdAt!),
                 ),
                 _DetailRow(
-                  label: 'Status',
+                  label: 'Application status',
                   value: application.status.toUpperCase(),
                 ),
+                _GigLifecycleStatus(gigId: application.gigId),
                 const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,
@@ -820,6 +840,10 @@ class _ApplicationCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          if (!showWorkerName) ...[
+            _GigLifecycleStatus(gigId: application.gigId),
+            const SizedBox(height: 8),
+          ],
           if (showWorkerName) ...[
             Text(
               application.gigTitle,
@@ -889,6 +913,50 @@ class _ApplicationCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+String _gigStatusLabel(String? status) {
+  switch (status) {
+    case 'open': return 'PENDING';
+    case 'filled': return 'ACCEPTED';
+    case 'closed': return 'CLOSED';
+    case 'completed': return 'COMPLETED';
+    default: return 'UNAVAILABLE';
+  }
+}
+
+class _GigLifecycleStatus extends StatelessWidget {
+  const _GigLifecycleStatus({required this.gigId});
+  final String gigId;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('gigs').doc(gigId).snapshots(),
+      builder: (context, snapshot) {
+        final status = snapshot.data?.data()?['status'] as String?;
+        final label = _gigStatusLabel(status);
+        return Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.flag_outlined, size: 16, color: scheme.onSurfaceVariant),
+              const SizedBox(width: 6),
+              Text(
+                'GIG STATUS: $label',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -1109,7 +1177,7 @@ class _CompletionPanelState extends State<_CompletionPanel> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.task_alt_rounded),
-                    label: const Text('Confirm completion'),
+                    label: const Text('Complete application'),
                   ),
                 )
               else
