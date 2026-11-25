@@ -32,25 +32,6 @@ class GigService {
     return user.uid;
   }
 
-  Future<void> _syncPublicProfile(
-    String uid,
-    Map<String, dynamic>? profile,
-  ) async {
-    if (profile == null) return;
-    await _firestore.collection('publicProfiles').doc(uid).set({
-      'uid': uid,
-      'fullName': profile['fullName'] as String? ?? '',
-      'activeRole': profile['activeRole'] as String? ?? 'worker',
-      'location': profile['location'] as String? ?? '',
-      'skills': List<String>.from(profile['skills'] ?? []),
-      'isAvailableForGigs': profile['isAvailableForGigs'] as bool? ?? true,
-      'rating': (profile['rating'] as num?)?.toDouble() ?? 0,
-      'completedGigs': (profile['completedGigs'] as num?)?.toInt() ?? 0,
-      'proofVideoUrl': profile['proofVideoUrl'] as String?,
-      'photoUrl': profile['photoUrl'] as String?,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-  }
 
   Future<String> createGig({
     required String title,
@@ -65,7 +46,6 @@ class GigService {
 
     final profile = await _firestore.collection('users').doc(uid).get();
     final profileData = profile.data();
-    await _syncPublicProfile(uid, profileData);
 
     final posterName =
         (profileData?['fullName'] as String?)?.trim().isNotEmpty == true
@@ -233,7 +213,6 @@ class GigService {
         await _firestore.collection('users').doc(uid).get();
 
     final workerProfile = profileDocument.data();
-    await _syncPublicProfile(uid, workerProfile);
 
     if (gigData['proofVideoRequired'] == true) {
       final proofVideoUrl = workerProfile?['proofVideoUrl'] as String?;
