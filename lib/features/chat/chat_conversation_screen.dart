@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_tokens.dart';
+import '../../core/widgets/profile_avatar.dart';
 import '../../data/services/chat_service.dart';
 
 class ChatConversationScreen extends StatefulWidget {
@@ -131,11 +132,13 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                         onTap: recipientId.isEmpty
                             ? null
                             : () => context.push('/profile/$recipientId'),
-                        child: CircleAvatar(
+                        child: ProfileAvatar(
+                          userId: recipientId,
+                          name: recipientName,
+                          radius: 20,
+                          fallbackPhotoUrl: recipientPhoto,
                           backgroundColor: scheme.secondary,
                           foregroundColor: scheme.onSecondary,
-                          backgroundImage: recipientPhoto != null && recipientPhoto.isNotEmpty ? NetworkImage(recipientPhoto) : null,
-                          child: recipientPhoto == null || recipientPhoto.isEmpty ? Text(_initials(recipientName)) : null,
                         ),
                       ),
                       const SizedBox(width: 11),
