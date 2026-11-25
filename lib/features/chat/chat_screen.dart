@@ -92,13 +92,7 @@ class ChatScreen extends StatelessWidget {
                         ? conversation.posterName
                         : conversation.workerName;
                     final recipientPhoto = isWorker ? conversation.posterPhotoUrl : conversation.workerPhotoUrl;
-                    final initials = recipientName
-                        .trim()
-                        .split(RegExp(r'\s+'))
-                        .where((part) => part.isNotEmpty)
-                        .take(2)
-                        .map((part) => part[0].toUpperCase())
-                        .join();
+
 
                     return Material(
                       color: scheme.surface,
