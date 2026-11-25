@@ -400,8 +400,18 @@ service cloud.firestore {
                     && request.resource.data.updatedAt == request.time;
 
       allow delete: if request.auth != null
-                    && resource.data.workerId == request.auth.uid
-                    && resource.data.status == 'rejected';
+                    && (
+                      (
+                        resource.data.workerId == request.auth.uid
+                        && resource.data.status == 'rejected'
+                      )
+                      ||
+                      (
+                        resource.data.posterId == request.auth.uid
+                        && get(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.posterId == request.auth.uid
+                        && get(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.status == 'completed'
+                      )
+                    );
     }
 
     match /conversations/{conversationId} {
