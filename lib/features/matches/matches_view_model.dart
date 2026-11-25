@@ -23,6 +23,8 @@ class MatchesViewModel extends ChangeNotifier {
   StreamSubscription<List<Gig>>? _posterGigsSubscription;
 
   bool isLoading = false;
+  String? offlineMessage;
+  Timer? _initialSnapshotTimer;
   String statusFilter = 'all';
 
   void setStatusFilter(String value) {
@@ -92,6 +94,7 @@ class MatchesViewModel extends ChangeNotifier {
   Future<void> load() async {
     isLoading = true;
     error = null;
+    offlineMessage = null;
     notifyListeners();
     try {
       final profile = await _profiles.getMyProfile();
@@ -125,22 +128,42 @@ class MatchesViewModel extends ChangeNotifier {
     await _posterGigsSubscription?.cancel();
     _workerApplications = [];
     _posterGigs = [];
-    _posterApplicationsByGig = {};
+    // Keep the last successful data in memory while reconnecting.
     isLoading = true;
     error = null;
+    offlineMessage = null;
     notifyListeners();
 
     var receivedFirstSnapshot = false;
+    _initialSnapshotTimer?.cancel();
+    _initialSnapshotTimer = Timer(const Duration(seconds: 8), () {
+      if (receivedFirstSnapshot || !isLoading) return;
+      isLoading = false;
+      offlineMessage = 'You appear to be offline. Showing saved data where available.';
+      if (recordCount == 0) {
+        error = 'No saved applications are available. Reconnect and try again.';
+      }
+      notifyListeners();
+    });
     void firstSnapshotReceived() {
       if (receivedFirstSnapshot) return;
       receivedFirstSnapshot = true;
+      _initialSnapshotTimer?.cancel();
       isLoading = false;
+      offlineMessage = null;
+      error = null;
       notifyListeners();
     }
 
     void streamFailed(Object _) {
-      error = 'Could not load applications. Check your network and try again.';
+      _initialSnapshotTimer?.cancel();
       isLoading = false;
+      if (receivedFirstSnapshot || recordCount > 0) {
+        offlineMessage = 'Connection interrupted. Showing the last available data.';
+        error = null;
+      } else {
+        error = 'You appear to be offline. Reconnect and try again.';
+      }
       notifyListeners();
     }
 
@@ -186,6 +209,7 @@ class MatchesViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _initialSnapshotTimer?.cancel();
     _profileSubscription?.cancel();
     _workerApplicationsSubscription?.cancel();
     _posterApplicationsSubscription?.cancel();
