@@ -643,7 +643,8 @@ service cloud.firestore {
         && request.resource.data.recipientId != request.auth.uid
         && request.resource.data.type in [
           'application_received', 'application_accepted',
-          'application_rejected', 'new_message', 'gig_completion_confirmed'
+          'application_rejected', 'new_message', 'gig_completion_confirmed',
+          'payment_marked', 'payment_received'
         ]
         && (
           (
@@ -687,6 +688,21 @@ service cloud.firestore {
                 && getAfter(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.workerCompletionConfirmed == true
               )
             )
+          ),
+          (
+            request.resource.data.type == 'payment_marked'
+            && request.auth.uid == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterId
+            && request.resource.data.recipientId == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.acceptedWorkerId
+            && getAfter(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterPaymentConfirmed == true
+            && getAfter(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.status == 'completed'
+          ),
+          (
+            request.resource.data.type == 'payment_received'
+            && request.auth.uid == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.acceptedWorkerId
+            && request.resource.data.recipientId == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterId
+            && getAfter(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterPaymentConfirmed == true
+            && getAfter(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.workerPaymentConfirmed == true
+            && getAfter(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.paid == true
           )
         )
         && request.resource.data.title is string
