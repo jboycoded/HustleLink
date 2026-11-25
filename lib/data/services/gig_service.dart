@@ -234,7 +234,8 @@ class GigService {
     // duplicate applications, while Firestore rules reject updates to an
     // existing application. A transaction read here would be denied for a
     // not-yet-created document by the application's read rules.
-    await applicationRef.set({
+    final batch = _firestore.batch();
+    batch.set(applicationRef, {
       'gigId': gig.id,
       'workerId': uid,
       'posterId': gig.posterId,
@@ -248,7 +249,8 @@ class GigService {
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
     });
-    await _firestore.collection('notifications').add({
+    final notificationRef = _firestore.collection('notifications').doc();
+    batch.set(notificationRef, {
       'recipientId': gig.posterId,
       'actorId': uid,
       'type': 'application_received',
@@ -258,6 +260,7 @@ class GigService {
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    await batch.commit();
   }
 
   Stream<List<Gig>> watchMyGigs({void Function(bool fromCache)? onCacheState}) {
@@ -347,28 +350,32 @@ class GigService {
 
     final applicationRef = _applications.doc(applicationId);
     if (status == 'rejected') {
-      final snapshot = await applicationRef.get();
-      if (!snapshot.exists) throw StateError('Application not found.');
-      final data = snapshot.data()!;
-      if (data['posterId'] != _uid) {
-        throw StateError('Only the poster can review this application.');
-      }
-      if (data['status'] != 'pending') {
-        throw StateError('This application has already been reviewed.');
-      }
-      await applicationRef.update({
-        'status': 'rejected',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      await _firestore.collection('notifications').add({
-        'recipientId': data['workerId'],
-        'actorId': _uid,
-        'type': 'application_rejected',
-        'title': 'Application update',
-        'body': 'Your application for ${data['gigTitle'] ?? 'a gig'} was not selected.',
-        'relatedId': applicationId,
-        'isRead': false,
-        'createdAt': FieldValue.serverTimestamp(),
+      await _firestore.runTransaction((transaction) async {
+        final snapshot = await transaction.get(applicationRef);
+        if (!snapshot.exists) throw StateError('Application not found.');
+        final data = snapshot.data()!;
+        if (data['posterId'] != _uid) {
+          throw StateError('Only the poster can review this application.');
+        }
+        if (data['status'] != 'pending') {
+          throw StateError('This application has already been reviewed.');
+        }
+        transaction.update(applicationRef, {
+          'status': 'rejected',
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        final notificationRef =
+            _firestore.collection('notifications').doc();
+        transaction.set(notificationRef, {
+          'recipientId': data['workerId'],
+          'actorId': _uid,
+          'type': 'application_rejected',
+          'title': 'Application update',
+          'body': 'Your application for ${data['gigTitle'] ?? 'a gig'} was not selected.',
+          'relatedId': applicationId,
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       });
       return;
     }
