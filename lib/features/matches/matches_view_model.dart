@@ -92,7 +92,7 @@ class MatchesViewModel extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    isLoading = true;
+    isLoading = recordCount == 0;
     error = null;
     offlineMessage = null;
     notifyListeners();
@@ -134,10 +134,8 @@ class MatchesViewModel extends ChangeNotifier {
     await _workerApplicationsSubscription?.cancel();
     await _posterApplicationsSubscription?.cancel();
     await _posterGigsSubscription?.cancel();
-    _workerApplications = [];
-    _posterGigs = [];
     // Keep the last successful data in memory while reconnecting.
-    isLoading = true;
+    isLoading = recordCount == 0;
     error = null;
     offlineMessage = null;
     notifyListeners();
@@ -145,7 +143,7 @@ class MatchesViewModel extends ChangeNotifier {
     var receivedFirstSnapshot = false;
     _initialSnapshotTimer?.cancel();
     _initialSnapshotTimer = Timer(const Duration(seconds: 8), () {
-      if (receivedFirstSnapshot || !isLoading) return;
+      if (receivedFirstSnapshot) return;
       isLoading = false;
       offlineMessage = 'You appear to be offline. Showing saved data where available.';
       if (recordCount == 0) {
