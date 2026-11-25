@@ -18,6 +18,10 @@ class Gig {
     this.distanceKm,
     this.workerCompletionConfirmed = false,
     this.posterCompletionConfirmed = false,
+    this.posterPaymentConfirmed = false,
+    this.workerPaymentConfirmed = false,
+    this.paid = false,
+    this.paidAt,
     this.completedAt,
     this.posterPhotoUrl,
   });
@@ -40,6 +44,10 @@ class Gig {
   final double? distanceKm;
   final bool workerCompletionConfirmed;
   final bool posterCompletionConfirmed;
+  final bool posterPaymentConfirmed;
+  final bool workerPaymentConfirmed;
+  final bool paid;
+  final DateTime? paidAt;
   final DateTime? completedAt;
   final String? posterPhotoUrl;
 
@@ -69,6 +77,10 @@ class Gig {
       updatedAt: readDate(data['updatedAt']),
       workerCompletionConfirmed: data['workerCompletionConfirmed'] as bool? ?? false,
       posterCompletionConfirmed: data['posterCompletionConfirmed'] as bool? ?? false,
+      posterPaymentConfirmed: data['posterPaymentConfirmed'] as bool? ?? false,
+      workerPaymentConfirmed: data['workerPaymentConfirmed'] as bool? ?? false,
+      paid: data['paid'] as bool? ?? false,
+      paidAt: readDate(data['paidAt']),
       completedAt: readDate(data['completedAt']),
       posterPhotoUrl: data['posterPhotoUrl'] as String?,
     );
