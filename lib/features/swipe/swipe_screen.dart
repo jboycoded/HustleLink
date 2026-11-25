@@ -482,7 +482,9 @@ class SwipeScreen extends StatelessWidget {
                     label: 'Delete',
                     icon: Icons.delete_outline_rounded,
                     destructive: true,
-                    onTap: () => _deleteGig(context, vm, gig),
+                    onTap: gig.status == 'closed' || gig.status == 'completed'
+                        ? () => _deleteGig(context, vm, gig)
+                        : null,
                   ),
                 ],
               ),
