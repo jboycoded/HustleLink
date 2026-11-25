@@ -458,7 +458,7 @@ service cloud.firestore {
                       (
                         resource.data.posterId == request.auth.uid
                         && get(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.posterId == request.auth.uid
-                        && get(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.status == 'completed'
+                        && get(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.status in ['closed', 'completed']
                       )
                     );
     }
