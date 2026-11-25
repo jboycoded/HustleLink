@@ -147,21 +147,40 @@ class EngagementService {
       if (data['status'] != 'filled' && data['status'] != 'completed') {
         throw StateError('This gig is not awaiting completion.');
       }
-      final workerConfirmed = data['workerCompletionConfirmed'] == true || uid == workerId;
-      final posterConfirmed = data['posterCompletionConfirmed'] == true || uid == posterId;
-      transaction.update(gigRef, {
+      final workerConfirmed =
+          data['workerCompletionConfirmed'] == true || uid == workerId;
+      final posterConfirmed =
+          data['posterCompletionConfirmed'] == true || uid == posterId;
+      final updates = <String, dynamic>{
         if (uid == workerId) 'workerCompletionConfirmed': true,
         if (uid == posterId) 'posterCompletionConfirmed': true,
-        if (workerConfirmed && posterConfirmed) ...{
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      if (workerConfirmed && posterConfirmed && data['status'] != 'completed') {
+        final applicationId = data['acceptedApplicationId'] as String? ??
+            '${gigId}_${workerId}';
+        final applicationRef =
+            _db.collection('applications').doc(applicationId);
+        final applicationSnapshot = await transaction.get(applicationRef);
+        if (!applicationSnapshot.exists) {
+          throw StateError('The accepted application could not be found.');
+        }
+        updates.addAll({
           'status': 'completed',
           'completedAt': FieldValue.serverTimestamp(),
-        },
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+        });
+        transaction.update(applicationRef, {
+          'status': 'completed',
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+      transaction.update(gigRef, updates);
     });
     final updated = await gigRef.get();
     final data = updated.data() ?? {};
-    final otherId = uid == data['acceptedWorkerId'] ? data['posterId'] as String : data['acceptedWorkerId'] as String;
+    final otherId = uid == data['acceptedWorkerId']
+        ? data['posterId'] as String
+        : data['acceptedWorkerId'] as String;
     await notifyUser(
       recipientId: otherId,
       type: 'gig_completion_confirmed',
@@ -169,6 +188,44 @@ class EngagementService {
       body: 'The other party confirmed completion of $gigTitle.',
       relatedId: gigId,
     );
+  }
+
+  Future<void> confirmGigPayment({
+    required String gigId,
+  }) async {
+    final uid = _uid;
+    final gigRef = _db.collection('gigs').doc(gigId);
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(gigRef);
+      if (!snapshot.exists) throw StateError('Gig not found.');
+      final data = snapshot.data()!;
+      final workerId = data['acceptedWorkerId'] as String? ?? '';
+      final posterId = data['posterId'] as String? ?? '';
+      if (uid != workerId && uid != posterId) {
+        throw StateError('Only the gig participants can confirm payment.');
+      }
+      if (data['status'] != 'completed' ||
+          data['workerCompletionConfirmed'] != true ||
+          data['posterCompletionConfirmed'] != true) {
+        throw StateError('Both parties must confirm completion first.');
+      }
+      if (data['paid'] == true) {
+        throw StateError('This gig has already been marked as paid.');
+      }
+      final posterConfirmed =
+          data['posterPaymentConfirmed'] == true || uid == posterId;
+      final workerConfirmed =
+          data['workerPaymentConfirmed'] == true || uid == workerId;
+      transaction.update(gigRef, {
+        if (uid == posterId) 'posterPaymentConfirmed': true,
+        if (uid == workerId) 'workerPaymentConfirmed': true,
+        if (posterConfirmed && workerConfirmed) ...{
+          'paid': true,
+          'paidAt': FieldValue.serverTimestamp(),
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
   }
 
   Future<bool> hasReviewed(String gigId) async {
