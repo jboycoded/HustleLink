@@ -572,10 +572,14 @@ class _MatchesScreenState extends State<MatchesScreen> {
                       ),
                     ],
                   )
-                else if (application.status == 'accepted')
-                  const Text(
-                    'This application has been accepted. You can find the conversation in your Chats tab.',
-                  ),
+                else if (application.status == 'accepted' ||
+                    application.status == 'completed') ...[
+                  if (application.status == 'accepted')
+                    const Text(
+                      'This application has been accepted. You can find the conversation in your Chats tab.',
+                    ),
+                  _CompletionPanel(application: application),
+                ],
               ],
             ),
           ),
