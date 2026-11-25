@@ -11,6 +11,8 @@ class UserProfile {
   final bool isAvailableForGigs;
   final double rating;
   final int completedGigs;
+  final int postedGigs;
+  final int paidGigs;
   final String? proofVideoUrl;
   final String? photoUrl;
 
@@ -27,6 +29,8 @@ class UserProfile {
     required this.isAvailableForGigs,
     required this.rating,
     required this.completedGigs,
+    this.postedGigs = 0,
+    this.paidGigs = 0,
     this.proofVideoUrl,
     this.photoUrl,
   });
@@ -64,6 +68,8 @@ class UserProfile {
           data['isAvailableForGigs'] as bool? ?? true,
       rating: (data['rating'] as num?)?.toDouble() ?? 0,
       completedGigs: (data['completedGigs'] as num?)?.toInt() ?? 0,
+      postedGigs: (data['postedGigs'] as num?)?.toInt() ?? 0,
+      paidGigs: (data['paidGigs'] as num?)?.toInt() ?? 0,
       proofVideoUrl: data['proofVideoUrl'] as String?,
       photoUrl: data['photoUrl'] as String?,
     );
