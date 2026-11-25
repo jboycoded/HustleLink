@@ -191,11 +191,12 @@ class GigService {
     }
     final blockedByMe = await _firestore.collection('users').doc(uid)
         .collection('blockedUsers').doc(gig.posterId).get();
-    final blockedMe = await _firestore.collection('users').doc(gig.posterId)
-        .collection('blockedUsers').doc(uid).get();
-    if (blockedByMe.exists || blockedMe.exists) {
-      throw StateError('You cannot apply to this account.');
+    if (blockedByMe.exists) {
+      throw StateError('You have blocked this poster and cannot apply.');
     }
+    // Whether the poster has blocked this worker is enforced by the
+    // applications create rule. A client cannot read another user's
+    // private blockedUsers subcollection.
 
     final gigDocument = await _gigs.doc(gig.id).get();
 
