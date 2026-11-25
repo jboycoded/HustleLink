@@ -166,7 +166,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       style: theme.textTheme.bodyMedium
                           ?.copyWith(color: scheme.onSurfaceVariant),
                     ),
-                    if (profile.location.isNotEmpty) ...[
+                    if (profile.activeRole == 'worker' && profile.location.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -179,13 +179,32 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       ),
                     ],
                     const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: _ProfileStat(
-                        label: 'COMPLETED',
-                        value: '${profile.completedGigs} GIGS',
+                    if (profile.activeRole == 'poster')
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _ProfileStat(
+                              label: 'GIGS POSTED',
+                              value: '${profile.postedGigs}',
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _ProfileStat(
+                              label: 'GIGS PAID',
+                              value: '${profile.paidGigs}',
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      SizedBox(
+                        width: double.infinity,
+                        child: _ProfileStat(
+                          label: 'COMPLETED',
+                          value: '${profile.completedGigs} GIGS',
+                        ),
                       ),
-                    ),
                     if (profile.activeRole == 'worker') ...[
                       const SizedBox(height: 16),
                       Row(
@@ -210,7 +229,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   ],
                 ),
               ),
-              if (profile.proofVideoUrl != null &&
+              if (profile.activeRole == 'worker' &&
+                  profile.proofVideoUrl != null &&
                   profile.proofVideoUrl!.isNotEmpty) ...[
                 const SizedBox(height: 22),
                 Text(
@@ -224,7 +244,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 ProfileProofVideoPlayer(videoUrl: profile.proofVideoUrl!),
               ],
               const SizedBox(height: 22),
-              _ProfileReviews(userId: profile.id),
+              _ProfileReviews(
+                userId: profile.id,
+                title: profile.activeRole == 'poster'
+                    ? 'CREDIBILITY RATING'
+                    : 'RATINGS & REVIEWS',
+              ),
+              if (profile.activeRole == 'worker') ...[
               const SizedBox(height: 22),
               Text(
                 'SKILLS & SERVICES',
@@ -250,6 +276,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       )
                       .toList(),
                 ),
+              ],
             ],
           );
         },
@@ -259,8 +286,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 }
 
 class _ProfileReviews extends StatelessWidget {
-  const _ProfileReviews({required this.userId});
+  const _ProfileReviews({required this.userId, required this.title});
   final String userId;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -274,7 +302,7 @@ class _ProfileReviews extends StatelessWidget {
             reviews.fold<int>(0, (sum, review) => sum + review.rating) / reviews.length;
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Expanded(child: Text('RATINGS & REVIEWS',
+            Expanded(child: Text(title,
               style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: .7))),
             Text(reviews.isEmpty ? 'No reviews' : '${average.toStringAsFixed(1)} ★  •  ${reviews.length}',
               style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
