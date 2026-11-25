@@ -56,15 +56,15 @@ class _MatchesScreenState extends State<MatchesScreen> {
           child: const Text('Try again'),
         ),
       );
-    } else if (vm.isPosterMode && vm.statusFilter != 'all' && vm.posterApplicationsByGig.isEmpty) {
+    } else if (vm.isPosterMode && vm.filteredPosterGigs.isEmpty) {
       body = const _EmptyState(
         icon: Icons.filter_list_off_rounded,
-        title: 'No applications in this status.',
-        message: 'Choose another filter to see more applications.',
+        title: 'No gigs in this category.',
+        message: 'Choose another filter to see more gigs.',
       );
     } else if (vm.isPosterMode) {
       body = _buildPosterApplications(context, vm);
-    } else if (vm.applicationCount == 0) {
+    } else if (vm.recordCount == 0) {
       body = const _EmptyState(
         icon: Icons.favorite_border_rounded,
         title: 'No applications yet.',
@@ -111,7 +111,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     ),
                   ),
                   child: Text(
-                    '${vm.applicationCount} APPLICATIONS',
+                    '${vm.recordCount} ${vm.isPosterMode ? 'GIGS' : 'APPLICATIONS'}',
                     style: text.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: scheme.onSecondary,
@@ -122,13 +122,15 @@ class _MatchesScreenState extends State<MatchesScreen> {
               ],
             ),
           ),
-          if (!vm.isLoading && vm.error == null && vm.applicationCount > 0)
+          if (!vm.isLoading && vm.error == null && vm.recordCount > 0)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(children: [
-                  for (final filter in ['all', 'pending', 'accepted', 'rejected'])
+                  for (final filter in (vm.isPosterMode
+                      ? ['all', 'pending', 'confirmed', 'closed']
+                      : ['all', 'pending', 'accepted', 'rejected']))
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
@@ -166,6 +168,46 @@ class _MatchesScreenState extends State<MatchesScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _confirmDeleteCompletedGig(
+    BuildContext context,
+    Gig gig,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete completed gig?'),
+        content: Text(
+          'Delete "${gig.title}" and remove its application records? This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await context.read<GigRepository>().deleteGig(gig.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Completed gig deleted from your records.')),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not delete this gig. Please try again.')),
+        );
+      }
+    }
   }
 
   Future<void> _showGigDetails(
@@ -602,7 +644,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     BuildContext context,
     MatchesViewModel vm,
   ) {
-    final gigs = vm.posterGigs;
+    final gigs = vm.filteredPosterGigs;
 
     return RefreshIndicator(
       onRefresh: vm.load,
@@ -629,6 +671,9 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 gig.title,
                 applications,
               ),
+              onDelete: gig.status == 'completed'
+                  ? () => _confirmDeleteCompletedGig(listContext, gig)
+                  : null,
             ),
           );
         },
@@ -1013,11 +1058,13 @@ class _GigApplicationsCard extends StatelessWidget {
     required this.gigTitle,
     required this.applications,
     required this.onTap,
+    this.onDelete,
   });
 
   final String gigTitle;
   final List<GigApplication> applications;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -1080,10 +1127,18 @@ class _GigApplicationsCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: scheme.onSurfaceVariant,
-                ),
+                if (onDelete != null)
+                  IconButton(
+                    tooltip: 'Delete completed gig',
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    color: scheme.error,
+                  )
+                else
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: scheme.onSurfaceVariant,
+                  ),
               ],
             ),
           ),
