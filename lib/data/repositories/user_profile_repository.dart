@@ -58,7 +58,7 @@ class UserProfileRepository {
   Future<UserProfile?> getPublicProfile(String userId) async {
     final document = await _publicProfile(userId).get();
     if (!document.exists) return null;
-    final data = document.data()!;
+    final data = Map<String, dynamic>.from(document.data()!);
     if ((data['activeRole'] as String? ?? 'worker') == 'poster') {
       final gigs = await _firestore
           .collection('gigs')
