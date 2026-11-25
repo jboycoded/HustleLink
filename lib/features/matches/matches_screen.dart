@@ -170,14 +170,14 @@ class _MatchesScreenState extends State<MatchesScreen> {
     );
   }
 
-  Future<void> _confirmDeleteCompletedGig(
+  Future<void> _confirmDeleteGig(
     BuildContext context,
     Gig gig,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete completed gig?'),
+        title: Text(gig.status == 'completed' ? 'Delete completed gig?' : 'Delete closed gig?'),
         content: Text(
           'Delete "${gig.title}" and remove its application records? This cannot be undone.',
         ),
@@ -198,7 +198,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
       await context.read<GigRepository>().deleteGig(gig.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Completed gig deleted from your records.')),
+          const SnackBar(content: Text('Gig deleted from your records.')),
         );
       }
     } catch (_) {
@@ -675,8 +675,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 gig.title,
                 applications,
               ),
-              onDelete: gig.status == 'completed'
-                  ? () => _confirmDeleteCompletedGig(listContext, gig)
+              onDelete: gig.status == 'closed' || gig.status == 'completed'
+                  ? () => _confirmDeleteGig(listContext, gig)
                   : null,
             ),
           );
