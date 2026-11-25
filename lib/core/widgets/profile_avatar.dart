@@ -22,7 +22,7 @@ class ProfileAvatar extends StatelessWidget {
   final Color? foregroundColor;
 
   String get _initials {
-    final parts = name.trim().split(RegExp(r'\\s+')).where((part) => part.isNotEmpty).take(2);
+    final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).take(2);
     return parts.map((part) => part[0].toUpperCase()).join();
   }
 
