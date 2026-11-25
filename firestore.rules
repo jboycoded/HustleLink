@@ -254,6 +254,13 @@ service cloud.firestore {
                     && request.resource.data.when is string
                     && request.resource.data.status in ['open', 'closed', 'filled']
                     && (
+                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+                      || (
+                        resource.data.status == 'open'
+                        && request.resource.data.status in ['closed', 'filled']
+                      )
+                    )
+                    && (
                       request.resource.data.status != 'filled'
                       || (
                         request.resource.data.acceptedApplicationId is string
@@ -349,7 +356,8 @@ service cloud.firestore {
       allow delete: if request.auth != null
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.activeRole == 'poster'
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['poster'])
-                    && resource.data.posterId == request.auth.uid;
+                    && resource.data.posterId == request.auth.uid
+                    && resource.data.status in ['closed', 'completed'];
     }
 
     match /applications/{applicationId} {
@@ -642,7 +650,7 @@ service cloud.firestore {
             request.resource.data.type == 'application_received'
             && get(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.workerId == request.auth.uid
             && get(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.posterId == request.resource.data.recipientId
-            && get(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.status == 'pending'
+            && getAfter(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.status == 'pending'
           )
           ||
           (
@@ -656,7 +664,7 @@ service cloud.firestore {
             request.resource.data.type == 'application_rejected'
             && get(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.posterId == request.auth.uid
             && get(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.workerId == request.resource.data.recipientId
-            && get(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.status == 'rejected'
+            && getAfter(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.status == 'rejected'
           )
           ||
           (
@@ -670,13 +678,13 @@ service cloud.firestore {
               (
                 request.auth.uid == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterId
                 && request.resource.data.recipientId == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.acceptedWorkerId
-                && get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterCompletionConfirmed == true
+                && getAfter(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterCompletionConfirmed == true
               )
               ||
               (
                 request.auth.uid == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.acceptedWorkerId
                 && request.resource.data.recipientId == get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterId
-                && get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.workerCompletionConfirmed == true
+                && getAfter(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.workerCompletionConfirmed == true
               )
             )
           )
