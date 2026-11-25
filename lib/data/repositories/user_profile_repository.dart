@@ -55,19 +55,44 @@ class UserProfileRepository {
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
+  Future<Map<String, dynamic>> _computedProfileStats(
+    String userId,
+    String role,
+  ) async {
+    final results = await Future.wait([
+      _firestore.collection('reviews')
+          .where('revieweeId', isEqualTo: userId).get(),
+      _firestore.collection('gigs')
+          .where('posterId', isEqualTo: userId).get(),
+      _firestore.collection('gigs')
+          .where('acceptedWorkerId', isEqualTo: userId).get(),
+    ]);
+    final reviews = results[0].docs;
+    final posted = results[1].docs;
+    final worked = results[2].docs;
+    final ratings = reviews
+        .map((doc) => (doc.data()['rating'] as num?)?.toDouble())
+        .whereType<double>()
+        .toList();
+    final completed = role == 'poster'
+        ? posted.where((doc) => doc.data()['status'] == 'completed').length
+        : worked.where((doc) => doc.data()['status'] == 'completed').length;
+    return {
+      'rating': ratings.isEmpty
+          ? 0.0
+          : ratings.reduce((a, b) => a + b) / ratings.length,
+      'completedGigs': completed,
+      'postedGigs': posted.length,
+      'paidGigs': posted.where((doc) => doc.data()['paid'] == true).length,
+    };
+  }
+
   Future<UserProfile?> getPublicProfile(String userId) async {
     final document = await _publicProfile(userId).get();
     if (!document.exists) return null;
     final data = Map<String, dynamic>.from(document.data()!);
-    if ((data['activeRole'] as String? ?? 'worker') == 'poster') {
-      final gigs = await _firestore
-          .collection('gigs')
-          .where('posterId', isEqualTo: userId)
-          .get();
-      data['postedGigs'] = gigs.size;
-      data['paidGigs'] =
-          gigs.docs.where((gig) => gig.data()['paid'] == true).length;
-    }
+    final role = data['activeRole'] as String? ?? 'worker';
+    data.addAll(await _computedProfileStats(userId, role));
     return UserProfile.fromMap(document.id, data);
   }
 
@@ -128,7 +153,11 @@ class UserProfileRepository {
       photoUrl: data['photoUrl'] as String?,
     ), SetOptions(merge: true));
 
-    return UserProfile.fromMap(document.id, data);
+    final computed = await _computedProfileStats(
+      user.uid,
+      data['activeRole'] as String? ?? 'worker',
+    );
+    return UserProfile.fromMap(document.id, {...data, ...computed});
   }
 
   Future<void> updateProfile({
