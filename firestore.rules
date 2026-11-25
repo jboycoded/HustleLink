@@ -649,8 +649,8 @@ service cloud.firestore {
         && (
           (
             request.resource.data.type == 'application_received'
-            && get(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.workerId == request.auth.uid
-            && get(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.posterId == request.resource.data.recipientId
+            && getAfter(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.workerId == request.auth.uid
+            && getAfter(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.posterId == request.resource.data.recipientId
             && getAfter(/databases/$(database)/documents/applications/$(request.resource.data.relatedId)).data.status == 'pending'
           )
           ||
