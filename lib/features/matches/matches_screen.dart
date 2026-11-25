@@ -369,91 +369,14 @@ class _MatchesScreenState extends State<MatchesScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) => _ThemeAwareBottomSheet(
-        child: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            12,
-            20,
-            20 + MediaQuery.of(sheetContext).viewInsets.bottom,
-          ),
-          child: SizedBox(
-            height: MediaQuery.of(sheetContext).size.height * 0.72,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: _themeFor(sheetContext).colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  gigTitle,
-                  style: _themeFor(sheetContext).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${applications.length} applicants',
-                  style: _themeFor(sheetContext).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: applications.isEmpty
-                      ? const Center(
-                          child: Text('No applications have been received for this gig yet.'),
-                        )
-                      : ListView.separated(
-                    itemCount: applications.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (itemContext, index) {
-                      final application = applications[index];
-
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: BorderSide(
-                            color: Theme.of(itemContext).colorScheme.outline,
-                          ),
-                        ),
-                        leading: ProfileAvatar(
-                          userId: application.workerId,
-                          name: application.workerName,
-                          radius: 22,
-                          fallbackPhotoUrl: application.workerPhotoUrl,
-                        ),
-                        title: Text(
-                          application.workerName,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        subtitle: Text(
-                          '${application.status[0].toUpperCase()}${application.status.substring(1)}',
-                        ),
-                        trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () {
-                          Navigator.pop(sheetContext);
-                          _showApplicantDetails(context, application);
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
+        child: _PosterApplicantsSheet(
+          gigTitle: gigTitle,
+          applications: applications,
+          onApplicantTap: (application) {
+            Navigator.pop(sheetContext);
+            _showApplicantDetails(context, application);
+          },
         ),
-      ),
       ),
     );
   }
@@ -906,6 +829,150 @@ class _ApplicationCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PosterApplicantsSheet extends StatefulWidget {
+  const _PosterApplicantsSheet({
+    required this.gigTitle,
+    required this.applications,
+    required this.onApplicantTap,
+  });
+
+  final String gigTitle;
+  final List<GigApplication> applications;
+  final ValueChanged<GigApplication> onApplicantTap;
+
+  @override
+  State<_PosterApplicantsSheet> createState() => _PosterApplicantsSheetState();
+}
+
+class _PosterApplicantsSheetState extends State<_PosterApplicantsSheet> {
+  String _filter = 'all';
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final visible = widget.applications
+        .where((application) =>
+            _filter == 'all' || application.status == _filter)
+        .toList();
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          12,
+          20,
+          20 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.76,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: scheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                widget.gigTitle,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${widget.applications.length} applications',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 14),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final status in [
+                      'all',
+                      'pending',
+                      'accepted',
+                      'rejected',
+                      'completed',
+                    ])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(status == 'all'
+                              ? 'All'
+                              : status[0].toUpperCase() + status.substring(1)),
+                          selected: _filter == status,
+                          onSelected: (_) => setState(() => _filter = status),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: visible.isEmpty
+                    ? Center(
+                        child: Text(
+                          widget.applications.isEmpty
+                              ? 'No applications have been received for this gig yet.'
+                              : 'No applications in this category.',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: visible.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: 10),
+                        itemBuilder: (itemContext, index) {
+                          final application = visible[index];
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              side: BorderSide(color: scheme.outline),
+                            ),
+                            leading: ProfileAvatar(
+                              userId: application.workerId,
+                              name: application.workerName,
+                              radius: 22,
+                              fallbackPhotoUrl: application.workerPhotoUrl,
+                            ),
+                            title: Text(
+                              application.workerName,
+                              style: const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            subtitle: Text(
+                              application.status[0].toUpperCase() +
+                                  application.status.substring(1),
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () => widget.onApplicantTap(application),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
