@@ -79,8 +79,8 @@ class ChatService {
       'lastSenderId': uid,
       'hiddenFor': FieldValue.arrayRemove([recipientId]),
     });
-    await batch.commit();
-    await _firestore.collection('notifications').add({
+    final notificationRef = _firestore.collection('notifications').doc();
+    batch.set(notificationRef, {
       'recipientId': recipientId,
       'actorId': uid,
       'type': 'new_message',
@@ -90,5 +90,6 @@ class ChatService {
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    await batch.commit();
   }
 }
