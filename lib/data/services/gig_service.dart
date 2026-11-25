@@ -503,6 +503,29 @@ class GigService {
   }
 
   Future<void> deleteGig(String gigId) async {
-    await _gigs.doc(gigId).delete();
+    final gigRef = _gigs.doc(gigId);
+    final gigSnapshot = await gigRef.get();
+    if (!gigSnapshot.exists) return;
+    final gig = gigSnapshot.data()!;
+    if (gig['posterId'] != _uid) {
+      throw StateError('Only the poster can delete this gig.');
+    }
+    if (gig['status'] != 'completed') {
+      throw StateError('Only completed gigs can be deleted from these records.');
+    }
+
+    final applications = await _applications
+        .where('gigId', isEqualTo: gigId)
+        .get();
+    // Delete in chunks to stay within Firestore's 500-write batch limit.
+    for (var start = 0; start < applications.docs.length; start += 450) {
+      final batch = _firestore.batch();
+      final end = (start + 450).clamp(0, applications.docs.length);
+      for (final application in applications.docs.sublist(start, end)) {
+        batch.delete(application.reference);
+      }
+      await batch.commit();
+    }
+    await gigRef.delete();
   }
 }
