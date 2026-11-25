@@ -40,19 +40,30 @@ class MatchesViewModel extends ChangeNotifier {
       List<GigApplication>.unmodifiable(_workerApplications);
   List<Gig> get posterGigs => List<Gig>.unmodifiable(_posterGigs);
 
-  Map<String, List<GigApplication>> get posterApplicationsByGig {
-    final grouped = <String, List<GigApplication>>{};
-    _posterApplicationsByGig.forEach((key, value) {
-      final visible = value.where((item) => statusFilter == 'all' || item.status == statusFilter).toList();
-      if (visible.isNotEmpty) grouped[key] = List<GigApplication>.unmodifiable(visible);
-    });
-    return Map<String, List<GigApplication>>.unmodifiable(grouped);
-  }
+  // Poster filters classify each gig by its overall lifecycle, not by the
+  // individual application statuses attached to that gig.
+  List<Gig> get filteredPosterGigs => _posterGigs.where((gig) {
+        switch (statusFilter) {
+          case 'pending':
+            return gig.status == 'open';
+          case 'confirmed':
+            return gig.status == 'filled';
+          case 'closed':
+            return gig.status == 'completed';
+          case 'all':
+          default:
+            return true;
+        }
+      }).toList();
 
-  int get applicationCount => isPosterMode
-      ? _posterApplicationsByGig.values.fold(
-          0, (total, applications) => total + applications.length)
-      : _workerApplications.length;
+  Map<String, List<GigApplication>> get posterApplicationsByGig =>
+      Map<String, List<GigApplication>>.unmodifiable({
+        for (final entry in _posterApplicationsByGig.entries)
+          entry.key: List<GigApplication>.unmodifiable(entry.value),
+      });
+
+  int get recordCount =>
+      isPosterMode ? _posterGigs.length : _workerApplications.length;
 
   final Set<String> _updatingApplicationIds = {};
   bool isUpdating(String id) => _updatingApplicationIds.contains(id);
