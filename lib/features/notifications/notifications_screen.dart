@@ -126,6 +126,8 @@ class NotificationsScreen extends StatelessWidget {
         'application_rejected' => Icons.info_outline_rounded,
         'new_message' => Icons.chat_bubble_outline_rounded,
         'gig_completion_confirmed' => Icons.task_alt_rounded,
+        'payment_marked' => Icons.payments_outlined,
+        'payment_received' => Icons.verified_rounded,
         _ => Icons.notifications_rounded,
       };
 }
