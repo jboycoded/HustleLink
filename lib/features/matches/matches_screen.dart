@@ -415,13 +415,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (itemContext, index) {
                       final application = applications[index];
-                      final initials = application.workerName
-                          .trim()
-                          .split(RegExp(r'\s+'))
-                          .where((part) => part.isNotEmpty)
-                          .take(2)
-                          .map((part) => part[0].toUpperCase())
-                          .join();
+
                       return ListTile(
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -938,7 +932,7 @@ class _GigLifecycleStatus extends StatelessWidget {
       stream: FirebaseFirestore.instance.collection('gigs').doc(gigId).snapshots(),
       builder: (context, snapshot) {
         final status = snapshot.data?.data()?['status'] as String?;
-        final label = _gigStatusLabel(status);
+        final label = status == null ? 'LOADING' : _gigStatusLabel(status);
         return Padding(
           padding: const EdgeInsets.only(top: 4, bottom: 4),
           child: Row(
