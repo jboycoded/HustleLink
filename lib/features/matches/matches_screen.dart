@@ -1040,7 +1040,9 @@ class _CompletionPanelState extends State<_CompletionPanel> {
                       : 'Payment: Poster ${gig.posterPaymentConfirmed ? 'marked paid' : 'pending'} • Worker ${gig.workerPaymentConfirmed ? 'confirmed receipt' : 'pending'}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-                if (!gig.paid && !paymentConfirmed)
+                if (!gig.paid && isWorker && !gig.posterPaymentConfirmed)
+                  const Text('Waiting for the poster to mark this gig as paid.')
+                else if (!gig.paid && !paymentConfirmed)
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.tonalIcon(
