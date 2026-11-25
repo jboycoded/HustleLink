@@ -25,7 +25,35 @@ class MatchesViewModel extends ChangeNotifier {
   bool isLoading = false;
   String? offlineMessage;
   Timer? _initialSnapshotTimer;
+  bool _posterGigsFromCache = false;
+  bool _posterApplicationsFromCache = false;
+  bool _workerApplicationsFromCache = false;
   String statusFilter = 'all';
+
+  void _updateCacheState(String source, bool fromCache) {
+    if (source == 'posterGigs') {
+      _posterGigsFromCache = fromCache;
+    } else if (source == 'posterApplications') {
+      _posterApplicationsFromCache = fromCache;
+    } else {
+      _workerApplicationsFromCache = fromCache;
+    }
+
+    final offline = isPosterMode
+        ? _posterGigsFromCache || _posterApplicationsFromCache
+        : _workerApplicationsFromCache;
+    offlineMessage = offline
+        ? 'Offline mode: showing saved applications and gig details.'
+        : null;
+    if (offline && recordCount == 0) {
+      error = 'You are offline and there are no saved applications to display.';
+    } else if (offline) {
+      error = null;
+    } else if (error?.contains('offline') == true) {
+      error = null;
+    }
+    notifyListeners();
+  }
 
   void setStatusFilter(String value) {
     statusFilter = value;
@@ -95,6 +123,9 @@ class MatchesViewModel extends ChangeNotifier {
     isLoading = recordCount == 0;
     error = null;
     offlineMessage = null;
+    _posterGigsFromCache = false;
+    _posterApplicationsFromCache = false;
+    _workerApplicationsFromCache = false;
     notifyListeners();
     try {
       final profile = await _profiles.getMyProfile();
@@ -138,6 +169,9 @@ class MatchesViewModel extends ChangeNotifier {
     isLoading = recordCount == 0;
     error = null;
     offlineMessage = null;
+    _posterGigsFromCache = false;
+    _posterApplicationsFromCache = false;
+    _workerApplicationsFromCache = false;
     notifyListeners();
 
     var receivedFirstSnapshot = false;
@@ -156,8 +190,11 @@ class MatchesViewModel extends ChangeNotifier {
       receivedFirstSnapshot = true;
       _initialSnapshotTimer?.cancel();
       isLoading = false;
-      offlineMessage = null;
-      error = null;
+      if (offlineMessage == null) {
+        error = null;
+      } else if (recordCount == 0) {
+        error = 'You are offline and there are no saved applications to display.';
+      }
       notifyListeners();
     }
 
@@ -174,7 +211,9 @@ class MatchesViewModel extends ChangeNotifier {
     }
 
     if (isPosterMode) {
-      _posterGigsSubscription = _repo.watchMyGigs().listen((gigs) {
+      _posterGigsSubscription = _repo.watchMyGigs(
+        onCacheState: (fromCache) => _updateCacheState('posterGigs', fromCache),
+      ).listen((gigs) {
         _posterGigs = gigs;
         _rebuildPosterApplicationGroups();
         firstSnapshotReceived();
@@ -182,7 +221,9 @@ class MatchesViewModel extends ChangeNotifier {
       }, onError: streamFailed);
 
       _posterApplicationsSubscription =
-          _repo.watchPosterApplications().listen((applications) {
+          _repo.watchPosterApplications(
+            onCacheState: (fromCache) => _updateCacheState('posterApplications', fromCache),
+          ).listen((applications) {
         // Keep all statuses; the UI filter exposes rejected applications as history.
         _posterApplicationsByGig = {};
         for (final application in applications) {
@@ -196,7 +237,9 @@ class MatchesViewModel extends ChangeNotifier {
       }, onError: streamFailed);
     } else {
       _workerApplicationsSubscription =
-          _repo.watchWorkerApplications().listen((applications) {
+          _repo.watchWorkerApplications(
+            onCacheState: (fromCache) => _updateCacheState('workerApplications', fromCache),
+          ).listen((applications) {
         _workerApplications = applications;
         firstSnapshotReceived();
         notifyListeners();
