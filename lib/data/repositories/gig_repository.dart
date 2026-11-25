@@ -72,13 +72,14 @@ class GigRepository {
         status: status,
       );
 
-  Stream<List<Gig>> watchMyGigs() => _service.watchMyGigs();
+  Stream<List<Gig>> watchMyGigs({void Function(bool fromCache)? onCacheState}) =>
+      _service.watchMyGigs(onCacheState: onCacheState);
 
-  Stream<List<GigApplication>> watchWorkerApplications() =>
-      _service.watchWorkerApplications();
+  Stream<List<GigApplication>> watchWorkerApplications({void Function(bool fromCache)? onCacheState}) =>
+      _service.watchWorkerApplications(onCacheState: onCacheState);
 
-  Stream<List<GigApplication>> watchPosterApplications() =>
-      _service.watchPosterApplications();
+  Stream<List<GigApplication>> watchPosterApplications({void Function(bool fromCache)? onCacheState}) =>
+      _service.watchPosterApplications(onCacheState: onCacheState);
 
   Future<void> deleteWorkerApplication(String applicationId) =>
       _service.deleteWorkerApplication(applicationId);
