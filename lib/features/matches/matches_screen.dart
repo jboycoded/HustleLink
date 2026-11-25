@@ -963,56 +963,153 @@ class _CompletionPanelState extends State<_CompletionPanel> {
     comment.dispose();
   }
 
+  Future<void> _confirmPayment(Gig gig, {required bool isWorker}) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(isWorker ? 'Confirm payment received?' : 'Mark gig as paid?'),
+        content: Text(isWorker
+            ? 'Confirm only if you have actually received the payment for this gig.'
+            : 'Confirm only after you have actually paid the worker for this gig. The worker will also be asked to confirm receipt.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(isWorker ? 'Confirm receipt' : 'Mark as paid'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<EngagementService>().confirmGigPayment(gigId: gig.id);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final service = context.read<EngagementService>();
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('gigs').doc(widget.application.gigId).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('gigs')
+          .doc(widget.application.gigId)
+          .snapshots(),
       builder: (context, snapshot) {
         final data = snapshot.data?.data();
-        final gig = data == null ? null : Gig.fromMap(widget.application.gigId, data);
-        if (gig == null || widget.application.status != 'accepted') return const SizedBox.shrink();
+        final gig = data == null
+            ? null
+            : Gig.fromMap(widget.application.gigId, data);
+        if (gig == null ||
+            (widget.application.status != 'accepted' &&
+                widget.application.status != 'completed')) {
+          return const SizedBox.shrink();
+        }
+
         final uid = service.currentUserId;
         final isWorker = uid == widget.application.workerId;
-        final confirmed = isWorker ? gig.workerCompletionConfirmed : gig.posterCompletionConfirmed;
+        final confirmed =
+            isWorker ? gig.workerCompletionConfirmed : gig.posterCompletionConfirmed;
+
         if (gig.status == 'completed') {
-          return FutureBuilder<bool>(
-            future: service.hasReviewed(gig.id),
-            builder: (context, reviewSnapshot) {
-              if (reviewSnapshot.data == true) {
-                return const Padding(
-                  padding: EdgeInsets.only(top: 12),
-                  child: Text('Gig completed • Review submitted'),
-                );
-              }
-              return Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: SizedBox(width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _review(gig),
-                    icon: const Icon(Icons.star_outline_rounded),
-                    label: const Text('Leave a review'),
-                  )),
-              );
-            },
+          final paymentConfirmed =
+              isWorker ? gig.workerPaymentConfirmed : gig.posterPaymentConfirmed;
+          return Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  gig.paid
+                      ? 'Payment confirmed by both parties • PAID'
+                      : 'Payment: Poster ${gig.posterPaymentConfirmed ? 'marked paid' : 'pending'} • Worker ${gig.workerPaymentConfirmed ? 'confirmed receipt' : 'pending'}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                if (!gig.paid && !paymentConfirmed)
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.tonalIcon(
+                      onPressed: _busy
+                          ? null
+                          : () => _confirmPayment(gig, isWorker: isWorker),
+                      icon: _busy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(isWorker
+                              ? Icons.account_balance_wallet_outlined
+                              : Icons.payments_outlined),
+                      label: Text(isWorker
+                          ? 'Confirm payment received'
+                          : 'Mark as paid'),
+                    ),
+                  )
+                else if (!gig.paid)
+                  const Text('Your confirmation is saved. Waiting for the other party.'),
+                const SizedBox(height: 10),
+                FutureBuilder<bool>(
+                  future: service.hasReviewed(gig.id),
+                  builder: (context, reviewSnapshot) {
+                    if (reviewSnapshot.data == true) {
+                      return const Text('Review submitted');
+                    }
+                    return SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _review(gig),
+                        icon: const Icon(Icons.star_outline_rounded),
+                        label: const Text('Leave a review'),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           );
         }
+
         if (gig.status != 'filled') return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.only(top: 12),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Completion: Worker ${gig.workerCompletionConfirmed ? 'confirmed' : 'waiting'} • Poster ${gig.posterCompletionConfirmed ? 'confirmed' : 'waiting'}',
-              style: Theme.of(context).textTheme.bodySmall),
-            if (!confirmed)
-              SizedBox(width: double.infinity,
-                child: FilledButton.tonalIcon(
-                  onPressed: _busy ? null : () => _confirm(gig),
-                  icon: _busy ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.task_alt_rounded),
-                  label: const Text('Confirm completion'),
-                ))
-            else
-              const Text('You confirmed completion. Waiting for the other party.'),
-          ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Completion: Worker ${gig.workerCompletionConfirmed ? 'confirmed' : 'waiting'} • Poster ${gig.posterCompletionConfirmed ? 'confirmed' : 'waiting'}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (!confirmed)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.tonalIcon(
+                    onPressed: _busy ? null : () => _confirm(gig),
+                    icon: _busy
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.task_alt_rounded),
+                    label: const Text('Confirm completion'),
+                  ),
+                )
+              else
+                const Text('You confirmed completion. Waiting for the other party.'),
+            ],
+          ),
         );
       },
     );
