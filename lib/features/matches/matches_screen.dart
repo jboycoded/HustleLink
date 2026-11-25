@@ -129,8 +129,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 scrollDirection: Axis.horizontal,
                 child: Row(children: [
                   for (final filter in (vm.isPosterMode
-                      ? ['all', 'pending', 'confirmed', 'closed']
-                      : ['all', 'pending', 'accepted', 'rejected']))
+                      ? ['all', 'pending', 'confirmed', 'closed', 'completed']
+                      : ['all', 'pending', 'accepted', 'rejected', 'completed']))
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
@@ -861,7 +861,7 @@ class _ApplicationCard extends StatelessWidget {
               ),
             ),
           ],
-          if (application.status == 'accepted')
+          if (application.status == 'accepted' || application.status == 'completed')
             _CompletionPanel(application: application),
           Wrap(
             spacing: 14,
