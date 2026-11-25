@@ -260,8 +260,10 @@ class GigService {
     });
   }
 
-  Stream<List<Gig>> watchMyGigs() {
-    return _gigs.where('posterId', isEqualTo: _uid).snapshots().map((snapshot) {
+  Stream<List<Gig>> watchMyGigs({void Function(bool fromCache)? onCacheState}) {
+    return _gigs.where('posterId', isEqualTo: _uid)
+        .snapshots(includeMetadataChanges: true).map((snapshot) {
+      onCacheState?.call(snapshot.metadata.isFromCache);
       final gigs = snapshot.docs
           .map((document) => Gig.fromMap(document.id, document.data()))
           .toList();
@@ -271,24 +273,28 @@ class GigService {
     });
   }
 
-  Stream<List<GigApplication>> watchWorkerApplications() {
-    return _applications.where('workerId', isEqualTo: _uid).snapshots().map(
-      (snapshot) => snapshot.docs
+  Stream<List<GigApplication>> watchWorkerApplications({void Function(bool fromCache)? onCacheState}) {
+    return _applications.where('workerId', isEqualTo: _uid)
+        .snapshots(includeMetadataChanges: true).map((snapshot) {
+      onCacheState?.call(snapshot.metadata.isFromCache);
+      return snapshot.docs
           .map((document) => GigApplication.fromMap(document.id, document.data()))
           .toList()
         ..sort((a, b) => (b.createdAt ?? DateTime(2000))
-            .compareTo(a.createdAt ?? DateTime(2000))),
-    );
+            .compareTo(a.createdAt ?? DateTime(2000)));
+    });
   }
 
-  Stream<List<GigApplication>> watchPosterApplications() {
-    return _applications.where('posterId', isEqualTo: _uid).snapshots().map(
-      (snapshot) => snapshot.docs
+  Stream<List<GigApplication>> watchPosterApplications({void Function(bool fromCache)? onCacheState}) {
+    return _applications.where('posterId', isEqualTo: _uid)
+        .snapshots(includeMetadataChanges: true).map((snapshot) {
+      onCacheState?.call(snapshot.metadata.isFromCache);
+      return snapshot.docs
           .map((document) => GigApplication.fromMap(document.id, document.data()))
           .toList()
         ..sort((a, b) => (b.createdAt ?? DateTime(2000))
-            .compareTo(a.createdAt ?? DateTime(2000))),
-    );
+            .compareTo(a.createdAt ?? DateTime(2000)));
+    });
   }
 
   Future<List<GigApplication>> fetchWorkerApplications() async {
