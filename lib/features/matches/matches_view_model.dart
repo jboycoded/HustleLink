@@ -110,7 +110,12 @@ class MatchesViewModel extends ChangeNotifier {
       await _listenToRoleData();
     } catch (_) {
       isLoading = false;
-      error = 'Could not load applications. Check your network and try again.';
+      if (recordCount > 0) {
+        offlineMessage = 'Connection unavailable. Showing the last data loaded on this device.';
+        error = null;
+      } else {
+        error = 'You appear to be offline. Reconnect and try again.';
+      }
       notifyListeners();
     }
   }
@@ -119,6 +124,9 @@ class MatchesViewModel extends ChangeNotifier {
     if (profile == null || profile.activeRole == activeRole) return;
     activeRole = profile.activeRole;
     statusFilter = activeRole == 'poster' ? 'pending' : 'all';
+    _workerApplications = [];
+    _posterGigs = [];
+    _posterApplicationsByGig = {};
     unawaited(_listenToRoleData());
   }
 
