@@ -490,8 +490,8 @@ class GigService {
     if (gig['posterId'] != _uid) {
       throw StateError('Only the poster can delete this gig.');
     }
-    if (gig['status'] != 'completed') {
-      throw StateError('Only completed gigs can be deleted from these records.');
+    if (gig['status'] != 'closed' && gig['status'] != 'completed') {
+      throw StateError('Only closed or completed gigs can be deleted from these records.');
     }
 
     final applications = await _applications
