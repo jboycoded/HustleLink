@@ -322,6 +322,7 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['workerPaymentConfirmed', 'paid', 'paidAt', 'updatedAt'])
             && request.resource.data.workerPaymentConfirmed == true
+            && resource.data.get('posterPaymentConfirmed', false) == true
             && request.resource.data.get('posterPaymentConfirmed', false)
                 == resource.data.get('posterPaymentConfirmed', false)
           )
