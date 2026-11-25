@@ -335,11 +335,12 @@ service cloud.firestore {
           )
           ||
           (
-            request.resource.data.get('posterPaymentConfirmed', false) != true
-            || request.resource.data.get('workerPaymentConfirmed', false) != true
-            ? request.resource.data.get('paid', false) == resource.data.get('paid', false)
-                && request.resource.data.get('paidAt', null) == resource.data.get('paidAt', null)
-            : false
+            !(
+              request.resource.data.get('posterPaymentConfirmed', false) == true
+              && request.resource.data.get('workerPaymentConfirmed', false) == true
+            )
+            && request.resource.data.get('paid', false) == resource.data.get('paid', false)
+            && request.resource.data.get('paidAt', null) == resource.data.get('paidAt', null)
           )
         )
         && request.resource.data.updatedAt == request.time;
