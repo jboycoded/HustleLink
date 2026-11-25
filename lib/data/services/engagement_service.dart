@@ -147,6 +147,12 @@ class EngagementService {
       if (data['status'] != 'filled' && data['status'] != 'completed') {
         throw StateError('This gig is not awaiting completion.');
       }
+      final alreadyConfirmed = uid == workerId
+          ? data['workerCompletionConfirmed'] == true
+          : data['posterCompletionConfirmed'] == true;
+      if (alreadyConfirmed) {
+        throw StateError('You have already confirmed completion.');
+      }
       final workerConfirmed =
           data['workerCompletionConfirmed'] == true || uid == workerId;
       final posterConfirmed =
@@ -162,7 +168,8 @@ class EngagementService {
         final applicationRef =
             _db.collection('applications').doc(applicationId);
         final applicationSnapshot = await transaction.get(applicationRef);
-        if (!applicationSnapshot.exists) {
+        if (!applicationSnapshot.exists ||
+            applicationSnapshot.data()?['status'] != 'accepted') {
           throw StateError('The accepted application could not be found.');
         }
         updates.addAll({
@@ -175,19 +182,20 @@ class EngagementService {
         });
       }
       transaction.update(gigRef, updates);
+
+      final otherId = uid == workerId ? posterId : workerId;
+      final notificationRef = _notifications.doc('${gigId}_${uid}_completion');
+      transaction.set(notificationRef, {
+        'recipientId': otherId,
+        'actorId': uid,
+        'type': 'gig_completion_confirmed',
+        'title': 'Completion confirmed',
+        'body': 'The other party confirmed completion of $gigTitle.',
+        'relatedId': gigId,
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
     });
-    final updated = await gigRef.get();
-    final data = updated.data() ?? {};
-    final otherId = uid == data['acceptedWorkerId']
-        ? data['posterId'] as String
-        : data['acceptedWorkerId'] as String;
-    await notifyUser(
-      recipientId: otherId,
-      type: 'gig_completion_confirmed',
-      title: 'Completion confirmed',
-      body: 'The other party confirmed completion of $gigTitle.',
-      relatedId: gigId,
-    );
   }
 
   Future<void> confirmGigPayment({
@@ -243,6 +251,9 @@ class EngagementService {
   }) async {
     if (rating < 1 || rating > 5) {
       throw ArgumentError('Choose a rating from 1 to 5 stars.');
+    }
+    if (comment.trim().length > 500) {
+      throw ArgumentError('Reviews must be 500 characters or fewer.');
     }
     final uid = _uid;
     final gigRef = _db.collection('gigs').doc(gigId);
