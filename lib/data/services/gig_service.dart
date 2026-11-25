@@ -520,7 +520,9 @@ class GigService {
     // Delete in chunks to stay within Firestore's 500-write batch limit.
     for (var start = 0; start < applications.docs.length; start += 450) {
       final batch = _firestore.batch();
-      final end = (start + 450).clamp(0, applications.docs.length);
+      final end = start + 450 < applications.docs.length
+          ? start + 450
+          : applications.docs.length;
       for (final application in applications.docs.sublist(start, end)) {
         batch.delete(application.reference);
       }
