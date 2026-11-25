@@ -58,7 +58,17 @@ class UserProfileRepository {
   Future<UserProfile?> getPublicProfile(String userId) async {
     final document = await _publicProfile(userId).get();
     if (!document.exists) return null;
-    return UserProfile.fromMap(document.id, document.data()!);
+    final data = document.data()!;
+    if ((data['activeRole'] as String? ?? 'worker') == 'poster') {
+      final gigs = await _firestore
+          .collection('gigs')
+          .where('posterId', isEqualTo: userId)
+          .get();
+      data['postedGigs'] = gigs.size;
+      data['paidGigs'] =
+          gigs.docs.where((gig) => gig.data()['paid'] == true).length;
+    }
+    return UserProfile.fromMap(document.id, data);
   }
 
   Future<UserProfile> getMyProfile() async {
