@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_tokens.dart';
+import '../../core/widgets/profile_avatar.dart';
 import '../../data/models/chat_conversation.dart';
 import '../../data/services/chat_service.dart';
 import '../notifications/notification_bell.dart';
@@ -118,12 +119,15 @@ class ChatScreen extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              CircleAvatar(
+                              ProfileAvatar(
+                                userId: isWorker
+                                    ? conversation.posterId
+                                    : conversation.workerId,
+                                name: recipientName,
                                 radius: 25,
+                                fallbackPhotoUrl: recipientPhoto,
                                 backgroundColor: scheme.secondary,
                                 foregroundColor: scheme.onSecondary,
-                                backgroundImage: recipientPhoto != null && recipientPhoto.isNotEmpty ? NetworkImage(recipientPhoto) : null,
-                                child: recipientPhoto == null || recipientPhoto.isEmpty ? Text(initials.isEmpty ? '?' : initials) : null,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
