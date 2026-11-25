@@ -234,13 +234,14 @@ class UserProfileRepository {
   }
 
   Stream<UserProfile?> watchMyProfile() {
-    return _users.doc(_uid).snapshots().map((document) {
+    return _users.doc(_uid).snapshots().asyncMap((document) async {
       if (!document.exists) return null;
-
-      return UserProfile.fromMap(
+      final data = document.data()!;
+      final computed = await _computedProfileStats(
         document.id,
-        document.data()!,
+        data['activeRole'] as String? ?? 'worker',
       );
+      return UserProfile.fromMap(document.id, {...data, ...computed});
     });
   }
 }
