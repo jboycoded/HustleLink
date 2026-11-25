@@ -49,6 +49,8 @@ class MatchesViewModel extends ChangeNotifier {
           case 'confirmed':
             return gig.status == 'filled';
           case 'closed':
+            return gig.status == 'closed';
+          case 'completed':
             return gig.status == 'completed';
           case 'all':
           default:
