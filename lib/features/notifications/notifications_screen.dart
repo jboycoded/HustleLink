@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_tokens.dart';
 import '../../data/services/engagement_service.dart';
+import '../../data/repositories/user_profile_repository.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -69,8 +70,33 @@ class NotificationsScreen extends StatelessWidget {
                   onTap: () async {
                     if (!item.isRead) await service.markNotificationRead(item.id);
                     if (!context.mounted || item.relatedId.isEmpty) return;
-                    if (item.type == 'new_message' ||
-                        item.type == 'application_accepted') {
+                    if (item.type == 'application_received') {
+                      try {
+                        await context
+                            .read<UserProfileRepository>()
+                            .updateActiveRole('poster');
+                      } catch (_) {
+                        // Still open Matches; the screen will show its normal
+                        // access or connection error if the role update fails.
+                      }
+                      if (context.mounted) context.push('/matches');
+                    } else if (item.type == 'application_accepted' ||
+                        item.type == 'application_rejected') {
+                      if (item.type == 'application_accepted') {
+                        try {
+                          await context
+                              .read<UserProfileRepository>()
+                              .updateActiveRole('worker');
+                        } catch (_) {}
+                      }
+                      if (context.mounted) {
+                        if (item.type == 'application_accepted') {
+                          context.push('/chat/${item.relatedId}');
+                        } else {
+                          context.push('/matches');
+                        }
+                      }
+                    } else if (item.type == 'new_message') {
                       context.push('/chat/${item.relatedId}');
                     } else {
                       context.push('/matches');
