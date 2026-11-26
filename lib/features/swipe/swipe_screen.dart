@@ -21,14 +21,28 @@ class SwipeScreen extends StatefulWidget {
 }
 
 class _SwipeScreenState extends State<SwipeScreen> {
+  String? _lastOpenedGigId;
+
   @override
   void initState() {
     super.initState();
-    if (widget.initialGigId != null && widget.initialGigId!.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _openNotifiedGig(widget.initialGigId!);
-      });
+    _scheduleNotifiedGig(widget.initialGigId);
+  }
+
+  @override
+  void didUpdateWidget(covariant SwipeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialGigId != widget.initialGigId) {
+      _scheduleNotifiedGig(widget.initialGigId);
     }
+  }
+
+  void _scheduleNotifiedGig(String? gigId) {
+    if (gigId == null || gigId.isEmpty || gigId == _lastOpenedGigId) return;
+    _lastOpenedGigId = gigId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _openNotifiedGig(gigId);
+    });
   }
 
   Future<void> _openNotifiedGig(String gigId) async {
