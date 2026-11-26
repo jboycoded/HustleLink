@@ -17,6 +17,7 @@ class MatchesViewModel extends ChangeNotifier {
   List<GigApplication> _workerApplications = [];
   List<Gig> _posterGigs = [];
   Map<String, List<GigApplication>> _posterApplicationsByGig = {};
+  List<GigApplication> _posterApplications = [];
   StreamSubscription<UserProfile?>? _profileSubscription;
   StreamSubscription<List<GigApplication>>? _workerApplicationsSubscription;
   StreamSubscription<List<GigApplication>>? _posterApplicationsSubscription;
@@ -164,6 +165,7 @@ class MatchesViewModel extends ChangeNotifier {
     _workerApplications = [];
     _posterGigs = [];
     _posterApplicationsByGig = {};
+    _posterApplications = [];
     unawaited(_listenToRoleData());
   }
 
@@ -233,12 +235,7 @@ class MatchesViewModel extends ChangeNotifier {
             onCacheState: (fromCache) => _updateCacheState('posterApplications', fromCache),
           ).listen((applications) {
         // Keep all statuses; the UI filter exposes rejected applications as history.
-        _posterApplicationsByGig = {};
-        for (final application in applications) {
-          _posterApplicationsByGig
-              .putIfAbsent(application.gigId, () => <GigApplication>[])
-              .add(application);
-        }
+        _posterApplications = applications;
         _rebuildPosterApplicationGroups();
         firstSnapshotReceived();
         notifyListeners();
@@ -256,12 +253,13 @@ class MatchesViewModel extends ChangeNotifier {
   }
 
   void _rebuildPosterApplicationGroups() {
-    for (final gig in _posterGigs) {
-      _posterApplicationsByGig.putIfAbsent(gig.id, () => <GigApplication>[]);
+    final groups = <String, List<GigApplication>>{};
+    for (final application in _posterApplications) {
+      groups
+          .putIfAbsent(application.gigId, () => <GigApplication>[])
+          .add(application);
     }
-    _posterApplicationsByGig.removeWhere(
-      (gigId, _) => !_posterGigs.any((gig) => gig.id == gigId),
-    );
+    _posterApplicationsByGig = groups;
   }
 
   @override
