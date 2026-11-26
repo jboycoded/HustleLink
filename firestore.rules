@@ -392,7 +392,6 @@ service cloud.firestore {
         && request.resource.data.posterId == request.auth.uid
         && exists(/databases/$(database)/documents/gigs/$(gigId))
         && get(/databases/$(database)/documents/gigs/$(gigId)).data.posterId == request.auth.uid
-        && !existsAfter(/databases/$(database)/documents/gigs/$(gigId))
         && request.resource.data.status == get(/databases/$(database)/documents/gigs/$(gigId)).data.status
         && request.resource.data.paid == get(/databases/$(database)/documents/gigs/$(gigId)).data.get('paid', false)
         && request.resource.data.createdAt == get(/databases/$(database)/documents/gigs/$(gigId)).data.get('createdAt', null)
