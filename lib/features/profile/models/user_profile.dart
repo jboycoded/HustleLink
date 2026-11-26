@@ -11,6 +11,7 @@ class UserProfile {
   final bool isAvailableForGigs;
   final double rating;
   final int completedGigs;
+  final int acceptedGigs;
   final int postedGigs;
   final int paidGigs;
   final String? proofVideoUrl;
@@ -29,6 +30,7 @@ class UserProfile {
     required this.isAvailableForGigs,
     required this.rating,
     required this.completedGigs,
+    this.acceptedGigs = 0,
     this.postedGigs = 0,
     this.paidGigs = 0,
     this.proofVideoUrl,
@@ -50,6 +52,10 @@ class UserProfile {
     return activeRole == 'poster' ? 'Poster' : 'Worker';
   }
 
+  double get completionRate => acceptedGigs == 0
+      ? 0
+      : (completedGigs / acceptedGigs).clamp(0.0, 1.0);
+
   UserProfile copyWith({
     String? activeRole,
     bool? isAvailableForGigs,
@@ -67,6 +73,7 @@ class UserProfile {
       isAvailableForGigs: isAvailableForGigs ?? this.isAvailableForGigs,
       rating: rating,
       completedGigs: completedGigs,
+      acceptedGigs: acceptedGigs,
       postedGigs: postedGigs,
       paidGigs: paidGigs,
       proofVideoUrl: proofVideoUrl,
@@ -92,6 +99,7 @@ class UserProfile {
           data['isAvailableForGigs'] as bool? ?? true,
       rating: (data['rating'] as num?)?.toDouble() ?? 0,
       completedGigs: (data['completedGigs'] as num?)?.toInt() ?? 0,
+      acceptedGigs: (data['acceptedGigs'] as num?)?.toInt() ?? 0,
       postedGigs: (data['postedGigs'] as num?)?.toInt() ?? 0,
       paidGigs: (data['paidGigs'] as num?)?.toInt() ?? 0,
       proofVideoUrl: data['proofVideoUrl'] as String?,
@@ -112,6 +120,9 @@ class UserProfile {
       'isAvailableForGigs': isAvailableForGigs,
       'rating': rating,
       'completedGigs': completedGigs,
+      'acceptedGigs': acceptedGigs,
+      'postedGigs': postedGigs,
+      'paidGigs': paidGigs,
       'proofVideoUrl': proofVideoUrl,
       'photoUrl': photoUrl,
     };
