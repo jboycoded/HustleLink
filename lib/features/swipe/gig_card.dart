@@ -71,11 +71,11 @@ class GigCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    flex: 3,
+                    flex: 4,
                     child: _Tag(
                       gig.location,
                       icon: Icons.place_outlined,
-                      maxLines: 2,
+                      maxLines: 3,
                     ),
                   ),
                   const SizedBox(width: 8),
