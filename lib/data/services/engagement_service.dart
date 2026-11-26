@@ -187,7 +187,7 @@ class EngagementService {
       transaction.update(gigRef, updates);
 
       final otherId = uid == workerId ? posterId : workerId;
-      transaction.set(notificationRef!, {
+      transaction.set(notificationRef, {
         'recipientId': otherId,
         'actorId': uid,
         'type': 'gig_completion_confirmed',
@@ -251,7 +251,7 @@ class EngagementService {
           ? '${gigId}_payment_marked'
           : '${gigId}_payment_received';
       notificationRef = _notifications.doc(notificationId);
-      transaction.set(notificationRef, {
+      transaction.set(notificationRef!, {
         'recipientId': recipientId,
         'actorId': uid,
         'type': uid == posterId ? 'payment_marked' : 'payment_received',
