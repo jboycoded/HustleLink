@@ -195,12 +195,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               ('COMPLETED', '${profile.completedGigs}'),
                               ('PAYMENT CONFIRMED', '${profile.paidGigs}'),
                               ('COMPLETION RATE', profile.acceptedGigs == 0 ? '—' : '${(profile.completionRate * 100).round()}%'),
+                              ('REPEAT WORKERS', '${profile.repeatEngagements}'),
                             ]
                           : <(String, String)>[
                               ('ACCEPTED', '${profile.acceptedGigs}'),
                               ('COMPLETED', '${profile.completedGigs}'),
                               ('PAYMENT CONFIRMED', '${profile.paidGigs}'),
                               ('COMPLETION RATE', profile.acceptedGigs == 0 ? '—' : '${(profile.completionRate * 100).round()}%'),
+                              ('REPEAT CLIENTS', '${profile.repeatEngagements}'),
                             ])
                           .map((item) => SizedBox(
                             width: (MediaQuery.sizeOf(context).width - 72) / 2,
