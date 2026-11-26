@@ -373,6 +373,46 @@ service cloud.firestore {
                     );
     }
 
+    // Minimal immutable records preserve credibility totals after a gig
+    // is deleted from the Poster account's own records.
+    match /gigHistory/{gigId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && !exists(/databases/$(database)/documents/gigHistory/$(gigId))
+        && request.resource.data.keys().hasAll([
+          'gigId', 'posterId', 'acceptedWorkerId', 'status',
+          'paid', 'createdAt', 'completedAt', 'archivedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'gigId', 'posterId', 'acceptedWorkerId', 'status',
+          'paid', 'createdAt', 'completedAt', 'archivedAt'
+        ])
+        && request.resource.data.gigId == gigId
+        && request.resource.data.posterId == request.auth.uid
+        && exists(/databases/$(database)/documents/gigs/$(gigId))
+        && get(/databases/$(database)/documents/gigs/$(gigId)).data.posterId == request.auth.uid
+        && !existsAfter(/databases/$(database)/documents/gigs/$(gigId))
+        && request.resource.data.status == get(/databases/$(database)/documents/gigs/$(gigId)).data.status
+        && request.resource.data.paid == get(/databases/$(database)/documents/gigs/$(gigId)).data.get('paid', false)
+        && request.resource.data.createdAt == get(/databases/$(database)/documents/gigs/$(gigId)).data.get('createdAt', null)
+        && request.resource.data.completedAt == get(/databases/$(database)/documents/gigs/$(gigId)).data.get('completedAt', null)
+        && request.resource.data.archivedAt == request.time
+        && (
+          request.resource.data.acceptedWorkerId
+            == get(/databases/$(database)/documents/gigs/$(gigId)).data.get('acceptedWorkerId', null)
+          || (
+            get(/databases/$(database)/documents/gigs/$(gigId)).data.get('acceptedWorkerId', '') == ''
+            && request.resource.data.acceptedWorkerId is string
+            && exists(/databases/$(database)/documents/applications/$(gigId + '_' + request.resource.data.acceptedWorkerId))
+            && get(/databases/$(database)/documents/applications/$(gigId + '_' + request.resource.data.acceptedWorkerId)).data.status in ['accepted', 'completed']
+            && get(/databases/$(database)/documents/applications/$(gigId + '_' + request.resource.data.acceptedWorkerId)).data.posterId == request.auth.uid
+          )
+        );
+
+      allow update, delete: if false;
+    }
+
     match /applications/{applicationId} {
       allow read: if request.auth != null
                   && (
