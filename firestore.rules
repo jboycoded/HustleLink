@@ -366,9 +366,20 @@ service cloud.firestore {
                       ||
                       (
                         resource.data.status == 'completed'
-                        && resource.data.get('acceptedWorkerId', '') is string
-                        && resource.data.get('acceptedWorkerId', '') != ''
                         && resource.data.get('paid', false) == true
+                        && (
+                          (
+                            resource.data.get('acceptedWorkerId', '') is string
+                            && resource.data.get('acceptedWorkerId', '') != ''
+                          )
+                          || (
+                            resource.data.get('acceptedApplicationId', '') is string
+                            && resource.data.get('acceptedApplicationId', '') != ''
+                            && exists(/databases/$(database)/documents/applications/$(resource.data.acceptedApplicationId))
+                            && get(/databases/$(database)/documents/applications/$(resource.data.acceptedApplicationId)).data.status in ['accepted', 'completed']
+                            && get(/databases/$(database)/documents/applications/$(resource.data.acceptedApplicationId)).data.posterId == request.auth.uid
+                          )
+                        )
                       )
                     );
     }
