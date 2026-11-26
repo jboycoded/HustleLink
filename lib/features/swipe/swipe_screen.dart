@@ -471,7 +471,7 @@ class SwipeScreen extends StatelessWidget {
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () {
                     Navigator.pop(sheetContext);
-                    context.push('/profile/${gig.posterId}');
+                    context.push('/profile/${gig.posterId}?role=poster');
                   },
                 ),
                 if (gig.proofVideoRequired) ...[
@@ -529,7 +529,7 @@ class SwipeScreen extends StatelessWidget {
                 gig: gig,
                 showDetailsHint: true,
                 onReport: () => _reportGig(context, gig),
-                onPosterTap: () => context.push('/profile/${gig.posterId}'),
+                onPosterTap: () => context.push('/profile/${gig.posterId}?role=poster'),
               ),
             ),
           ),
