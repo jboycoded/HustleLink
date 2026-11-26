@@ -9,6 +9,7 @@ class GigReview {
     required this.reviewerName,
     required this.rating,
     required this.comment,
+    this.revieweeRole,
     this.createdAt,
   });
 
@@ -19,6 +20,7 @@ class GigReview {
   final String reviewerName;
   final int rating;
   final String comment;
+  final String? revieweeRole;
   final DateTime? createdAt;
 
   factory GigReview.fromMap(String id, Map<String, dynamic> data) {
@@ -31,6 +33,7 @@ class GigReview {
       reviewerName: data['reviewerName'] as String? ?? 'HustleLink member',
       rating: (data['rating'] as num?)?.toInt() ?? 0,
       comment: data['comment'] as String? ?? '',
+      revieweeRole: data['revieweeRole'] as String?,
       createdAt: timestamp is Timestamp ? timestamp.toDate() : null,
     );
   }
