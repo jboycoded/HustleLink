@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/gig.dart';
 import '../models/gig_application.dart';
+import 'push_notification_service.dart';
 
 class GigService {
   GigService({
@@ -262,6 +263,7 @@ class GigService {
       'createdAt': FieldValue.serverTimestamp(),
     });
     await batch.commit();
+    await PushNotificationService().sendForNotification(notificationRef.id);
   }
 
   Stream<List<Gig>> watchMyGigs({void Function(bool fromCache)? onCacheState}) {
@@ -352,6 +354,7 @@ class GigService {
 
     final applicationRef = _applications.doc(applicationId);
     if (status == 'rejected') {
+      final notificationRef = _firestore.collection('notifications').doc();
       await _firestore.runTransaction((transaction) async {
         final snapshot = await transaction.get(applicationRef);
         if (!snapshot.exists) throw StateError('Application not found.');
@@ -366,8 +369,6 @@ class GigService {
           'status': 'rejected',
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        final notificationRef =
-            _firestore.collection('notifications').doc();
         transaction.set(notificationRef, {
           'recipientId': data['workerId'],
           'actorId': _uid,
@@ -379,9 +380,11 @@ class GigService {
           'createdAt': FieldValue.serverTimestamp(),
         });
       });
+      await PushNotificationService().sendForNotification(notificationRef.id);
       return;
     }
 
+    final notificationRef = _firestore.collection('notifications').doc();
     await _firestore.runTransaction((transaction) async {
       final applicationSnapshot = await transaction.get(applicationRef);
       if (!applicationSnapshot.exists) {
@@ -415,7 +418,6 @@ class GigService {
         'acceptedWorkerId': application['workerId'],
         'updatedAt': FieldValue.serverTimestamp(),
       });
-      final notificationRef = _firestore.collection('notifications').doc();
       transaction.set(notificationRef, {
         'recipientId': application['workerId'],
         'actorId': _uid,
@@ -452,6 +454,7 @@ class GigService {
         'createdAt': FieldValue.serverTimestamp(),
       });
     });
+    await PushNotificationService().sendForNotification(notificationRef.id);
   }
 
   Future<void> deleteWorkerApplication(String applicationId) async {
