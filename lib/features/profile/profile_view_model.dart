@@ -113,7 +113,7 @@ class ProfileViewModel extends ChangeNotifier {
 
     try {
       await _repository.updateActiveRole(role);
-      _profile = await _repository.getMyProfile();
+      _profile = _profile!.copyWith(activeRole: role);
       _errorMessage = null;
       notifyListeners();
       return true;
@@ -127,7 +127,7 @@ class ProfileViewModel extends ChangeNotifier {
   Future<void> toggleAvailability(bool value) async {
     try {
       await _repository.updateAvailability(value);
-      _profile = await _repository.getMyProfile();
+      _profile = _profile?.copyWith(isAvailableForGigs: value);
       _errorMessage = null;
     } catch (error) {
       _errorMessage = _friendlyError(error);
