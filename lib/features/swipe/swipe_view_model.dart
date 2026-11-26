@@ -26,6 +26,7 @@ class SwipeViewModel extends ChangeNotifier {
   StreamSubscription<List<GigApplication>>? _workerApplicationsSubscription;
   StreamSubscription<List<GigApplication>>? _posterApplicationsSubscription;
   final Set<String> _acceptedGigIds = {};
+  Gig? _focusedGig;
 
   bool isLoading = false;
   bool isSaving = false;
@@ -63,6 +64,7 @@ class SwipeViewModel extends ChangeNotifier {
   List<Gig> get visibleGigs => List.unmodifiable(_discoveryGigs);
 
   Gig? get currentGig {
+    if (_focusedGig != null) return _focusedGig;
     final available = _discoveryGigs;
     if (available.isEmpty) return null;
 
@@ -74,6 +76,19 @@ class SwipeViewModel extends ChangeNotifier {
   }
 
   bool get hasMoreGigs => currentGig != null;
+
+  Future<Gig?> focusGig(String gigId) async {
+    final gig = await _repo.getGigById(gigId);
+    if (gig == null || !gig.isOpen || gig.posterId.isEmpty) return null;
+    _focusedGig = gig;
+    notifyListeners();
+    return gig;
+  }
+
+  void clearFocusedGig() {
+    _focusedGig = null;
+    notifyListeners();
+  }
 
   Future<void> load() async {
     isLoading = true;
