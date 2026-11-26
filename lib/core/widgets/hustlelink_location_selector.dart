@@ -104,17 +104,21 @@ class _HustleLinkLocationSelectorState
   String? _selectedState;
   String? _selectedCountry;
   String? _legacyLocation;
+  late String _lastEmittedValue;
 
   @override
   void initState() {
     super.initState();
+    _lastEmittedValue = widget.initialValue;
     _readInitialValue(widget.initialValue);
   }
 
   @override
   void didUpdateWidget(covariant HustleLinkLocationSelector oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialValue != widget.initialValue) {
+    if (oldWidget.initialValue != widget.initialValue &&
+        widget.initialValue != _lastEmittedValue) {
+      _lastEmittedValue = widget.initialValue;
       _readInitialValue(widget.initialValue);
     }
   }
@@ -171,15 +175,18 @@ class _HustleLinkLocationSelectorState
   }
 
   void _emitLocation() {
+    final String value;
     if (_mode == 'remote') {
-      widget.onChanged('Remote');
+      value = 'Remote';
     } else if (_scope == 'nigeria' && _selectedState != null) {
-      widget.onChanged('Physical · ${_states[_selectedState]}, Nigeria');
+      value = 'Physical · ${_states[_selectedState]}, Nigeria';
     } else if (_scope == 'country' && _selectedCountry != null) {
-      widget.onChanged('Physical · $_selectedCountry');
+      value = 'Physical · $_selectedCountry';
     } else {
-      widget.onChanged('');
+      value = '';
     }
+    _lastEmittedValue = value;
+    widget.onChanged(value);
   }
 
   @override
