@@ -125,7 +125,9 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                         borderRadius: BorderRadius.circular(30),
                         onTap: recipientId.isEmpty
                             ? null
-                            : () => context.push('/profile/$recipientId'),
+                            : () => context.push(
+                                  '/profile/$recipientId?role=${isWorker ? 'poster' : 'worker'}',
+                                ),
                         child: ProfileAvatar(
                           userId: recipientId,
                           name: recipientName,
