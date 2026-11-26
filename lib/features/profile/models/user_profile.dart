@@ -50,6 +50,30 @@ class UserProfile {
     return activeRole == 'poster' ? 'Poster' : 'Worker';
   }
 
+  UserProfile copyWith({
+    String? activeRole,
+    bool? isAvailableForGigs,
+  }) {
+    return UserProfile(
+      id: id,
+      fullName: fullName,
+      email: email,
+      activeRole: activeRole ?? this.activeRole,
+      roles: roles,
+      location: location,
+      skills: skills,
+      isVerified: isVerified,
+      profileCompleted: profileCompleted,
+      isAvailableForGigs: isAvailableForGigs ?? this.isAvailableForGigs,
+      rating: rating,
+      completedGigs: completedGigs,
+      postedGigs: postedGigs,
+      paidGigs: paidGigs,
+      proofVideoUrl: proofVideoUrl,
+      photoUrl: photoUrl,
+    );
+  }
+
   factory UserProfile.fromMap(
     String id,
     Map<String, dynamic> data,
