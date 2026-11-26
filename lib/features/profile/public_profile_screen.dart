@@ -199,13 +199,21 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               ('ACCEPTED', '${profile.acceptedGigs}'),
                               ('COMPLETED', '${profile.completedGigs}'),
                               ('PAYMENT CONFIRMED', '${profile.paidGigs}'),
-                              ('COMPLETION RATE', '${(profile.completionRate * 100).round()}%'),
+                              ('COMPLETION RATE', profile.acceptedGigs == 0 ? '—' : '${(profile.completionRate * 100).round()}%'),
                             ])
                           .map((item) => SizedBox(
                             width: (MediaQuery.sizeOf(context).width - 72) / 2,
                             child: _ProfileStat(label: item.$1, value: item.$2),
                           ))
                           .toList(),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Completion rate is completed gigs divided by accepted gigs. Payment is counted only after both parties confirm it in HustleLink.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                     if (profile.activeRole == 'worker') ...[
                       const SizedBox(height: 16),
