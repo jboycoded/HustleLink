@@ -583,6 +583,18 @@ class GigService {
       );
     }
 
+    String? archivedWorkerId = gig['acceptedWorkerId'] as String?;
+    if (hasAcceptedParticipant &&
+        (archivedWorkerId == null || archivedWorkerId.isEmpty)) {
+      for (final application in applications.docs) {
+        final data = application.data();
+        if (data['status'] == 'accepted' || data['status'] == 'completed') {
+          archivedWorkerId = data['workerId'] as String?;
+          break;
+        }
+      }
+    }
+
     // Remove application records while the parent gig still exists, because
     // Firestore rules verify the poster against that parent record.
     for (var start = 0; start < applications.docs.length; start += 450) {
@@ -615,16 +627,7 @@ class GigService {
     finalBatch.set(_firestore.collection('gigHistory').doc(gigId), {
       'gigId': gigId,
       'posterId': _uid,
-      'acceptedWorkerId': hasAcceptedParticipant
-          ? (gig['acceptedWorkerId'] as String? ??
-              applications.docs
-                  .map((application) => application.data())
-                  .firstWhere(
-                    (data) => data['status'] == 'accepted' ||
-                        data['status'] == 'completed',
-                    orElse: () => const <String, dynamic>{},
-                  )['workerId'] as String?)
-          : null,
+      'acceptedWorkerId': archivedWorkerId,
       'status': gig['status'],
       'paid': gig['paid'] == true,
       'createdAt': gig['createdAt'],
