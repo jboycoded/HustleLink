@@ -70,12 +70,21 @@ class UserProfileRepository {
     final reviews = results[0].docs;
     final posted = results[1].docs;
     final worked = results[2].docs;
-    final posterApplications = userId == _auth.currentUser?.uid
-        ? (await _firestore.collection('applications')
-                .where('posterId', isEqualTo: userId)
-                .get())
-            .docs
-        : <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+
+    // Private application records are queried only for the signed-in user.
+    // They provide a compatibility path for older gigs whose acceptedWorkerId
+    // field was not populated consistently.
+    final appResults = userId == _auth.currentUser?.uid
+        ? await Future.wait([
+            _firestore.collection('applications')
+                .where('workerId', isEqualTo: userId).get(),
+            _firestore.collection('applications')
+                .where('posterId', isEqualTo: userId).get(),
+          ])
+        : null;
+    final workerApplications = appResults?[0].docs ?? [];
+    final posterApplications = appResults?[1].docs ?? [];
+
     final acceptedWorkersByGig = <String, Set<String>>{};
     for (final application in posterApplications) {
       final data = application.data();
@@ -85,9 +94,63 @@ class UserProfileRepository {
             .add(data['workerId'] as String? ?? '');
       }
     }
+
     final gigsById = <String, Map<String, dynamic>>{
       for (final doc in [...posted, ...worked]) doc.id: doc.data(),
     };
+    final acceptedIds = <String>{};
+    final completedIds = <String>{};
+    final paidIds = <String>{};
+
+    if (role == 'poster') {
+      for (final doc in posted) {
+        final data = doc.data();
+        if ((data['acceptedWorkerId'] as String?)?.isNotEmpty == true ||
+            (data['acceptedApplicationId'] as String?)?.isNotEmpty == true ||
+            data['status'] == 'filled' ||
+            data['status'] == 'completed') {
+          acceptedIds.add(doc.id);
+        }
+        if (data['status'] == 'completed') completedIds.add(doc.id);
+        if (data['paid'] == true) paidIds.add(doc.id);
+      }
+      for (final application in posterApplications) {
+        final data = application.data();
+        final gigId = data['gigId'] as String? ?? '';
+        if (gigId.isEmpty) continue;
+        if (data['status'] == 'accepted' || data['status'] == 'completed') {
+          acceptedIds.add(gigId);
+        }
+        if (data['status'] == 'completed') completedIds.add(gigId);
+      }
+    } else {
+      for (final doc in worked) {
+        final data = doc.data();
+        acceptedIds.add(doc.id);
+        if (data['status'] == 'completed') completedIds.add(doc.id);
+        if (data['paid'] == true) paidIds.add(doc.id);
+      }
+      for (final application in workerApplications) {
+        final data = application.data();
+        final gigId = data['gigId'] as String? ?? '';
+        if (gigId.isEmpty) continue;
+        if (data['status'] == 'accepted' || data['status'] == 'completed') {
+          acceptedIds.add(gigId);
+          if (data['status'] == 'completed') completedIds.add(gigId);
+          if (!gigsById.containsKey(gigId)) {
+            try {
+              final gig = await _firestore.collection('gigs').doc(gigId).get();
+              if (gig.exists) gigsById[gigId] = gig.data()!;
+            } catch (_) {
+              // Keep the remaining profile statistics available if a legacy
+              // gig record cannot be read.
+            }
+          }
+          if (gigsById[gigId]?['paid'] == true) paidIds.add(gigId);
+        }
+      }
+    }
+
     final ratings = reviews.where((doc) {
       final review = doc.data();
       final savedRole = review['revieweeRole'];
@@ -105,16 +168,15 @@ class UserProfileRepository {
     }).map((doc) => (doc.data()['rating'] as num?)?.toDouble())
       .whereType<double>()
       .toList();
-    final completed = role == 'poster'
-        ? posted.where((doc) => doc.data()['status'] == 'completed').length
-        : worked.where((doc) => doc.data()['status'] == 'completed').length;
+
     return {
       'rating': ratings.isEmpty
           ? 0.0
           : ratings.reduce((a, b) => a + b) / ratings.length,
-      'completedGigs': completed,
-      'postedGigs': posted.length,
-      'paidGigs': posted.where((doc) => doc.data()['paid'] == true).length,
+      'acceptedGigs': acceptedIds.length,
+      'completedGigs': completedIds.length,
+      'postedGigs': role == 'poster' ? posted.length : 0,
+      'paidGigs': paidIds.length,
     };
   }
 
