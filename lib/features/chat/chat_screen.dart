@@ -7,6 +7,8 @@ import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/profile_avatar.dart';
 import '../../data/models/chat_conversation.dart';
 import '../../data/services/chat_service.dart';
+import '../../data/repositories/user_profile_repository.dart';
+import '../profile/models/user_profile.dart';
 import '../notifications/notification_bell.dart';
 
 String _chatTime(BuildContext context, DateTime? date) {
@@ -24,10 +26,18 @@ class ChatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = context.read<ChatService>();
+    final profileRepository = context.read<UserProfileRepository>();
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return SafeArea(
+    return StreamBuilder<UserProfile?>(
+      stream: profileRepository.watchMyProfile(),
+      builder: (context, profileSnapshot) {
+        if (!profileSnapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final activeRole = profileSnapshot.data!.activeRole;
+        return SafeArea(
       child: Column(
         children: [
           Padding(
@@ -66,7 +76,10 @@ class ChatScreen extends StatelessWidget {
                 final conversations = (snapshot.data?.docs ?? [])
                     .map((doc) => ChatConversation.fromMap(doc.id, doc.data()))
                     .where((conversation) =>
-                        !conversation.isHiddenFor(service.currentUserId))
+                        !conversation.isHiddenFor(service.currentUserId) &&
+                        (activeRole == 'worker'
+                            ? conversation.workerId == service.currentUserId
+                            : conversation.posterId == service.currentUserId))
                     .toList()
                   ..sort((a, b) => (b.lastMessageAt ?? DateTime(2000))
                       .compareTo(a.lastMessageAt ?? DateTime(2000)));
@@ -233,6 +246,8 @@ class ChatScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+      },
     );
   }
 }
