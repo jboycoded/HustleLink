@@ -51,7 +51,8 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
       if (mounted) _router.go('/matches');
       return;
     }
-    if (type == 'application_accepted') {
+    if (type == 'application_accepted' ||
+        type == 'application_rejected') {
       try {
         await UserProfileRepository().updateActiveRole('worker');
       } catch (_) {}
@@ -59,6 +60,8 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
     if ((type == 'new_message' || type == 'application_accepted') &&
         relatedId.isNotEmpty) {
       _router.go('/chat/$relatedId');
+    } else if (type == 'application_rejected') {
+      _router.go('/matches');
     } else {
       _router.go('/notifications');
     }
