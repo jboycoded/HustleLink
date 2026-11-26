@@ -355,7 +355,6 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time;
 
       allow delete: if request.auth != null
-                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.activeRole == 'poster'
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['poster'])
                     && resource.data.posterId == request.auth.uid
                     && resource.data.status in ['closed', 'completed'];
@@ -755,6 +754,11 @@ service cloud.firestore {
           'rating', 'comment', 'createdAt'
         ])
         && request.resource.data.reviewerId == request.auth.uid
+        && request.resource.data.revieweeRole in ['worker', 'poster']
+        && request.resource.data.revieweeRole == (
+          request.auth.uid == get(/databases/$(database)/documents/gigs/$(request.resource.data.gigId)).data.posterId
+            ? 'worker' : 'poster'
+        )
         && reviewId == request.resource.data.gigId + '_' + request.auth.uid
         && request.resource.data.rating is int
         && request.resource.data.rating >= 1
