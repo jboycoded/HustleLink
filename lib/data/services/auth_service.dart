@@ -1,6 +1,7 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import 'push_notification_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -66,5 +67,8 @@ class AuthService {
     return _auth.sendPasswordResetEmail(email: normalizedEmail);
   }
 
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() async {
+    await PushNotificationService().unregisterCurrentDevice();
+    await _auth.signOut();
+  }
 }
