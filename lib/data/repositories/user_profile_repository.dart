@@ -220,12 +220,12 @@ class UserProfileRepository {
     for (final partnerId in completedPartnerByGig.values) {
       completedPartnerCounts.update(
         partnerId,
-        (count) => count + 1,
+        (currentCount) => currentCount + 1,
         ifAbsent: () => 1,
       );
     }
     final repeatEngagements = completedPartnerCounts.values
-        .where((count) => count >= 2)
+        .where((engagementCount) => engagementCount >= 2)
         .length;
 
     final ratings = reviews.where((doc) {
