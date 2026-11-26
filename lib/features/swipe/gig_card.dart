@@ -101,9 +101,7 @@ class GigCard extends StatelessWidget {
                 Text(
                   gig.description,
                   maxLines: 3,
-                  maxLines: maxLines,
-              softWrap: true,
-              overflow: TextOverflow.ellipsis,
+                  overflow: TextOverflow.ellipsis,
                   style: text.bodyMedium?.copyWith(
                     color: scheme.onSecondary.withValues(alpha: 0.8),
                   ),
@@ -183,6 +181,8 @@ class _Tag extends StatelessWidget {
           Flexible(
             child: Text(
               label,
+              maxLines: maxLines,
+              softWrap: true,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w700,
