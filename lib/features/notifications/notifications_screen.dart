@@ -81,11 +81,16 @@ class NotificationsScreen extends StatelessWidget {
                         await service.isNotificationActionable(item);
                     if (!context.mounted) return;
                     if (!actionable) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('This activity is no longer available.'),
-                        ),
-                      );
+                      try {
+                        await service.deleteNotification(item.id);
+                      } catch (_) {}
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('This notification is no longer relevant and has been removed.'),
+                          ),
+                        );
+                      }
                       return;
                     }
                     if (!item.isRead) await service.markNotificationRead(item.id);
