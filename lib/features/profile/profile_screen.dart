@@ -2,12 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/hustlelink_categories.dart';
 import '../../../core/widgets/hustlelink_location_selector.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../data/services/admin_access_service.dart';
 import '../../../data/services/proof_video_service.dart';
 import '../../../data/services/profile_photo_service.dart';
 import '../../../data/services/engagement_service.dart';
@@ -421,6 +423,24 @@ class ProfileScreen extends StatelessWidget {
                     icon: const Icon(Icons.block_outlined),
                     label: const Text('Manage blocked accounts'),
                   ),
+                ),
+                const SizedBox(height: 16),
+                FutureBuilder<String?>(
+                  future: AdminAccessService().getCurrentRole(),
+                  builder: (context, snapshot) {
+                    final role = snapshot.data;
+                    if (role == null || role.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.push('/admin'),
+                        icon: const Icon(Icons.admin_panel_settings_outlined),
+                        label: Text('Admin Dashboard · ${AdminAccessService.roleLabel(role)}'),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 _ProfileProofVideoSection(
