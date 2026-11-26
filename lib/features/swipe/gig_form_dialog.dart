@@ -133,7 +133,7 @@ class _GigFormDialogState extends State<GigFormDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: HustleLinkCategories.all.contains(_selectedCategory)
+                  initialValue: HustleLinkCategories.all.contains(_selectedCategory)
                       ? _selectedCategory
                       : null,
                   decoration: const InputDecoration(
