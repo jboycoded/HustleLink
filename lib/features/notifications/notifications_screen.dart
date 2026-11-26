@@ -116,7 +116,7 @@ class NotificationsScreen extends StatelessWidget {
                         // Still open Matches; the screen will show its normal
                         // access or connection error if the role update fails.
                       }
-                      if (context.mounted) context.push('/matches');
+                      if (context.mounted) context.go('/matches');
                     } else if (item.type == 'application_accepted' ||
                         item.type == 'application_rejected') {
                       try {
@@ -124,7 +124,7 @@ class NotificationsScreen extends StatelessWidget {
                       } catch (_) {}
                       if (context.mounted) {
                         if (item.type == 'application_accepted') {
-                          context.push('/chat/${item.relatedId}');
+                          context.go('/chat/${item.relatedId}');
                         } else {
                           context.push('/matches');
                         }
@@ -143,7 +143,7 @@ class NotificationsScreen extends StatelessWidget {
                         await profiles.updateActiveRole('worker');
                       } catch (_) {}
                       if (context.mounted) {
-                        context.push('/swipe?gigId=${item.relatedId}');
+                        context.go('/swipe?gigId=${item.relatedId}');
                       }
                     } else {
                       if (item.type == 'gig_completion_confirmed' ||
