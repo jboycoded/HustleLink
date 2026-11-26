@@ -20,6 +20,10 @@ class NotificationsScreen extends StatelessWidget {
         title: const Text('NOTIFICATIONS'),
         actions: [
           TextButton(
+            onPressed: () => _confirmClearAllNotifications(context, service),
+            child: const Text('Clear all'),
+          ),
+          TextButton(
             onPressed: service.markAllNotificationsRead,
             child: const Text('Mark all read'),
           ),
@@ -73,6 +77,17 @@ class NotificationsScreen extends StatelessWidget {
                     // BuildContext lookup is performed across an async gap.
                     final profiles = context.read<UserProfileRepository>();
                     final chats = context.read<ChatService>();
+                    final actionable =
+                        await service.isNotificationActionable(item);
+                    if (!context.mounted) return;
+                    if (!actionable) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('This activity is no longer available.'),
+                        ),
+                      );
+                      return;
+                    }
                     if (!item.isRead) await service.markNotificationRead(item.id);
                     if (!context.mounted || item.relatedId.isEmpty) return;
                     if (item.type == 'application_received') {
@@ -160,6 +175,47 @@ class NotificationsScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _confirmClearAllNotifications(
+    BuildContext context,
+    EngagementService service,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Clear all notifications?'),
+        content: const Text(
+          'This will remove all notifications from your notification screen. '
+          'It will not delete your applications, gigs, conversations, or messages.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Clear all'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await service.clearAllNotifications();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Notifications cleared.')),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not clear notifications. Please try again.')),
+        );
+      }
+    }
   }
 
   IconData _iconFor(String type) => switch (type) {
