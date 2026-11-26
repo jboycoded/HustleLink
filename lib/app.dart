@@ -57,8 +57,13 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
         await UserProfileRepository().updateActiveRole('worker');
       } catch (_) {}
     }
-    if ((type == 'new_message' || type == 'application_accepted') &&
-        relatedId.isNotEmpty) {
+    if (type == 'new_message' && relatedId.isNotEmpty) {
+      try {
+        final role = await ChatService().getCurrentUserRoleForConversation(relatedId);
+        if (role != null) await UserProfileRepository().updateActiveRole(role);
+      } catch (_) {}
+      if (mounted) _router.go('/chat/$relatedId');
+    } else if (type == 'application_accepted' && relatedId.isNotEmpty) {
       _router.go('/chat/$relatedId');
     } else if (type == 'application_rejected') {
       _router.go('/matches');
