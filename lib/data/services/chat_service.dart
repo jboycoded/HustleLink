@@ -41,9 +41,11 @@ class ChatService {
       final data = snapshot.data()!;
       if (data['posterId'] == _uid) return 'poster';
       if (data['acceptedWorkerId'] == _uid) return 'worker';
+    } else if (!allowConversationFallback) {
+      // For notification routing, do not open an engagement whose gig has
+      // already been deleted. Other callers may still use the legacy fallback.
+      return null;
     }
-
-    if (!allowConversationFallback) return null;
 
     // Older accepted gigs may not have acceptedWorkerId populated. Use the
     // conversation created for that gig as a compatibility fallback.
