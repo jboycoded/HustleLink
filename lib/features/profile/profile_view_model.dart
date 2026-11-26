@@ -47,6 +47,7 @@ class ProfileViewModel extends ChangeNotifier {
               completedGigs: previous.completedGigs,
               postedGigs: previous.postedGigs,
               paidGigs: previous.paidGigs,
+              repeatEngagements: previous.repeatEngagements,
             );
           } else {
             _profile = await _repository.getMyProfile();
