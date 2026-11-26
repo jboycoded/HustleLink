@@ -596,20 +596,14 @@ class GigService {
       await batch.commit();
     }
 
-    // Hide the shared conversation from both participants in the same atomic
-    // batch that deletes the gig. The conversation and its messages remain
-    // stored for historical integrity.
+    // Archive the conversation only for the poster who deleted this gig.
+    // The worker's chat list and the shared message history remain intact.
     final finalBatch = _firestore.batch();
     for (final conversation in conversations.docs) {
-      final data = conversation.data();
-      final participants = (data['participants'] as List<dynamic>? ?? [])
+      final hiddenFor = (conversation.data()['hiddenFor'] as List<dynamic>? ?? [])
           .whereType<String>()
           .toSet();
-      final hiddenFor = (data['hiddenFor'] as List<dynamic>? ?? [])
-          .whereType<String>()
-          .toSet();
-      if (participants.isNotEmpty && !hiddenFor.containsAll(participants)) {
-        hiddenFor.addAll(participants);
+      if (hiddenFor.add(_uid)) {
         finalBatch.update(conversation.reference, {
           'hiddenFor': hiddenFor.toList(),
         });
