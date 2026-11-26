@@ -131,12 +131,12 @@ class _HustleLinkLocationSelectorState
 
     if (_mode == 'remote' || normalized.isEmpty) return;
 
-    if (RegExp(r'\\babuja\\b').hasMatch(normalized)) {
+    if (RegExp(r'\babuja\b').hasMatch(normalized)) {
       _selectedState = 'fct';
       return;
     }
     for (final entry in _states.entries) {
-      if (RegExp('\\\\b${RegExp.escape(entry.key)}\\\\b').hasMatch(normalized)) {
+      if (RegExp('\\b${RegExp.escape(entry.key)}\\b').hasMatch(normalized)) {
         _selectedState = entry.key;
         return;
       }
