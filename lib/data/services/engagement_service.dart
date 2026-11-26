@@ -114,6 +114,10 @@ class EngagementService {
     }
   }
 
+  Future<void> deleteNotification(String id) async {
+    await _notifications.doc(id).delete();
+  }
+
   Future<void> markNotificationRead(String id) async {
     await _notifications.doc(id).update({'isRead': true});
   }
