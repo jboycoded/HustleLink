@@ -291,6 +291,19 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 }
 
+String _reviewCategoryLabel(String key) {
+  const labels = {
+    'quality': 'Quality',
+    'professionalism': 'Professionalism',
+    'communication': 'Communication',
+    'punctuality': 'Punctuality',
+    'paymentReliability': 'Payment reliability',
+    'fairTreatment': 'Fair treatment',
+    'requirementClarity': 'Requirements clarity',
+  };
+  return labels[key] ?? key;
+}
+
 class _ProfileReviews extends StatelessWidget {
   const _ProfileReviews({required this.userId, required this.role, required this.title, this.paidGigs});
   final String userId;
@@ -346,6 +359,20 @@ class _ProfileReviews extends StatelessWidget {
                 if (review.comment.isNotEmpty) ...[
                   const SizedBox(height: 5),
                   Text(review.comment),
+                ],
+                if (review.categoryRatings.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: review.categoryRatings.entries.map((entry) => Text(
+                      '${_reviewCategoryLabel(entry.key)}: ${entry.value}/5',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )).toList(),
+                  ),
                 ],
               ]),
             )),
