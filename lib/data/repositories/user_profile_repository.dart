@@ -100,6 +100,14 @@ class UserProfileRepository {
             .add(data['workerId'] as String? ?? '');
       }
     }
+    for (final archived in archivedPosted) {
+      final workerId = archived.data()['acceptedWorkerId'] as String?;
+      if (workerId != null && workerId.isNotEmpty) {
+        acceptedWorkersByGig
+            .putIfAbsent(archived.id, () => <String>{})
+            .add(workerId);
+      }
+    }
 
     final gigsById = <String, Map<String, dynamic>>{
       for (final doc in [...posted, ...worked, ...archivedPosted, ...archivedWorked]) doc.id: doc.data(),
