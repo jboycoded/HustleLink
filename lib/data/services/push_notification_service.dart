@@ -80,10 +80,10 @@ class PushNotificationService {
       await _handleRemoteTap(initialMessage);
     }
 
-    // Keep using the FCM registration token here: the Supabase Edge Function
-    // sends through the FCM HTTP v1 API, which targets registration tokens.
-    // The newer onRegistered stream provides a Firebase Installation ID,
-    // which is not interchangeable with that FCM registration token.
+    // The current Edge Function sends to FCM HTTP v1 registration tokens.
+    // firebase_messaging 17 still exposes these token APIs, although deprecated;
+    // its new onRegistered stream supplies a Firebase Installation ID instead.
+    // ignore: deprecated_member_use
     _messaging.onTokenRefresh.listen((token) {
       if (_auth.currentUser != null) {
         _registerToken(token);
@@ -102,6 +102,7 @@ class PushNotificationService {
 
   Future<void> _registerCurrentToken() async {
     try {
+      // ignore: deprecated_member_use
       final token = await _messaging.getToken();
       if (token != null && token.isNotEmpty) await _registerToken(token);
     } catch (error) {
@@ -121,6 +122,7 @@ class PushNotificationService {
     final user = _auth.currentUser;
     if (user == null) return;
     try {
+      // ignore: deprecated_member_use
       final token = await _messaging.getToken();
       if (token != null && token.isNotEmpty) {
         await _invoke({'action': 'remove-token', 'token': token});
