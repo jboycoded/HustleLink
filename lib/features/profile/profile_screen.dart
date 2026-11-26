@@ -729,6 +729,18 @@ class ProfileScreen extends StatelessWidget {
                                 });
                               },
                         icon: const Icon(Icons.add_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(dialogContext).colorScheme.secondary,
+                          foregroundColor:
+                              Theme.of(dialogContext).colorScheme.onSecondary,
+                          disabledBackgroundColor: Theme.of(dialogContext)
+                              .colorScheme.secondary
+                              .withValues(alpha: .45),
+                          disabledForegroundColor: Theme.of(dialogContext)
+                              .colorScheme.onSecondary
+                              .withValues(alpha: .65),
+                        ),
                       ),
                     ),
                   ],
