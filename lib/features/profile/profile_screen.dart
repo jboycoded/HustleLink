@@ -262,6 +262,12 @@ class ProfileScreen extends StatelessWidget {
                       const SizedBox(height: 20),
 
                       _CredibilityStats(profile: profile),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Completion rate is completed gigs divided by accepted gigs. Payment is counted only after both parties confirm it in HustleLink.',
+                        textAlign: TextAlign.center,
+                        style: text.labelSmall?.copyWith(color: colors.muted),
+                      ),
                     ],
                   ),
                 ),
@@ -833,7 +839,7 @@ class _CredibilityStats extends StatelessWidget {
             ('ACCEPTED', '${profile.acceptedGigs}'),
             ('COMPLETED', '${profile.completedGigs}'),
             ('PAYMENT CONFIRMED', '${profile.paidGigs}'),
-            ('COMPLETION RATE', '${(profile.completionRate * 100).round()}%'),
+            ('COMPLETION RATE', profile.acceptedGigs == 0 ? '—' : '${(profile.completionRate * 100).round()}%'),
           ];
     return Wrap(
       spacing: 10,
