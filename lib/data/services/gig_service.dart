@@ -118,7 +118,7 @@ class GigService {
       final notificationIds = <String>[];
       for (final profile in chunk) {
         final ref = _firestore.collection('notifications')
-            .doc('new_gig_' + gigId + '_' + profile.id);
+            .doc('new_gig_${gigId}_${profile.id}');
         notificationIds.add(ref.id);
         batch.set(ref, {
           'recipientId': profile.id,
