@@ -59,7 +59,6 @@ class _HustleLinkLocationSelectorState
     'yobe': 'Yobe State',
     'zamfara': 'Zamfara State',
     'fct': 'Federal Capital Territory (Abuja)',
-    'abuja': 'Federal Capital Territory (Abuja)',
   };
 
   static const List<String> _countries = [
@@ -132,8 +131,12 @@ class _HustleLinkLocationSelectorState
 
     if (_mode == 'remote' || normalized.isEmpty) return;
 
+    if (RegExp(r'\\babuja\\b').hasMatch(normalized)) {
+      _selectedState = 'fct';
+      return;
+    }
     for (final entry in _states.entries) {
-      if (normalized.contains(entry.key)) {
+      if (RegExp('\\\\b${RegExp.escape(entry.key)}\\\\b').hasMatch(normalized)) {
         _selectedState = entry.key;
         return;
       }
