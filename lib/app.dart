@@ -67,6 +67,14 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
       _router.go('/chat/$relatedId');
     } else if (type == 'application_rejected') {
       _router.go('/matches');
+    } else if ((type == 'gig_completion_confirmed' ||
+            type == 'payment_marked' || type == 'payment_received') &&
+        relatedId.isNotEmpty) {
+      try {
+        final role = await ChatService().getCurrentUserRoleForGig(relatedId);
+        if (role != null) await UserProfileRepository().updateActiveRole(role);
+      } catch (_) {}
+      if (mounted) _router.go('/matches');
     } else {
       _router.go('/notifications');
     }
