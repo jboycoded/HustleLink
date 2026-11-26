@@ -565,10 +565,13 @@ class SwipeScreen extends StatelessWidget {
     );
   }
 
-  bool _canDeleteGig(Gig gig) {
-    final hasAcceptedParticipant =
-        gig.hasAcceptedParticipant ||
-        (gig.acceptedApplicationId?.isNotEmpty ?? false);
+  bool _hasAcceptedParticipant(Gig gig, SwipeViewModel vm) =>
+      gig.hasAcceptedParticipant ||
+      (gig.acceptedApplicationId?.isNotEmpty ?? false) ||
+      vm.hasAcceptedApplication(gig.id);
+
+  bool _canDeleteGig(Gig gig, SwipeViewModel vm) {
+    final hasAcceptedParticipant = _hasAcceptedParticipant(gig, vm);
     if (gig.status == 'closed') return !hasAcceptedParticipant;
     if (gig.status == 'completed') {
       return hasAcceptedParticipant && gig.paid;
@@ -599,6 +602,9 @@ class SwipeScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final gig = vm.gigs[index];
 
+          final hasAcceptedParticipant =
+              _hasAcceptedParticipant(gig, vm);
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -613,14 +619,14 @@ class SwipeScreen extends StatelessWidget {
                     child: _PosterGigAction(
                       label: 'Edit',
                       icon: Icons.edit_outlined,
-                      onTap: vm.isSaving || !gig.isOpen
+                      onTap: vm.isSaving || !gig.isOpen || hasAcceptedParticipant
                           ? null
                           : () => _showGigForm(context, vm, gig: gig),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: gig.isOpen
+                    child: gig.isOpen && !hasAcceptedParticipant
                         ? _PosterGigAction(
                             label: 'Close',
                             icon: Icons.check_circle_outline,
@@ -629,12 +635,12 @@ class SwipeScreen extends StatelessWidget {
                         : _PosterGigAction(
                             label: gig.status == 'completed'
                                 ? 'Completed'
-                                : gig.status == 'filled'
+                                : hasAcceptedParticipant
                                     ? 'In progress'
                                     : 'Closed',
                             icon: gig.status == 'completed'
                                 ? Icons.task_alt_rounded
-                                : gig.status == 'filled'
+                                : hasAcceptedParticipant
                                     ? Icons.handshake_outlined
                                     : Icons.lock_outline_rounded,
                             onTap: null,
@@ -645,7 +651,7 @@ class SwipeScreen extends StatelessWidget {
                     label: 'Delete',
                     icon: Icons.delete_outline_rounded,
                     destructive: true,
-                    onTap: _canDeleteGig(gig)
+                    onTap: _canDeleteGig(gig, vm)
                         ? () => _deleteGig(context, vm, gig)
                         : null,
                   ),
