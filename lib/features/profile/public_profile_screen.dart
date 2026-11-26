@@ -194,6 +194,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               ('ACCEPTED', '${profile.acceptedGigs}'),
                               ('COMPLETED', '${profile.completedGigs}'),
                               ('PAYMENT CONFIRMED', '${profile.paidGigs}'),
+                              ('COMPLETION RATE', profile.acceptedGigs == 0 ? '—' : '${(profile.completionRate * 100).round()}%'),
                             ]
                           : <(String, String)>[
                               ('ACCEPTED', '${profile.acceptedGigs}'),
@@ -209,7 +210,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Completion rate is completed gigs divided by accepted gigs. Payment is counted only after both parties confirm it in HustleLink.',
+                      'Completion rate is completed gigs divided by accepted gigs, including ongoing engagements. Payment is counted only after both parties confirm it in HustleLink.',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: scheme.onSurfaceVariant,
