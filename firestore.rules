@@ -157,7 +157,7 @@ service cloud.firestore {
             'updatedAt'
           ])
         && request.resource.data.fullName is string
-        && request.resource.data.activeRole == get(/databases/$(database)/documents/users/$(userId)).data.activeRole
+        && request.resource.data.activeRole == getAfter(/databases/$(database)/documents/users/$(userId)).data.activeRole
         && request.resource.data.location is string
         && request.resource.data.skills is list
         && request.resource.data.isAvailableForGigs is bool
