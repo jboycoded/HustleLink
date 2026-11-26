@@ -82,13 +82,11 @@ class NotificationsScreen extends StatelessWidget {
                       if (context.mounted) context.push('/matches');
                     } else if (item.type == 'application_accepted' ||
                         item.type == 'application_rejected') {
-                      if (item.type == 'application_accepted') {
-                        try {
-                          await context
-                              .read<UserProfileRepository>()
-                              .updateActiveRole('worker');
-                        } catch (_) {}
-                      }
+                      try {
+                        await context
+                            .read<UserProfileRepository>()
+                            .updateActiveRole('worker');
+                      } catch (_) {}
                       if (context.mounted) {
                         if (item.type == 'application_accepted') {
                           context.push('/chat/${item.relatedId}');
