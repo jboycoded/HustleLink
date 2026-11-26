@@ -524,6 +524,31 @@ class GigService {
         .where('gigId', isEqualTo: gigId)
         .where('posterId', isEqualTo: _uid)
         .get();
+    final hasAcceptedApplication = applications.docs.any((application) {
+      final data = application.data();
+      return data['status'] == 'accepted' || data['status'] == 'completed';
+    });
+    final hasAcceptedParticipant =
+        (gig['acceptedWorkerId'] as String?)?.isNotEmpty == true ||
+        (gig['acceptedApplicationId'] as String?)?.isNotEmpty == true ||
+        hasAcceptedApplication;
+
+    if (hasAcceptedParticipant) {
+      final isCompletedAndPaid = gig['status'] == 'completed' &&
+          gig['paid'] == true &&
+          gig['posterPaymentConfirmed'] == true &&
+          gig['workerPaymentConfirmed'] == true;
+      if (!isCompletedAndPaid) {
+        throw StateError(
+          'This gig has an accepted worker. It can only be deleted after completion and payment have both been confirmed.',
+        );
+      }
+    } else if (gig['status'] != 'closed') {
+      throw StateError(
+        'A gig without an accepted participant can only be deleted after it is closed.',
+      );
+    }
+
     // Delete in chunks to stay within Firestore's 500-write batch limit.
     for (var start = 0; start < applications.docs.length; start += 450) {
       final batch = _firestore.batch();
