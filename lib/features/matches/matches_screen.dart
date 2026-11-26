@@ -189,6 +189,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           return _ApplicationCard(
             application: application,
             showWorkerName: false,
+            onTap: () => _showWorkerApplicationDetails(context, application),
           );
         },
       ),
@@ -233,6 +234,135 @@ class _MatchesScreenState extends State<MatchesScreen> {
         );
       }
     }
+  }
+
+  Future<void> _showWorkerApplicationDetails(
+    BuildContext context,
+    GigApplication application,
+  ) async {
+    final gigFuture =
+        context.read<GigRepository>().getGigById(application.gigId);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => _ThemeAwareBottomSheet(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
+            child: FutureBuilder<Gig?>(
+              future: gigFuture,
+              builder: (sheetContentContext, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 56),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                final gig = snapshot.data;
+                return ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight:
+                        MediaQuery.of(sheetContentContext).size.height * .78,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 42,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(sheetContentContext)
+                                .colorScheme.outlineVariant,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        gig?.title ?? application.gigTitle,
+                        style: Theme.of(sheetContentContext)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 14),
+                      Expanded(
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: [
+                            if ((gig?.description ?? '').isNotEmpty) ...[
+                              Text(
+                                'DESCRIPTION',
+                                style: Theme.of(sheetContentContext)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(gig!.description),
+                              const SizedBox(height: 14),
+                            ],
+                            _DetailRow(
+                              label: 'Application status',
+                              value: application.status.toUpperCase(),
+                            ),
+                            _DetailRow(
+                              label: 'Gig status',
+                              value: gig == null
+                                  ? 'Gig no longer available'
+                                  : _gigStatusLabel(gig.status),
+                            ),
+                            _DetailRow(
+                              label: 'Category',
+                              value: gig?.category ?? application.gigCategory,
+                            ),
+                            _DetailRow(
+                              label: 'Payment',
+                              value: '₦${gig?.pay ?? application.gigPay}',
+                            ),
+                            _DetailRow(
+                              label: 'Location',
+                              value: gig?.location ?? application.gigLocation,
+                            ),
+                            _DetailRow(
+                              label: 'Schedule',
+                              value: gig?.when ?? 'Not available',
+                            ),
+                            if (gig != null)
+                              _DetailRow(
+                                label: 'Proof video required',
+                                value: gig.proofVideoRequired ? 'Yes' : 'No',
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (application.status == 'accepted' ||
+                          application.status == 'completed')
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: () {
+                              Navigator.pop(sheetContext);
+                              context.push('/chat/${application.id}');
+                            },
+                            icon: const Icon(Icons.chat_bubble_outline_rounded),
+                            label: const Text('Open chat'),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _showGigDetails(
@@ -627,10 +757,12 @@ class _ApplicationCard extends StatelessWidget {
   const _ApplicationCard({
     required this.application,
     required this.showWorkerName,
+    this.onTap,
   });
 
   final GigApplication application;
   final bool showWorkerName;
+  final VoidCallback? onTap;
 
   Future<void> _review(BuildContext context, String status) async {
     final accepted = status == 'accepted';
@@ -702,7 +834,10 @@ class _ApplicationCard extends StatelessWidget {
     final scheme = theme.colorScheme;
     final colors = context.appColors;
 
-    return Container(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(AppTokens.space),
       decoration: BoxDecoration(
         color: scheme.surface,
@@ -770,6 +905,22 @@ class _ApplicationCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 14,
+                  color: scheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  'Tap to view application details',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ],
           if (showWorkerName && application.status == 'pending') ...[
             const SizedBox(height: 16),
@@ -829,6 +980,7 @@ class _ApplicationCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }
