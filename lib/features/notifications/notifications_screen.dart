@@ -143,7 +143,7 @@ class NotificationsScreen extends StatelessWidget {
                         await profiles.updateActiveRole('worker');
                       } catch (_) {}
                       if (context.mounted) {
-                        context.push('/swipe?gigId=' + item.relatedId);
+                        context.push('/swipe?gigId=${item.relatedId}');
                       }
                     } else {
                       if (item.type == 'gig_completion_confirmed' ||
