@@ -51,6 +51,13 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
       if (mounted) _router.go('/matches');
       return;
     }
+    if (type == 'new_matching_gig' && relatedId.isNotEmpty) {
+      try {
+        await UserProfileRepository().updateActiveRole('worker');
+      } catch (_) {}
+      if (mounted) _router.go('/swipe?gigId=' + relatedId);
+      return;
+    }
     if (type == 'application_accepted' ||
         type == 'application_rejected') {
       try {
