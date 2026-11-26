@@ -82,7 +82,9 @@ GoRouter createAppRouter({
                     ctx.read<GigRepository>(),
                     ctx.read<UserProfileRepository>(),
                   )..load(),
-                  child: const SwipeScreen(),
+                  child: SwipeScreen(
+                    initialGigId: state.uri.queryParameters['gigId'],
+                  ),
                 ),
               ),
             ],
