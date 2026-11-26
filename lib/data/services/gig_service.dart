@@ -547,7 +547,19 @@ class GigService {
       );
     }
 
-    // Delete in chunks to stay within Firestore's 500-write batch limit.
+    final conversations = await _firestore
+        .collection('conversations')
+        .where('gigId', isEqualTo: gigId)
+        .where('participants', arrayContains: _uid)
+        .get();
+    if (conversations.docs.length > 499) {
+      throw StateError(
+        'This gig has too many conversation records to archive safely. Please contact support.',
+      );
+    }
+
+    // Remove application records while the parent gig still exists, because
+    // Firestore rules verify the poster against that parent record.
     for (var start = 0; start < applications.docs.length; start += 450) {
       final batch = _firestore.batch();
       final end = start + 450 < applications.docs.length
@@ -558,6 +570,27 @@ class GigService {
       }
       await batch.commit();
     }
-    await gigRef.delete();
+
+    // Hide the shared conversation from both participants in the same atomic
+    // batch that deletes the gig. The conversation and its messages remain
+    // stored for historical integrity.
+    final finalBatch = _firestore.batch();
+    for (final conversation in conversations.docs) {
+      final data = conversation.data();
+      final participants = (data['participants'] as List<dynamic>? ?? [])
+          .whereType<String>()
+          .toSet();
+      final hiddenFor = (data['hiddenFor'] as List<dynamic>? ?? [])
+          .whereType<String>()
+          .toSet();
+      if (participants.isNotEmpty && !hiddenFor.containsAll(participants)) {
+        hiddenFor.addAll(participants);
+        finalBatch.update(conversation.reference, {
+          'hiddenFor': hiddenFor.toList(),
+        });
+      }
+    }
+    finalBatch.delete(gigRef);
+    await finalBatch.commit();
   }
 }
