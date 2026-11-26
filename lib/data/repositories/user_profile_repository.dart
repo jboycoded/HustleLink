@@ -41,12 +41,14 @@ class UserProfileRepository {
     required int completedGigs,
     String? proofVideoUrl,
     String? photoUrl,
+    String workerDescription = '',
   }) =>
       {
         'uid': uid,
         'fullName': fullName,
         'activeRole': activeRole,
         'location': location,
+        'workerDescription': workerDescription,
         'skills': HustleLinkCategories.canonicalizeAll(skills),
         'isAvailableForGigs': isAvailable,
         'rating': rating,
@@ -297,6 +299,7 @@ class UserProfileRepository {
         'roles': ['worker', 'poster'],
         'activeRole': 'worker',
         'location': '',
+        'workerDescription': '',
         'skills': <String>[],
         'isVerified': false,
         'profileCompleted': false,
@@ -312,6 +315,7 @@ class UserProfileRepository {
         fullName: data['fullName'] as String,
         activeRole: data['activeRole'] as String,
         location: data['location'] as String,
+        workerDescription: data['workerDescription'] as String? ?? '',
         skills: const [],
         isAvailable: true,
         rating: 0,
@@ -329,6 +333,7 @@ class UserProfileRepository {
       fullName: data['fullName'] as String? ?? '',
       activeRole: data['activeRole'] as String? ?? 'worker',
       location: data['location'] as String? ?? '',
+      workerDescription: data['workerDescription'] as String? ?? '',
       skills: List<String>.from(data['skills'] ?? []),
       isAvailable: data['isAvailableForGigs'] as bool? ?? true,
       rating: (data['rating'] as num?)?.toDouble() ?? 0,
@@ -348,20 +353,27 @@ class UserProfileRepository {
     required String fullName,
     required String location,
     required List<String> skills,
+    String? workerDescription,
   }) async {
-    await _users.doc(_uid).update({
+    final userUpdate = <String, dynamic>{
       'fullName': fullName.trim(),
       'location': location.trim(),
       'skills': HustleLinkCategories.canonicalizeAll(skills),
       'profileCompleted': true,
       'updatedAt': FieldValue.serverTimestamp(),
-    });
-    await _publicProfile(_uid).set({
+    };
+    final publicUpdate = <String, dynamic>{
       'fullName': fullName.trim(),
       'location': location.trim(),
       'skills': HustleLinkCategories.canonicalizeAll(skills),
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+    if (workerDescription != null) {
+      userUpdate['workerDescription'] = workerDescription.trim();
+      publicUpdate['workerDescription'] = workerDescription.trim();
+    }
+    await _users.doc(_uid).update(userUpdate);
+    await _publicProfile(_uid).set(publicUpdate, SetOptions(merge: true));
   }
 
   Future<void> updateProfilePhotoUrl(String? url) async {
