@@ -946,19 +946,6 @@ class _ApplicationCard extends StatelessWidget {
               ],
             ),
           ],
-          if (!showWorkerName && application.status == 'rejected') ...[
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () => _removeRejected(context),
-                icon: const Icon(Icons.delete_outline_rounded),
-                label: const Text('Remove'),
-              ),
-            ),
-          ],
-          if (application.status == 'accepted' || application.status == 'completed')
-            _CompletionPanel(application: application),
           Wrap(
             spacing: 14,
             runSpacing: 8,
@@ -979,6 +966,19 @@ class _ApplicationCard extends StatelessWidget {
                 ),
             ],
           ),
+          if (!showWorkerName && application.status == 'rejected') ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _removeRejected(context),
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: const Text('Remove'),
+              ),
+            ),
+          ],
+          if (application.status == 'accepted' || application.status == 'completed')
+            _CompletionPanel(application: application),
         ],
       ),
       ),
