@@ -178,6 +178,56 @@ class UserProfileRepository {
       }
     }
 
+    final completedPartnerByGig = <String, String>{};
+    if (role == 'poster') {
+      for (final doc in [...posted, ...archivedPosted]) {
+        final data = doc.data();
+        final workerId = data['acceptedWorkerId'] as String? ?? '';
+        if (data['status'] == 'completed' && workerId.isNotEmpty) {
+          completedPartnerByGig[doc.id] = workerId;
+        }
+      }
+      for (final application in posterApplications) {
+        final data = application.data();
+        if (data['status'] == 'completed') {
+          final gigId = data['gigId'] as String? ?? '';
+          final workerId = data['workerId'] as String? ?? '';
+          if (gigId.isNotEmpty && workerId.isNotEmpty) {
+            completedPartnerByGig[gigId] = workerId;
+          }
+        }
+      }
+    } else {
+      for (final doc in [...worked, ...archivedWorked]) {
+        final data = doc.data();
+        final posterId = data['posterId'] as String? ?? '';
+        if (data['status'] == 'completed' && posterId.isNotEmpty) {
+          completedPartnerByGig[doc.id] = posterId;
+        }
+      }
+      for (final application in workerApplications) {
+        final data = application.data();
+        if (data['status'] == 'completed') {
+          final gigId = data['gigId'] as String? ?? '';
+          final posterId = data['posterId'] as String? ?? '';
+          if (gigId.isNotEmpty && posterId.isNotEmpty) {
+            completedPartnerByGig[gigId] = posterId;
+          }
+        }
+      }
+    }
+    final completedPartnerCounts = <String, int>{};
+    for (final partnerId in completedPartnerByGig.values) {
+      completedPartnerCounts.update(
+        partnerId,
+        (count) => count + 1,
+        ifAbsent: () => 1,
+      );
+    }
+    final repeatEngagements = completedPartnerCounts.values
+        .where((count) => count >= 2)
+        .length;
+
     final ratings = reviews.where((doc) {
       final review = doc.data();
       final savedRole = review['revieweeRole'];
@@ -204,6 +254,7 @@ class UserProfileRepository {
       'completedGigs': completedIds.length,
       'postedGigs': role == 'poster' ? posted.length + archivedPosted.length : 0,
       'paidGigs': paidIds.length,
+      'repeatEngagements': repeatEngagements,
     };
   }
 
