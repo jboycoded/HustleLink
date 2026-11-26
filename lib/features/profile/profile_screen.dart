@@ -274,6 +274,34 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 _ProfileCompleteness(profile: profile),
+                if (profile.activeRole == 'worker') ...[
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'ABOUT ME',
+                      style: text.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colors.muted,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      profile.workerDescription.trim().isEmpty
+                          ? 'Add a short introduction so posters can learn more about you.'
+                          : profile.workerDescription,
+                      style: text.bodyMedium?.copyWith(
+                        color: profile.workerDescription.trim().isEmpty
+                            ? colors.muted
+                            : scheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 20),
 
                 // Availability
@@ -604,8 +632,9 @@ class ProfileScreen extends StatelessWidget {
     final nameController = TextEditingController(
       text: profile.fullName,
     );
-    final locationController = TextEditingController(
-      text: profile.location,
+    var locationValue = profile.location;
+    final workerDescriptionController = TextEditingController(
+      text: profile.workerDescription,
     );
     var selectedSkills = HustleLinkCategories.canonicalizeAll(profile.skills);
     String? pendingSkill;
@@ -628,13 +657,27 @@ class ProfileScreen extends StatelessWidget {
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: locationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Location',
-                    hintText: 'e.g. Lagos, Nigeria',
-                  ),
+                HustleLinkLocationSelector(
+                  initialValue: locationValue,
+                  onChanged: (value) {
+                    setDialogState(() => locationValue = value);
+                  },
                 ),
+                if (profile.activeRole == 'worker') ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: workerDescriptionController,
+                    decoration: const InputDecoration(
+                      labelText: 'About me',
+                      hintText: 'Tell posters about your experience, strengths and the work you do.',
+                      alignLabelWithHint: true,
+                    ),
+                    minLines: 3,
+                    maxLines: 5,
+                    maxLength: 600,
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -738,8 +781,11 @@ class ProfileScreen extends StatelessWidget {
 
                 final saved = await vm.updateProfile(
                   fullName: name,
-                  location: locationController.text,
+                  location: locationValue,
                   skills: HustleLinkCategories.canonicalizeAll(selectedSkills),
+                  workerDescription: profile.activeRole == 'worker'
+                      ? workerDescriptionController.text
+                      : null,
                 );
 
                 if (dialogContext.mounted) {
@@ -755,7 +801,7 @@ class ProfileScreen extends StatelessWidget {
     );
 
     nameController.dispose();
-    locationController.dispose();
+    workerDescriptionController.dispose();
 
     if (result == false && context.mounted && vm.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
