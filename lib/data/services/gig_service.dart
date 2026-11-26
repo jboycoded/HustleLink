@@ -73,8 +73,9 @@ class GigService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    // Notify available Worker-mode profiles whose saved skills include
-    // this category. Delivery is best-effort and cannot undo a posted gig.
+    // Notify every profile with a matching saved worker skill, regardless
+    // of the user's currently selected role or availability setting.
+    // Delivery is best-effort and cannot undo a posted gig.
     try {
       await _notifyMatchingWorkers(
         gigId: document.id,
@@ -95,18 +96,17 @@ class GigService {
     required String category,
     required int pay,
   }) async {
-    final profiles = await _firestore
-        .collection('publicProfiles')
-        .where('isAvailableForGigs', isEqualTo: true)
-        .get();
+    // Skills are the worker's saved capabilities. Do not gate notifications
+    // on activeRole or isAvailableForGigs: either setting may change later.
+    final profiles = await _firestore.collection('publicProfiles').get();
 
     final matches = profiles.docs.where((profile) {
       final skills = profile.data()['skills'];
       return profile.id != _uid &&
-          profile.data()['activeRole'] == 'worker' &&
           skills is List &&
           skills.whereType<String>().any(
-            (skill) => skill.trim() == category,
+            (skill) =>
+                HustleLinkCategories.canonicalize(skill) == category,
           );
     }).toList();
 
@@ -114,13 +114,24 @@ class GigService {
     // Keep each batch below Firestore's 20-document access-call limit in rules.
     for (var start = 0; start < matches.length; start += 19) {
       final chunk = matches.skip(start).take(19).toList();
+      final targets = await Future.wait(chunk.map((profile) {
+        final ref = _firestore
+            .collection('notifications')
+            .doc('new_gig_${gigId}_${profile.id}');
+        return ref.get().then((existing) => (ref: ref, profile: profile, exists: existing.exists));
+      }));
+
+      // Deterministic notification IDs plus this existence check ensure a
+      // worker is notified only once for a particular gig, including retries.
+      final newTargets = targets.where((target) => !target.exists).toList();
+      if (newTargets.isEmpty) continue;
+
       final batch = _firestore.batch();
       final notificationIds = <String>[];
-      for (final profile in chunk) {
-        final ref = _firestore.collection('notifications')
-            .doc('new_gig_${gigId}_${profile.id}');
-        notificationIds.add(ref.id);
-        batch.set(ref, {
+      for (final target in newTargets) {
+        final profile = target.profile;
+        notificationIds.add(target.ref.id);
+        batch.set(target.ref, {
           'recipientId': profile.id,
           'actorId': _uid,
           'type': 'new_matching_gig',
