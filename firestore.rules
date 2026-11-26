@@ -761,7 +761,7 @@ service cloud.firestore {
             request.resource.data.type == 'new_matching_gig'
             && get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.posterId == request.auth.uid
             && get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.status == 'open'
-                                    && get(/databases/$(database)/documents/publicProfiles/$(request.resource.data.recipientId)).data.skills.hasAny([
+             && get(/databases/$(database)/documents/publicProfiles/$(request.resource.data.recipientId)).data.skills.hasAny([
               get(/databases/$(database)/documents/gigs/$(request.resource.data.relatedId)).data.category
             ])
           )
