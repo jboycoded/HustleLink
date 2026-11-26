@@ -413,6 +413,21 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/applications/$(gigId + '_' + request.resource.data.acceptedWorkerId)).data.status in ['accepted', 'completed']
             && get(/databases/$(database)/documents/applications/$(gigId + '_' + request.resource.data.acceptedWorkerId)).data.posterId == request.auth.uid
           )
+        )
+        && (
+          (
+            request.resource.data.status == 'closed'
+            && (
+              request.resource.data.acceptedWorkerId == null
+              || request.resource.data.acceptedWorkerId == ''
+            )
+          )
+          || (
+            request.resource.data.status == 'completed'
+            && request.resource.data.paid == true
+            && request.resource.data.acceptedWorkerId is string
+            && request.resource.data.acceptedWorkerId != ''
+          )
         );
 
       allow update, delete: if false;
