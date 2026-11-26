@@ -359,7 +359,7 @@ class UserProfileRepository {
     await _publicProfile(_uid).set({
       'fullName': fullName.trim(),
       'location': location.trim(),
-      'skills': skills,
+      'skills': HustleLinkCategories.canonicalizeAll(skills),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
