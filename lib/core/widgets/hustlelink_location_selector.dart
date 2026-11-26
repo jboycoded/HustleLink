@@ -148,14 +148,13 @@ class _HustleLinkLocationSelectorState
 
     final countryAliases = <String, String>{
       'uk': 'United Kingdom',
-      'u.k.': 'United Kingdom',
       'usa': 'United States',
       'us': 'United States',
-      'u.s.': 'United States',
       'uae': 'United Arab Emirates',
     };
+    final locationWords = normalized.split(RegExp(r'[^a-z0-9]+'));
     for (final entry in countryAliases.entries) {
-      if (normalized.contains(entry.key)) {
+      if (locationWords.contains(entry.key)) {
         _scope = 'country';
         _selectedCountry = entry.value;
         return;
