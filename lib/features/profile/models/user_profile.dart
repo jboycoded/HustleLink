@@ -54,7 +54,7 @@ class UserProfile {
 
   double get completionRate => acceptedGigs == 0
       ? 0
-      : (completedGigs / acceptedGigs).clamp(0.0, 1.0);
+      : (completedGigs / acceptedGigs).clamp(0.0, 1.0).toDouble();
 
   UserProfile copyWith({
     String? activeRole,
