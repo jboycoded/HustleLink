@@ -24,6 +24,8 @@ class Gig {
     this.paidAt,
     this.completedAt,
     this.posterPhotoUrl,
+    this.acceptedApplicationId,
+    this.acceptedWorkerId,
   });
 
   final String id;
@@ -50,8 +52,12 @@ class Gig {
   final DateTime? paidAt;
   final DateTime? completedAt;
   final String? posterPhotoUrl;
+  final String? acceptedApplicationId;
+  final String? acceptedWorkerId;
 
   bool get isOpen => status == 'open';
+  bool get hasAcceptedParticipant =>
+      acceptedWorkerId != null && acceptedWorkerId!.isNotEmpty;
 
   factory Gig.fromMap(String id, Map<String, dynamic> data) {
     DateTime? readDate(dynamic value) {
@@ -83,6 +89,8 @@ class Gig {
       paidAt: readDate(data['paidAt']),
       completedAt: readDate(data['completedAt']),
       posterPhotoUrl: data['posterPhotoUrl'] as String?,
+      acceptedApplicationId: data['acceptedApplicationId'] as String?,
+      acceptedWorkerId: data['acceptedWorkerId'] as String?,
     );
   }
 
@@ -102,6 +110,8 @@ class Gig {
           ? FieldValue.serverTimestamp()
           : Timestamp.fromDate(createdAt!),
       'updatedAt': FieldValue.serverTimestamp(),
+      if (acceptedApplicationId != null) 'acceptedApplicationId': acceptedApplicationId,
+      if (acceptedWorkerId != null) 'acceptedWorkerId': acceptedWorkerId,
     };
   }
 }
