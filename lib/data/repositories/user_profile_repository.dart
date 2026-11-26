@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../features/profile/models/user_profile.dart';
+import '../../core/constants/hustlelink_categories.dart';
 
 class UserProfileRepository {
   UserProfileRepository({
@@ -46,7 +47,7 @@ class UserProfileRepository {
         'fullName': fullName,
         'activeRole': activeRole,
         'location': location,
-        'skills': skills,
+        'skills': HustleLinkCategories.canonicalizeAll(skills),
         'isAvailableForGigs': isAvailable,
         'rating': rating,
         'completedGigs': completedGigs,
@@ -351,7 +352,7 @@ class UserProfileRepository {
     await _users.doc(_uid).update({
       'fullName': fullName.trim(),
       'location': location.trim(),
-      'skills': skills,
+      'skills': HustleLinkCategories.canonicalizeAll(skills),
       'profileCompleted': true,
       'updatedAt': FieldValue.serverTimestamp(),
     });
