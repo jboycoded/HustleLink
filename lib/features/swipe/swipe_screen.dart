@@ -140,7 +140,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
 
     if (!confirmed || !context.mounted) return;
 
-    final success = await vm.apply();
+    final success = await vm.apply(targetGig: gig);
 
     if (!context.mounted) return;
 
