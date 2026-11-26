@@ -96,7 +96,7 @@ class ChatScreen extends StatelessWidget {
                     icon: Icons.chat_bubble_outline_rounded,
                     title: 'No conversations yet',
                     message:
-                        'Chats become available when a poster accepts your application.',
+                        'Accepted gig conversations appear here, separated by whether you are the worker or poster.',
                   );
                 }
 
