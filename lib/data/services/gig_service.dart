@@ -168,6 +168,9 @@ class GigService {
               document.id,
               document.data(),
             ))
+        // Closed gigs leave the active Poster Swipe list, but remain in
+        // the Matches history stream and its Closed filter.
+        .where((gig) => gig.status != 'closed')
         .toList();
 
     gigs.sort((a, b) {
