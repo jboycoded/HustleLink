@@ -261,13 +261,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      SizedBox(
-                        width: double.infinity,
-                        child: _StatBox(
-                          label: 'COMPLETED',
-                          value: '${profile.completedGigs} GIGS',
-                        ),
-                      ),
+                      _CredibilityStats(profile: profile),
                     ],
                   ),
                 ),
@@ -808,6 +802,37 @@ class _ProfileProofVideoSection extends StatelessWidget {
   }
 }
 
+class _CredibilityStats extends StatelessWidget {
+  const _CredibilityStats({required this.profile});
+  final UserProfile profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPoster = profile.activeRole == 'poster';
+    final items = isPoster
+        ? <(String, String)>[
+            ('GIGS POSTED', '${profile.postedGigs}'),
+            ('ACCEPTED', '${profile.acceptedGigs}'),
+            ('COMPLETED', '${profile.completedGigs}'),
+            ('PAYMENT CONFIRMED', '${profile.paidGigs}'),
+          ]
+        : <(String, String)>[
+            ('ACCEPTED', '${profile.acceptedGigs}'),
+            ('COMPLETED', '${profile.completedGigs}'),
+            ('PAYMENT CONFIRMED', '${profile.paidGigs}'),
+            ('COMPLETION RATE', '${(profile.completionRate * 100).round()}%'),
+          ];
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: items.map((item) => SizedBox(
+        width: (MediaQuery.sizeOf(context).width - 70) / 2,
+        child: _StatBox(label: item.$1, value: item.$2),
+      )).toList(),
+    );
+  }
+}
+
 class _OwnProfileReviews extends StatelessWidget {
   const _OwnProfileReviews({required this.userId, required this.role});
   final String userId;
@@ -831,7 +856,7 @@ class _OwnProfileReviews extends StatelessWidget {
               child: LinearProgressIndicator(),
             )
           else
-            Text(reviews.isEmpty ? 'No reviews yet.' : '${average.toStringAsFixed(1)} ★ from ${reviews.length} reviews'),
+            Text(reviews.isEmpty ? 'New to HustleLink — no reviews yet.' : '${average.toStringAsFixed(1)} ★ from ${reviews.length} reviews'),
           ...reviews.take(5).map((r) => ListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(r.reviewerName),
