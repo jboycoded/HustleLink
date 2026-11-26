@@ -382,7 +382,7 @@ class ProfileScreen extends StatelessWidget {
                     }).toList(),
                   ),
                 const SizedBox(height: 24),
-                _OwnProfileReviews(userId: profile.id),
+                _OwnProfileReviews(userId: profile.id, role: profile.activeRole),
                 const SizedBox(height: 16),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -809,13 +809,14 @@ class _ProfileProofVideoSection extends StatelessWidget {
 }
 
 class _OwnProfileReviews extends StatelessWidget {
-  const _OwnProfileReviews({required this.userId});
+  const _OwnProfileReviews({required this.userId, required this.role});
   final String userId;
+  final String role;
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<GigReview>>(
-      stream: context.read<EngagementService>().watchReviewsFor(userId),
+      stream: context.read<EngagementService>().watchReviewsFor(userId, role: role),
       builder: (context, snapshot) {
         final reviews = snapshot.data ?? const <GigReview>[];
         final average = reviews.isEmpty ? 0.0 : reviews.fold<int>(0, (s, r) => s + r.rating) / reviews.length;
