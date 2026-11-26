@@ -132,7 +132,7 @@ class NotificationsScreen extends StatelessWidget {
                     } else if (item.type == 'new_message') {
                       if (resolvedRole != null) {
                         try {
-                          await profiles.updateActiveRole(resolvedRole!);
+                          await profiles.updateActiveRole(resolvedRole);
                         } catch (_) {}
                       }
                       if (context.mounted) {
