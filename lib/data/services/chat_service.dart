@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'push_notification_service.dart';
+
 class ChatService {
   ChatService({FirebaseFirestore? firestore, FirebaseAuth? auth})
       : _firestore = firestore ?? FirebaseFirestore.instance,
@@ -91,5 +93,6 @@ class ChatService {
       'createdAt': FieldValue.serverTimestamp(),
     });
     await batch.commit();
+    await PushNotificationService().sendForNotification(notificationRef.id);
   }
 }
