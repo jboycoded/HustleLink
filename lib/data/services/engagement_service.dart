@@ -311,6 +311,7 @@ class EngagementService {
         'gigId': gigId,
         'reviewerId': uid,
         'revieweeId': revieweeId,
+        'revieweeRole': uid == workerId ? 'poster' : 'worker',
         'reviewerName': reviewer.data()?['fullName'] ?? 'HustleLink member',
         'rating': rating,
         'comment': comment.trim(),
@@ -319,12 +320,42 @@ class EngagementService {
     });
   }
 
-  Stream<List<GigReview>> watchReviewsFor(String userId) {
+  Stream<List<GigReview>> watchReviewsFor(
+    String userId, {
+    required String role,
+  }) {
     return _db.collection('reviews')
         .where('revieweeId', isEqualTo: userId)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => GigReview.fromMap(doc.id, doc.data()))
-            .toList());
+        .asyncMap((snapshot) async {
+      final result = <GigReview>[];
+      final gigCache = <String, Map<String, dynamic>?>{};
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        var revieweeRole = data['revieweeRole'] as String?;
+        // Resolve older reviews from the gig participants because legacy
+        // review records did not persist the role being reviewed.
+        if (revieweeRole == null || revieweeRole.isEmpty) {
+          final gigId = data['gigId'] as String? ?? '';
+          if (!gigCache.containsKey(gigId) && gigId.isNotEmpty) {
+            final gig = await _db.collection('gigs').doc(gigId).get();
+            gigCache[gigId] = gig.data();
+          }
+          final gig = gigCache[gigId];
+          final reviewerId = data['reviewerId'] as String? ?? '';
+          if (gig?['posterId'] == reviewerId) {
+            revieweeRole = 'worker';
+          } else if (gig?['acceptedWorkerId'] == reviewerId) {
+            revieweeRole = 'poster';
+          }
+        }
+        if (revieweeRole == role) {
+          result.add(GigReview.fromMap(doc.id, {...data, 'revieweeRole': revieweeRole}));
+        }
+      }
+      result.sort((a, b) =>
+          (b.createdAt ?? DateTime(2000)).compareTo(a.createdAt ?? DateTime(2000)));
+      return result;
+    });
   }
 }
