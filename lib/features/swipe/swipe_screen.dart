@@ -437,7 +437,7 @@ class SwipeScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '₦${gig.pay.toString().replaceAllMapped(RegExp(r'\\B(?=(\\d{3})+(?!\\d))'), (_) => ',')}',
+                  '₦${gig.pay.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',')}',
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
