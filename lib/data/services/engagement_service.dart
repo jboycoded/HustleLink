@@ -49,14 +49,62 @@ class EngagementService {
     return _notifications
         .where('recipientId', isEqualTo: _uid)
         .snapshots()
-        .map((snapshot) {
-      final items = snapshot.docs
-          .map((doc) => AppNotification.fromMap(doc.id, doc.data()))
+        .asyncMap((snapshot) async {
+      final checks = await Future.wait(snapshot.docs.map((doc) async {
+        final item = AppNotification.fromMap(doc.id, doc.data());
+        return MapEntry(item, await isNotificationActionable(item));
+      }));
+      final items = checks
+          .where((entry) => entry.value)
+          .map((entry) => entry.key)
           .toList();
       items.sort((a, b) => (b.createdAt ?? DateTime(2000))
           .compareTo(a.createdAt ?? DateTime(2000)));
       return items;
     });
+  }
+
+  // Notifications are historical records, but only remain visible while
+  // their related application, conversation, or gig still exists for this
+  // recipient. This prevents taps from opening deleted records.
+  Future<bool> isNotificationActionable(AppNotification item) async {
+    if (item.relatedId.isEmpty) return false;
+
+    switch (item.type) {
+      case 'application_received':
+      case 'application_accepted':
+      case 'application_rejected':
+        final application =
+            await _db.collection('applications').doc(item.relatedId).get();
+        if (!application.exists) return false;
+        final data = application.data()!;
+        return data['recipientId'] == _uid ||
+            data['posterId'] == _uid ||
+            data['workerId'] == _uid;
+
+      case 'new_message':
+        final conversation =
+            await _db.collection('conversations').doc(item.relatedId).get();
+        if (!conversation.exists) return false;
+        final data = conversation.data()!;
+        final participants = data['participants'];
+        final hiddenFor = data['hiddenFor'];
+        return participants is List &&
+            participants.contains(_uid) &&
+            !(hiddenFor is List && hiddenFor.contains(_uid));
+
+      case 'gig_completion_confirmed':
+      case 'payment_marked':
+      case 'payment_received':
+        final gig = await _db.collection('gigs').doc(item.relatedId).get();
+        if (!gig.exists) return false;
+        final data = gig.data()!;
+        return data['posterId'] == _uid ||
+            data['acceptedWorkerId'] == _uid;
+
+      default:
+        return false;
+    }
   }
 
   Future<void> markNotificationRead(String id) async {
@@ -73,6 +121,22 @@ class EngagementService {
       batch.update(doc.reference, {'isRead': true});
     }
     if (unread.isNotEmpty) await batch.commit();
+  }
+
+  Future<void> clearAllNotifications() async {
+    final snapshot = await _notifications
+        .where('recipientId', isEqualTo: _uid)
+        .get();
+    for (var start = 0; start < snapshot.docs.length; start += 450) {
+      final batch = _db.batch();
+      final end = start + 450 < snapshot.docs.length
+          ? start + 450
+          : snapshot.docs.length;
+      for (final doc in snapshot.docs.sublist(start, end)) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    }
   }
 
   Future<void> blockUser(String targetId) async {
