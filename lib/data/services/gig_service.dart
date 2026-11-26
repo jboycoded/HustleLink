@@ -66,7 +66,7 @@ class GigService {
       'status': 'open',
       'proofVideoRequired': proofVideoRequired,
       'posterPhotoUrl': profileData?['photoUrl'],
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': Timestamp.now(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
@@ -167,6 +167,7 @@ class GigService {
               document.id,
               document.data(),
             ))
+        .where((gig) => gig.status != 'closed')
         .toList();
 
     gigs.sort((a, b) {
@@ -269,6 +270,7 @@ class GigService {
       onCacheState?.call(snapshot.metadata.isFromCache);
       final gigs = snapshot.docs
           .map((document) => Gig.fromMap(document.id, document.data()))
+          .where((gig) => gig.status != 'closed')
           .toList();
       gigs.sort((a, b) => (b.createdAt ?? DateTime(2000))
           .compareTo(a.createdAt ?? DateTime(2000)));
@@ -476,6 +478,13 @@ class GigService {
     required String when,
     required bool proofVideoRequired,
   }) async {
+    final gigSnapshot = await _gigs.doc(gigId).get();
+    if (!gigSnapshot.exists || gigSnapshot.data()?['posterId'] != _uid) {
+      throw StateError('Gig not found or you do not own this gig.');
+    }
+    if (gigSnapshot.data()?['status'] == 'closed') {
+      throw StateError('Closed gigs can no longer be edited.');
+    }
     await _gigs.doc(gigId).update({
       'title': title.trim(),
       'description': description.trim(),
@@ -509,6 +518,7 @@ class GigService {
 
     final applications = await _applications
         .where('gigId', isEqualTo: gigId)
+        .where('posterId', isEqualTo: _uid)
         .get();
     // Delete in chunks to stay within Firestore's 500-write batch limit.
     for (var start = 0; start < applications.docs.length; start += 450) {
