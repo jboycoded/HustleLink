@@ -14,6 +14,7 @@ class UserProfile {
   final int acceptedGigs;
   final int postedGigs;
   final int paidGigs;
+  final int repeatEngagements;
   final String? proofVideoUrl;
   final String? photoUrl;
 
@@ -33,6 +34,7 @@ class UserProfile {
     this.acceptedGigs = 0,
     this.postedGigs = 0,
     this.paidGigs = 0,
+    this.repeatEngagements = 0,
     this.proofVideoUrl,
     this.photoUrl,
   });
@@ -64,6 +66,7 @@ class UserProfile {
     int? completedGigs,
     int? postedGigs,
     int? paidGigs,
+    int? repeatEngagements,
   }) {
     return UserProfile(
       id: id,
@@ -81,6 +84,7 @@ class UserProfile {
       acceptedGigs: acceptedGigs ?? this.acceptedGigs,
       postedGigs: postedGigs ?? this.postedGigs,
       paidGigs: paidGigs ?? this.paidGigs,
+      repeatEngagements: repeatEngagements ?? this.repeatEngagements,
       proofVideoUrl: proofVideoUrl,
       photoUrl: photoUrl,
     );
@@ -107,6 +111,7 @@ class UserProfile {
       acceptedGigs: (data['acceptedGigs'] as num?)?.toInt() ?? 0,
       postedGigs: (data['postedGigs'] as num?)?.toInt() ?? 0,
       paidGigs: (data['paidGigs'] as num?)?.toInt() ?? 0,
+      repeatEngagements: (data['repeatEngagements'] as num?)?.toInt() ?? 0,
       proofVideoUrl: data['proofVideoUrl'] as String?,
       photoUrl: data['photoUrl'] as String?,
     );
@@ -128,6 +133,7 @@ class UserProfile {
       'acceptedGigs': acceptedGigs,
       'postedGigs': postedGigs,
       'paidGigs': paidGigs,
+      'repeatEngagements': repeatEngagements,
       'proofVideoUrl': proofVideoUrl,
       'photoUrl': photoUrl,
     };
