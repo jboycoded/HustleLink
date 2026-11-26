@@ -114,24 +114,16 @@ class GigService {
     // Keep each batch below Firestore's 20-document access-call limit in rules.
     for (var start = 0; start < matches.length; start += 19) {
       final chunk = matches.skip(start).take(19).toList();
-      final targets = await Future.wait(chunk.map((profile) {
+      final batch = _firestore.batch();
+      final notificationIds = <String>[];
+      for (final profile in chunk) {
+        // One stable document per gig and recipient prevents duplicate
+        // notification records for the same worker/gig pair.
         final ref = _firestore
             .collection('notifications')
             .doc('new_gig_${gigId}_${profile.id}');
-        return ref.get().then((existing) => (ref: ref, profile: profile, exists: existing.exists));
-      }));
-
-      // Deterministic notification IDs plus this existence check ensure a
-      // worker is notified only once for a particular gig, including retries.
-      final newTargets = targets.where((target) => !target.exists).toList();
-      if (newTargets.isEmpty) continue;
-
-      final batch = _firestore.batch();
-      final notificationIds = <String>[];
-      for (final target in newTargets) {
-        final profile = target.profile;
-        notificationIds.add(target.ref.id);
-        batch.set(target.ref, {
+        notificationIds.add(ref.id);
+        batch.set(ref, {
           'recipientId': profile.id,
           'actorId': _uid,
           'type': 'new_matching_gig',
