@@ -604,6 +604,8 @@ class SwipeScreen extends StatelessWidget {
 
           final hasAcceptedParticipant =
               _hasAcceptedParticipant(gig, vm);
+          final isInProgress =
+              gig.status == 'filled' || hasAcceptedParticipant;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -635,12 +637,12 @@ class SwipeScreen extends StatelessWidget {
                         : _PosterGigAction(
                             label: gig.status == 'completed'
                                 ? 'Completed'
-                                : hasAcceptedParticipant
+                                : isInProgress
                                     ? 'In progress'
                                     : 'Closed',
                             icon: gig.status == 'completed'
                                 ? Icons.task_alt_rounded
-                                : hasAcceptedParticipant
+                                : isInProgress
                                     ? Icons.handshake_outlined
                                     : Icons.lock_outline_rounded,
                             onTap: null,
