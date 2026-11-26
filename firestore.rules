@@ -3,9 +3,37 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function currentAdminRole() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role
+        : '';
+    }
+
+    function isAdmin() {
+      return currentAdminRole() in [
+        'super_admin', 'admin', 'moderator', 'support', 'analyst'
+      ];
+    }
+
+    function canManageUsers() {
+      return currentAdminRole() in ['super_admin', 'admin', 'moderator'];
+    }
+
+    function canManageGigs() {
+      return currentAdminRole() in ['super_admin', 'admin', 'moderator'];
+    }
+
+    function canReviewReports() {
+      return currentAdminRole() in [
+        'super_admin', 'admin', 'moderator', 'support'
+      ];
+    }
+
+
     match /users/{userId} {
       allow read: if request.auth != null
-                  && request.auth.uid == userId;
+                  && (request.auth.uid == userId || isAdmin());
 
       allow create: if request.auth != null
                     && request.auth.uid == userId
@@ -814,6 +842,11 @@ service cloud.firestore {
     }
 
     match /reports/{reportId} {
+      allow read: if canReviewReports();
+      allow update: if canReviewReports()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedAt', 'reviewedBy', 'resolutionNote'])
+        && request.resource.data.status in ['open', 'under_review', 'resolved', 'dismissed']
+        && request.resource.data.reviewedBy == request.auth.uid;
       allow create: if request.auth != null
         && request.resource.data.keys().hasAll([
           'reporterId', 'targetType', 'targetId', 'reason',
@@ -832,7 +865,18 @@ service cloud.firestore {
         && request.resource.data.details is string
         && request.resource.data.status == 'open'
         && request.resource.data.createdAt == request.time;
-      allow read, update, delete: if false;
+      allow delete: if false;
+    }
+
+    match /adminUsers/{adminUserId} {
+      allow read: if request.auth != null && request.auth.uid == adminUserId;
+      // Admin grants are provisioned out-of-band in Firebase Console.
+      allow create, update, delete: if false;
+    }
+
+    match /adminAuditLogs/{logId} {
+      allow read: if currentAdminRole() in ['super_admin', 'admin', 'analyst'];
+      allow create, update, delete: if false;
     }
 
     match /reviews/{reviewId} {
