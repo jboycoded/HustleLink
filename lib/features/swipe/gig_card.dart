@@ -68,9 +68,27 @@ class GigCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              _Tag(gig.location, icon: Icons.place_outlined, maxLines: 2),
-              const SizedBox(height: 8),
-              _Tag(gig.when, icon: Icons.schedule_rounded),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: _Tag(
+                      gig.location,
+                      icon: Icons.place_outlined,
+                      maxLines: 2,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: _Tag(
+                      gig.when,
+                      icon: Icons.schedule_rounded,
+                      maxLines: 2,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
           Column(
