@@ -144,7 +144,7 @@ class NotificationsScreen extends StatelessWidget {
                           item.type == 'payment_received') {
                         if (resolvedRole != null) {
                           try {
-                            await profiles.updateActiveRole(resolvedRole!);
+                            await profiles.updateActiveRole(resolvedRole);
                           } catch (_) {}
                         }
                       }
