@@ -362,24 +362,19 @@ service cloud.firestore {
                         resource.data.status == 'closed'
                         && resource.data.get('acceptedWorkerId', '') == ''
                         && resource.data.get('acceptedApplicationId', '') == ''
+                        && exists(/databases/$(database)/documents/gigHistory/$(gigId))
+                        && (
+                          get(/databases/$(database)/documents/gigHistory/$(gigId)).data.acceptedWorkerId == null
+                          || get(/databases/$(database)/documents/gigHistory/$(gigId)).data.acceptedWorkerId == ''
+                        )
                       )
                       ||
                       (
                         resource.data.status == 'completed'
                         && resource.data.get('paid', false) == true
-                        && (
-                          (
-                            resource.data.get('acceptedWorkerId', '') is string
-                            && resource.data.get('acceptedWorkerId', '') != ''
-                          )
-                          || (
-                            resource.data.get('acceptedApplicationId', '') is string
-                            && resource.data.get('acceptedApplicationId', '') != ''
-                            && exists(/databases/$(database)/documents/applications/$(resource.data.acceptedApplicationId))
-                            && get(/databases/$(database)/documents/applications/$(resource.data.acceptedApplicationId)).data.status in ['accepted', 'completed']
-                            && get(/databases/$(database)/documents/applications/$(resource.data.acceptedApplicationId)).data.posterId == request.auth.uid
-                          )
-                        )
+                        && exists(/databases/$(database)/documents/gigHistory/$(gigId))
+                        && get(/databases/$(database)/documents/gigHistory/$(gigId)).data.acceptedWorkerId is string
+                        && get(/databases/$(database)/documents/gigHistory/$(gigId)).data.acceptedWorkerId != ''
                       )
                     );
     }
