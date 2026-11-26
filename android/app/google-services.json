@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "461780178802",
+    "project_id": "hustlelink-483a9",
+    "storage_bucket": "hustlelink-483a9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:461780178802:android:98af6e7b06ef1a6d39efeb",
+        "android_client_info": {
+          "package_name": "com.hustlelink.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbat2fBpjfP-9iZMIpFONluDgGmvDtBeQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
