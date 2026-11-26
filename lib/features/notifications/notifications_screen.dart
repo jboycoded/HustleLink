@@ -155,7 +155,7 @@ class NotificationsScreen extends StatelessWidget {
                           } catch (_) {}
                         }
                       }
-                      if (context.mounted) context.push('/matches');
+                      if (context.mounted) context.go('/matches');
                     }
                   },
                   child: Container(
