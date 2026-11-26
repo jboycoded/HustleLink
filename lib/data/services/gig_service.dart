@@ -71,7 +71,71 @@ class GigService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
+    // Notify available Worker-mode profiles whose saved skills include
+    // this category. Delivery is best-effort and cannot undo a posted gig.
+    try {
+      await _notifyMatchingWorkers(
+        gigId: document.id,
+        title: title.trim(),
+        category: category.trim(),
+        pay: pay,
+      );
+    } catch (_) {
+      // The gig is already live; a notification failure must not fail posting.
+    }
+
     return document.id;
+  }
+
+  Future<void> _notifyMatchingWorkers({
+    required String gigId,
+    required String title,
+    required String category,
+    required int pay,
+  }) async {
+    final profiles = await _firestore
+        .collection('publicProfiles')
+        .where('activeRole', isEqualTo: 'worker')
+        .where('isAvailableForGigs', isEqualTo: true)
+        .get();
+
+    final matches = profiles.docs.where((profile) {
+      final skills = profile.data()['skills'];
+      return profile.id != _uid &&
+          skills is List &&
+          skills.whereType<String>().any(
+            (skill) => skill.trim().toLowerCase() == category.toLowerCase(),
+          );
+    }).toList();
+
+    for (var start = 0; start < matches.length; start += 400) {
+      final chunk = matches.skip(start).take(400).toList();
+      final batch = _firestore.batch();
+      final notificationIds = <String>[];
+      for (final profile in chunk) {
+        final ref = _firestore.collection('notifications')
+            .doc('new_gig_' + gigId + '_' + profile.id);
+        notificationIds.add(ref.id);
+        batch.set(ref, {
+          'recipientId': profile.id,
+          'actorId': _uid,
+          'type': 'new_matching_gig',
+          'title': 'A new gig matches your skills',
+          'body': '$title · $category · ₦$pay',
+          'relatedId': gigId,
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      await batch.commit();
+      for (final id in notificationIds) {
+        try {
+          await PushNotificationService().sendForNotification(id);
+        } catch (_) {
+          // Continue sending to the remaining matched workers.
+        }
+      }
+    }
   }
 
   Stream<List<Gig>> watchAvailableGigs() {
