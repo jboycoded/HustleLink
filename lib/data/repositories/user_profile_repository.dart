@@ -66,23 +66,39 @@ class UserProfileRepository {
           .where('posterId', isEqualTo: userId).get(),
       _firestore.collection('gigs')
           .where('acceptedWorkerId', isEqualTo: userId).get(),
+      _firestore.collection('applications')
+          .where('posterId', isEqualTo: userId).get(),
     ]);
     final reviews = results[0].docs;
     final posted = results[1].docs;
     final worked = results[2].docs;
+    final posterApplications = results[3].docs;
+    final acceptedWorkersByGig = <String, Set<String>>{};
+    for (final application in posterApplications) {
+      final data = application.data();
+      if (data['status'] == 'accepted' || data['status'] == 'completed') {
+        acceptedWorkersByGig
+            .putIfAbsent(data['gigId'] as String? ?? '', () => <String>{})
+            .add(data['workerId'] as String? ?? '');
+      }
+    }
     final gigsById = <String, Map<String, dynamic>>{
       for (final doc in [...posted, ...worked]) doc.id: doc.data(),
     };
     final ratings = reviews.where((doc) {
       final review = doc.data();
-      final savedRole = review['revieweeRole'] as String?;
-      if (savedRole != null) return savedRole == role;
-      final gig = gigsById[review['gigId'] as String? ?? ''];
+      final savedRole = review['revieweeRole'];
+      if (savedRole is String && savedRole.trim().isNotEmpty) {
+        return savedRole.trim().toLowerCase() == role;
+      }
+      final gigId = review['gigId'] as String? ?? '';
+      final gig = gigsById[gigId];
       if (gig == null) return false;
       final reviewerId = review['reviewerId'] as String? ?? '';
       return role == 'worker'
           ? gig['posterId'] == reviewerId
-          : gig['acceptedWorkerId'] == reviewerId;
+          : gig['posterId'] == userId &&
+              (acceptedWorkersByGig[gigId]?.contains(reviewerId) ?? false);
     }).map((doc) => (doc.data()['rating'] as num?)?.toDouble())
       .whereType<double>()
       .toList();
