@@ -52,7 +52,13 @@ class EngagementService {
         .asyncMap((snapshot) async {
       final checks = await Future.wait(snapshot.docs.map((doc) async {
         final item = AppNotification.fromMap(doc.id, doc.data());
-        return MapEntry(item, await isNotificationActionable(item));
+        try {
+          return MapEntry(item, await isNotificationActionable(item));
+        } catch (_) {
+          // A stale or blocked related record should not prevent the rest of
+          // the notification list from loading.
+          return MapEntry(item, false);
+        }
       }));
       final items = checks
           .where((entry) => entry.value)
