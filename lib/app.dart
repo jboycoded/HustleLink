@@ -12,6 +12,7 @@ import 'data/services/engagement_service.dart';
 import 'data/services/gig_service.dart';
 import 'data/services/profile_photo_service.dart';
 import 'data/services/proof_video_service.dart';
+import 'data/services/push_notification_service.dart';
 
 class HustleLinkApp extends StatefulWidget {
   const HustleLinkApp({super.key});
@@ -24,6 +25,7 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
   late final AuthService _authService;
   late final AuthRefreshNotifier _authRefresh;
   late final GoRouter _router;
+  late final PushNotificationService _pushNotifications;
 
   @override
   void initState() {
@@ -34,6 +36,20 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
       authService: _authService,
       authRefresh: _authRefresh,
     );
+    _pushNotifications = PushNotificationService();
+    _pushNotifications.initialize(onNotificationTap: _handleNotificationTap);
+  }
+
+  Future<void> _handleNotificationTap(Map<String, dynamic> data) async {
+    if (!mounted) return;
+    final type = data['type'] as String? ?? '';
+    final relatedId = data['relatedId'] as String? ?? '';
+    if ((type == 'new_message' || type == 'application_accepted') &&
+        relatedId.isNotEmpty) {
+      _router.go('/chat/$relatedId');
+    } else {
+      _router.go('/notifications');
+    }
   }
 
   @override
