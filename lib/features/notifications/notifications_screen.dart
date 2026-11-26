@@ -69,13 +69,15 @@ class NotificationsScreen extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(AppTokens.rMd),
                   onTap: () async {
+                    // Resolve providers before the first await so no
+                    // BuildContext lookup is performed across an async gap.
+                    final profiles = context.read<UserProfileRepository>();
+                    final chats = context.read<ChatService>();
                     if (!item.isRead) await service.markNotificationRead(item.id);
                     if (!context.mounted || item.relatedId.isEmpty) return;
                     if (item.type == 'application_received') {
                       try {
-                        await context
-                            .read<UserProfileRepository>()
-                            .updateActiveRole('poster');
+                        await profiles.updateActiveRole('poster');
                       } catch (_) {
                         // Still open Matches; the screen will show its normal
                         // access or connection error if the role update fails.
@@ -84,9 +86,7 @@ class NotificationsScreen extends StatelessWidget {
                     } else if (item.type == 'application_accepted' ||
                         item.type == 'application_rejected') {
                       try {
-                        await context
-                            .read<UserProfileRepository>()
-                            .updateActiveRole('worker');
+                        await profiles.updateActiveRole('worker');
                       } catch (_) {}
                       if (context.mounted) {
                         if (item.type == 'application_accepted') {
@@ -97,14 +97,9 @@ class NotificationsScreen extends StatelessWidget {
                       }
                     } else if (item.type == 'new_message') {
                       try {
-                        final role = await context
-                            .read<ChatService>()
+                        final role = await chats
                             .getCurrentUserRoleForConversation(item.relatedId);
-                        if (role != null) {
-                          await context
-                              .read<UserProfileRepository>()
-                              .updateActiveRole(role);
-                        }
+                        if (role != null) await profiles.updateActiveRole(role);
                       } catch (_) {}
                       if (context.mounted) {
                         context.push('/chat/${item.relatedId}');
@@ -114,14 +109,9 @@ class NotificationsScreen extends StatelessWidget {
                           item.type == 'payment_marked' ||
                           item.type == 'payment_received') {
                         try {
-                          final role = await context
-                              .read<ChatService>()
-                              .getCurrentUserRoleForGig(item.relatedId);
-                          if (role != null) {
-                            await context
-                                .read<UserProfileRepository>()
-                                .updateActiveRole(role);
-                          }
+                          final role =
+                              await chats.getCurrentUserRoleForGig(item.relatedId);
+                          if (role != null) await profiles.updateActiveRole(role);
                         } catch (_) {}
                       }
                       if (context.mounted) context.push('/matches');
