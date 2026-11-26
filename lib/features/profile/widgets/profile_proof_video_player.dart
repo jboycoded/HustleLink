@@ -98,6 +98,10 @@ class _ProfileProofVideoPlayerState extends State<ProfileProofVideoPlayer> {
                     });
                   },
                   iconSize: 30,
+                  style: IconButton.styleFrom(
+                    backgroundColor: scheme.secondary,
+                    foregroundColor: scheme.onSecondary,
+                  ),
                   icon: Icon(
                     _controller.value.isPlaying
                         ? Icons.pause_rounded
