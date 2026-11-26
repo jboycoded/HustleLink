@@ -304,7 +304,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'Show your profile to nearby clients',
+                              'Let posters know you are open to work. You can still apply when this is off.',
                               style: text.labelSmall?.copyWith(
                                 color: colors.muted,
                               ),
