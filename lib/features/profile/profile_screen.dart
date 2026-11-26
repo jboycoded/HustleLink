@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/constants/hustlelink_categories.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/proof_video_service.dart';
@@ -606,14 +607,14 @@ class ProfileScreen extends StatelessWidget {
     final locationController = TextEditingController(
       text: profile.location,
     );
-    final skillsController = TextEditingController(
-      text: profile.skills.join(', '),
-    );
+    var selectedSkills = HustleLinkCategories.canonicalizeAll(profile.skills);
+    String? pendingSkill;
 
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
           title: const Text('Edit profile'),
           content: SingleChildScrollView(
             child: Column(
@@ -635,15 +636,85 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: skillsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Skills',
-                    hintText: 'e.g. Plumbing, Design, Coding',
-                    helperText: 'Separate skills with commas.',
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Worker categories',
+                    style: Theme.of(dialogContext).textTheme.titleSmall,
                   ),
-                  maxLines: 3,
                 ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: pendingSkill,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Select a category',
+                        ),
+                        items: HustleLinkCategories.all
+                            .where((category) => !selectedSkills.contains(category))
+                            .map((category) => DropdownMenuItem(
+                                  value: category,
+                                  child: Text(category),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          setDialogState(() => pendingSkill = value);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: IconButton.filled(
+                        tooltip: 'Add category',
+                        onPressed: pendingSkill == null
+                            ? null
+                            : () {
+                                setDialogState(() {
+                                  if (!selectedSkills.contains(pendingSkill)) {
+                                    selectedSkills = [
+                                      ...selectedSkills,
+                                      pendingSkill!,
+                                    ]..sort();
+                                  }
+                                  pendingSkill = null;
+                                });
+                              },
+                        icon: const Icon(Icons.add_rounded),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (selectedSkills.isEmpty)
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Add the types of work you can do.'),
+                  )
+                else
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: selectedSkills.map((skill) {
+                        return InputChip(
+                          label: Text(skill),
+                          onDeleted: () {
+                            setDialogState(() {
+                              selectedSkills = selectedSkills
+                                  .where((item) => item != skill)
+                                  .toList();
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -665,17 +736,10 @@ class ProfileScreen extends StatelessWidget {
                   return;
                 }
 
-                final skills = skillsController.text
-                    .split(',')
-                    .map((skill) => skill.trim())
-                    .where((skill) => skill.isNotEmpty)
-                    .toSet()
-                    .toList();
-
                 final saved = await vm.updateProfile(
                   fullName: name,
                   location: locationController.text,
-                  skills: skills,
+                  skills: HustleLinkCategories.canonicalizeAll(selectedSkills),
                 );
 
                 if (dialogContext.mounted) {
@@ -685,13 +749,13 @@ class ProfileScreen extends StatelessWidget {
               child: const Text('Save changes'),
             ),
           ],
+        ),
         );
       },
     );
 
     nameController.dispose();
     locationController.dispose();
-    skillsController.dispose();
 
     if (result == false && context.mounted && vm.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
