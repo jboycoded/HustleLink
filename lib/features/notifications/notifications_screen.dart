@@ -138,6 +138,13 @@ class NotificationsScreen extends StatelessWidget {
                       if (context.mounted) {
                         context.push('/chat/${item.relatedId}');
                       }
+                    } else if (item.type == 'new_matching_gig') {
+                      try {
+                        await profiles.updateActiveRole('worker');
+                      } catch (_) {}
+                      if (context.mounted) {
+                        context.push('/swipe?gigId=' + item.relatedId);
+                      }
                     } else {
                       if (item.type == 'gig_completion_confirmed' ||
                           item.type == 'payment_marked' ||
