@@ -595,6 +595,24 @@ class GigService {
       }
     }
 
+    // Archive the outcome before removing application records. The
+    // immutable summary is ignored by profile totals while the live gig still
+    // exists, and becomes the source of truth once the gig is deleted.
+    final historyRef = _firestore.collection('gigHistory').doc(gigId);
+    final historySnapshot = await historyRef.get();
+    if (!historySnapshot.exists) {
+      await historyRef.set({
+        'gigId': gigId,
+        'posterId': _uid,
+        'acceptedWorkerId': archivedWorkerId,
+        'status': gig['status'],
+        'paid': gig['paid'] == true,
+        'createdAt': gig['createdAt'],
+        'completedAt': gig['completedAt'],
+        'archivedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
     // Remove application records while the parent gig still exists, because
     // Firestore rules verify the poster against that parent record.
     for (var start = 0; start < applications.docs.length; start += 450) {
@@ -622,18 +640,6 @@ class GigService {
       }
     }
 
-    // Preserve a small, immutable engagement record so deleting an eligible
-    // gig does not erase either participant's credibility history.
-    finalBatch.set(_firestore.collection('gigHistory').doc(gigId), {
-      'gigId': gigId,
-      'posterId': _uid,
-      'acceptedWorkerId': archivedWorkerId,
-      'status': gig['status'],
-      'paid': gig['paid'] == true,
-      'createdAt': gig['createdAt'],
-      'completedAt': gig['completedAt'],
-      'archivedAt': FieldValue.serverTimestamp(),
-    });
     finalBatch.delete(gigRef);
     await finalBatch.commit();
   }
