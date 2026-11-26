@@ -74,8 +74,18 @@ class UserProfileRepository {
     final reviews = results[0].docs;
     final posted = results[1].docs;
     final worked = results[2].docs;
-    final archivedPosted = results[3].docs;
-    final archivedWorked = results[4].docs;
+    final liveGigIds = {
+      ...posted.map((doc) => doc.id),
+      ...worked.map((doc) => doc.id),
+    };
+    // A history record is written just before deletion. Ignore it while its
+    // live gig still exists so a failed delete cannot double-count the gig.
+    final archivedPosted = results[3].docs
+        .where((doc) => !liveGigIds.contains(doc.id))
+        .toList();
+    final archivedWorked = results[4].docs
+        .where((doc) => !liveGigIds.contains(doc.id))
+        .toList();
 
     // Private application records are queried only for the signed-in user.
     // They provide a compatibility path for older gigs whose acceptedWorkerId
