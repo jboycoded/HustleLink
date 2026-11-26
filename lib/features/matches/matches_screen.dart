@@ -1213,20 +1213,66 @@ class _CompletionPanelState extends State<_CompletionPanel> {
     final service = context.read<EngagementService>();
     if (await service.hasReviewed(gig.id)) return;
     if (!mounted) return;
+
+    // Posters rate the worker; workers rate the poster.
+    final isPosterReviewing = service.currentUserId == gig.posterId;
+    final categoryLabels = isPosterReviewing
+        ? const <String, String>{
+            'quality': 'Quality of work',
+            'professionalism': 'Professionalism',
+            'communication': 'Communication',
+            'punctuality': 'Punctuality',
+          }
+        : const <String, String>{
+            'paymentReliability': 'Payment reliability',
+            'communication': 'Communication',
+            'fairTreatment': 'Fair treatment',
+            'requirementClarity': 'Clarity of requirements',
+          };
     var rating = 5;
+    final categoryRatings = <String, int>{
+      for (final key in categoryLabels.keys) key: 5,
+    };
     final comment = TextEditingController();
     final submitted = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: const Text('Leave a review'),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('Rating: $rating / 5 stars'),
-            Slider(value: rating.toDouble(), min: 1, max: 5, divisions: 4,
-              onChanged: (value) => setDialogState(() => rating = value.round())),
-            TextField(controller: comment, maxLines: 3, maxLength: 500,
-              decoration: const InputDecoration(labelText: 'Comment (optional)')),
-          ]),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const Text('Overall experience'),
+                Text('Rating: $rating / 5 stars'),
+                Slider(value: rating.toDouble(), min: 1, max: 5, divisions: 4,
+                  onChanged: (value) => setDialogState(() => rating = value.round())),
+                const Divider(),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Rate each area', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+                ...categoryLabels.entries.map((entry) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    Text('${entry.value}: ${categoryRatings[entry.key]} / 5'),
+                    Slider(
+                      value: categoryRatings[entry.key]!.toDouble(),
+                      min: 1,
+                      max: 5,
+                      divisions: 4,
+                      onChanged: (value) => setDialogState(
+                        () => categoryRatings[entry.key] = value.round(),
+                      ),
+                    ),
+                  ],
+                )),
+                TextField(controller: comment, maxLines: 3, maxLength: 500,
+                  decoration: const InputDecoration(labelText: 'Comment (optional)')),
+              ]),
+            ),
+          ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
             FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Submit review')),
@@ -1236,7 +1282,12 @@ class _CompletionPanelState extends State<_CompletionPanel> {
     );
     if (submitted == true && mounted) {
       try {
-        await service.submitReview(gigId: gig.id, rating: rating, comment: comment.text);
+        await service.submitReview(
+          gigId: gig.id,
+          rating: rating,
+          categoryRatings: categoryRatings,
+          comment: comment.text,
+        );
         if (mounted) {
           setState(() {});
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review submitted.')));
