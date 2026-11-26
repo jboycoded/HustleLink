@@ -10,6 +10,7 @@ import '../../data/repositories/gig_repository.dart';
 import '../../data/repositories/user_profile_repository.dart';
 import '../../data/services/auth_service.dart';
 import '../../features/auth/auth_screen.dart';
+import '../../features/admin/admin_dashboard_screen.dart';
 import '../../features/chat/chat_screen.dart';
 import '../../features/chat/chat_conversation_screen.dart';
 import '../../features/matches/matches_screen.dart';
@@ -60,6 +61,10 @@ GoRouter createAppRouter({
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) => const AdminDashboardScreen(),
+      ),
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
