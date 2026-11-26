@@ -844,13 +844,15 @@ class _CredibilityStats extends StatelessWidget {
             ('COMPLETION RATE', profile.acceptedGigs == 0 ? '—' : '${(profile.completionRate * 100).round()}%'),
             ('REPEAT CLIENTS', '${profile.repeatEngagements}'),
           ];
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: items.map((item) => SizedBox(
-        width: (MediaQuery.sizeOf(context).width - 70) / 2,
-        child: _StatBox(label: item.$1, value: item.$2),
-      )).toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) => Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: items.map((item) => SizedBox(
+          width: (constraints.maxWidth - 10) / 2,
+          child: _StatBox(label: item.$1, value: item.$2),
+        )).toList(),
+      ),
     );
   }
 }
