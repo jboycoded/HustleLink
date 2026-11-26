@@ -21,6 +21,8 @@ class GigCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
+    final hasPosterPhoto =
+        gig.posterPhotoUrl != null && gig.posterPhotoUrl!.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -42,8 +44,7 @@ class GigCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  if (gig.posterPhotoUrl != null &&
-                      gig.posterPhotoUrl!.isNotEmpty) ...[
+                  if (hasPosterPhoto) ...[
                     CircleAvatar(
                       radius: 16,
                       backgroundImage: NetworkImage(gig.posterPhotoUrl!),
@@ -68,16 +69,24 @@ class GigCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              _Tag(
-                gig.location,
-                icon: Icons.place_outlined,
-                maxLines: 2,
-              ),
-              const SizedBox(height: 6),
-              _Tag(
-                gig.when,
-                icon: Icons.schedule_rounded,
-                maxLines: 2,
+              Padding(
+                padding: EdgeInsets.only(left: hasPosterPhoto ? 40 : 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _Tag(
+                      gig.location,
+                      icon: Icons.place_outlined,
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 6),
+                    _Tag(
+                      gig.when,
+                      icon: Icons.schedule_rounded,
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
