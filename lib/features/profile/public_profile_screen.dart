@@ -185,7 +185,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       ),
                     ],
                     const SizedBox(height: 20),
-                    Wrap(
+                    LayoutBuilder(
+                      builder: (context, constraints) => Wrap(
                       spacing: 10,
                       runSpacing: 10,
                       children: (profile.activeRole == 'poster'
@@ -205,10 +206,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               ('REPEAT CLIENTS', '${profile.repeatEngagements}'),
                             ])
                           .map((item) => SizedBox(
-                            width: (MediaQuery.sizeOf(context).width - 72) / 2,
+                            width: (constraints.maxWidth - 10) / 2,
                             child: _ProfileStat(label: item.$1, value: item.$2),
                           ))
                           .toList(),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
