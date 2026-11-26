@@ -261,9 +261,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 title: profile.activeRole == 'poster'
                     ? 'CREDIBILITY RATING'
                     : 'RATINGS & REVIEWS',
-                paidGigs: profile.activeRole == 'poster'
-                    ? profile.paidGigs
-                    : null,
               ),
               if (profile.activeRole == 'worker') ...[
               const SizedBox(height: 22),
@@ -314,11 +311,10 @@ String _reviewCategoryLabel(String key) {
 }
 
 class _ProfileReviews extends StatelessWidget {
-  const _ProfileReviews({required this.userId, required this.role, required this.title, this.paidGigs});
+  const _ProfileReviews({required this.userId, required this.role, required this.title});
   final String userId;
   final String role;
   final String title;
-  final int? paidGigs;
 
   @override
   Widget build(BuildContext context) {
@@ -339,7 +335,6 @@ class _ProfileReviews extends StatelessWidget {
                 reviews.isEmpty
                     ? 'New to HustleLink'
                     : '${average.toStringAsFixed(1)} ★  •  ${reviews.length} reviews',
-                if (paidGigs != null) '$paidGigs payment confirmed',
               ].join('  •  '),
               style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
