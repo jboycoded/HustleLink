@@ -4,11 +4,12 @@ import '../../core/theme/app_tokens.dart';
 import '../../data/models/gig.dart';
 
 class GigCard extends StatelessWidget {
-  const GigCard({super.key, required this.gig, this.onReport, this.onPosterTap});
+  const GigCard({super.key, required this.gig, this.onReport, this.onPosterTap, this.showDetailsHint = false});
 
   final Gig gig;
   final VoidCallback? onReport;
   final VoidCallback? onPosterTap;
+  final bool showDetailsHint;
 
   static String _naira(int value) => '₦${value.toString().replaceAllMapped(
         RegExp(r'\B(?=(\d{3})+(?!\d))'),
@@ -120,6 +121,17 @@ class GigCard extends StatelessWidget {
                 const _Tag(
                   '30-sec proof',
                   icon: Icons.videocam_outlined,
+                ),
+              ],
+              if (showDetailsHint) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'TAP FOR FULL DETAILS',
+                  style: text.labelSmall?.copyWith(
+                    color: scheme.onSecondary.withValues(alpha: 0.75),
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
                 ),
               ],
             ],
