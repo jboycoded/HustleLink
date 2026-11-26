@@ -132,6 +132,7 @@ GoRouter createAppRouter({
                     path: ':userId',
                     builder: (context, state) => PublicProfileScreen(
                       userId: state.pathParameters['userId']!,
+                    displayRole: state.uri.queryParameters['role'],
                     ),
                   ),
                 ],
