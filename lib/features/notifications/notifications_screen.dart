@@ -110,7 +110,21 @@ class NotificationsScreen extends StatelessWidget {
                         context.push('/chat/${item.relatedId}');
                       }
                     } else {
-                      context.push('/matches');
+                      if (item.type == 'gig_completion_confirmed' ||
+                          item.type == 'payment_marked' ||
+                          item.type == 'payment_received') {
+                        try {
+                          final role = await context
+                              .read<ChatService>()
+                              .getCurrentUserRoleForGig(item.relatedId);
+                          if (role != null) {
+                            await context
+                                .read<UserProfileRepository>()
+                                .updateActiveRole(role);
+                          }
+                        } catch (_) {}
+                      }
+                      if (context.mounted) context.push('/matches');
                     }
                   },
                   child: Container(
