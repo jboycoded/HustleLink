@@ -649,7 +649,7 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: pendingSkill,
+                        initialValue: pendingSkill,
                         isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'Select a category',
