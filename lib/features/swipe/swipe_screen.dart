@@ -11,8 +11,43 @@ import 'gig_card.dart';
 import 'gig_form_dialog.dart';
 import 'swipe_view_model.dart';
 
-class SwipeScreen extends StatelessWidget {
-  const SwipeScreen({super.key});
+class SwipeScreen extends StatefulWidget {
+  const SwipeScreen({super.key, this.initialGigId});
+
+  final String? initialGigId;
+
+  @override
+  State<SwipeScreen> createState() => _SwipeScreenState();
+}
+
+class _SwipeScreenState extends State<SwipeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialGigId != null && widget.initialGigId!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openNotifiedGig(widget.initialGigId!);
+      });
+    }
+  }
+
+  Future<void> _openNotifiedGig(String gigId) async {
+    final vm = context.read<SwipeViewModel>();
+    while (mounted && vm.isLoading) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    if (!mounted) return;
+    final gig = await vm.focusGig(gigId);
+    if (!mounted) return;
+    if (gig == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This gig is no longer available.')),
+      );
+      return;
+    }
+    await _showWorkerGigDetails(context, vm, gig);
+    if (mounted) vm.clearFocusedGig();
+  }
 
   Future<void> _showGigForm(
     BuildContext context,
