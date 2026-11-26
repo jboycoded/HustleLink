@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/gig.dart';
 import '../../core/constants/hustlelink_categories.dart';
+import '../../core/widgets/hustlelink_location_selector.dart';
 
 class GigFormData {
   const GigFormData({
@@ -38,7 +39,7 @@ class _GigFormDialogState extends State<GigFormDialog> {
   late final TextEditingController _description;
   String? _selectedCategory;
   late final TextEditingController _pay;
-  late final TextEditingController _location;
+  String _locationValue = '';
   late final TextEditingController _when;
 
   late bool _proofVideoRequired;
@@ -57,7 +58,7 @@ class _GigFormDialogState extends State<GigFormDialog> {
     _pay = TextEditingController(
       text: gig == null ? '' : gig.pay.toString(),
     );
-    _location = TextEditingController(text: gig?.location ?? '');
+    _locationValue = gig?.location ?? '';
     _when = TextEditingController(text: gig?.when ?? '');
     _proofVideoRequired = gig?.proofVideoRequired ?? true;
   }
@@ -67,7 +68,6 @@ class _GigFormDialogState extends State<GigFormDialog> {
     _title.dispose();
     _description.dispose();
     _pay.dispose();
-    _location.dispose();
     _when.dispose();
     super.dispose();
   }
@@ -81,6 +81,12 @@ class _GigFormDialogState extends State<GigFormDialog> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    if (_locationValue.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a work location.')),
+      );
+      return;
+    }
 
     Navigator.pop(
       context,
@@ -89,7 +95,7 @@ class _GigFormDialogState extends State<GigFormDialog> {
         description: _description.text.trim(),
         category: _selectedCategory!,
         pay: int.parse(_pay.text.replaceAll(',', '').trim()),
-        location: _location.text.trim(),
+        location: _locationValue.trim(),
         when: _when.text.trim(),
         proofVideoRequired: _proofVideoRequired,
       ),
@@ -171,14 +177,11 @@ class _GigFormDialogState extends State<GigFormDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _location,
-                  decoration: const InputDecoration(
-                    labelText: 'Location',
-                    hintText: 'e.g. Yaba, Lagos',
-                  ),
-                  textCapitalization: TextCapitalization.words,
-                  validator: _required,
+                HustleLinkLocationSelector(
+                  initialValue: _locationValue,
+                  onChanged: (value) {
+                    setState(() => _locationValue = value);
+                  },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
