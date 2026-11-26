@@ -31,7 +31,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   @override
   void didUpdateWidget(covariant PublicProfileScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.userId != widget.userId) _loadProfile();
+    if (oldWidget.userId != widget.userId ||
+        oldWidget.displayRole != widget.displayRole) {
+      _loadProfile();
+    }
   }
 
   Future<void> _reportProfile(BuildContext context, EngagementService service) async {
