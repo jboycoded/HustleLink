@@ -10,9 +10,10 @@ import 'models/user_profile.dart';
 import 'widgets/profile_proof_video_player.dart';
 
 class PublicProfileScreen extends StatefulWidget {
-  const PublicProfileScreen({super.key, required this.userId});
+  const PublicProfileScreen({super.key, required this.userId, this.displayRole});
 
   final String userId;
+  final String? displayRole;
 
   @override
   State<PublicProfileScreen> createState() => _PublicProfileScreenState();
@@ -62,8 +63,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   void _loadProfile() {
-    _profileFuture =
-        context.read<UserProfileRepository>().getPublicProfile(widget.userId);
+    _profileFuture = context.read<UserProfileRepository>().getPublicProfile(
+      widget.userId,
+      roleOverride: widget.displayRole,
+    );
   }
 
   @override
@@ -246,6 +249,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               const SizedBox(height: 22),
               _ProfileReviews(
                 userId: profile.id,
+                role: profile.activeRole,
                 title: profile.activeRole == 'poster'
                     ? 'CREDIBILITY RATING'
                     : 'RATINGS & REVIEWS',
@@ -289,8 +293,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 }
 
 class _ProfileReviews extends StatelessWidget {
-  const _ProfileReviews({required this.userId, required this.title, this.paidGigs});
+  const _ProfileReviews({required this.userId, required this.role, required this.title, this.paidGigs});
   final String userId;
+  final String role;
   final String title;
   final int? paidGigs;
 
@@ -299,7 +304,7 @@ class _ProfileReviews extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return StreamBuilder<List<GigReview>>(
-      stream: context.read<EngagementService>().watchReviewsFor(userId),
+      stream: context.read<EngagementService>().watchReviewsFor(userId, role: role),
       builder: (context, snapshot) {
         final reviews = snapshot.data ?? const <GigReview>[];
         final average = reviews.isEmpty ? 0.0 :
