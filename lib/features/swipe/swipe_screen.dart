@@ -565,6 +565,20 @@ class SwipeScreen extends StatelessWidget {
     );
   }
 
+  bool _canDeleteGig(Gig gig) {
+    final hasAcceptedParticipant =
+        gig.hasAcceptedParticipant ||
+        (gig.acceptedApplicationId?.isNotEmpty ?? false);
+    if (gig.status == 'closed') return !hasAcceptedParticipant;
+    if (gig.status == 'completed') {
+      return hasAcceptedParticipant &&
+          gig.paid &&
+          gig.posterPaymentConfirmed &&
+          gig.workerPaymentConfirmed;
+    }
+    return false;
+  }
+
   Widget _buildPosterBody(BuildContext context, SwipeViewModel vm) {
     if (vm.gigs.isEmpty) {
       return _EmptyState(
@@ -618,10 +632,14 @@ class SwipeScreen extends StatelessWidget {
                         : _PosterGigAction(
                             label: gig.status == 'completed'
                                 ? 'Completed'
-                                : 'Closed',
+                                : gig.status == 'filled'
+                                    ? 'In progress'
+                                    : 'Closed',
                             icon: gig.status == 'completed'
                                 ? Icons.task_alt_rounded
-                                : Icons.lock_outline_rounded,
+                                : gig.status == 'filled'
+                                    ? Icons.handshake_outlined
+                                    : Icons.lock_outline_rounded,
                             onTap: null,
                           ),
                   ),
@@ -630,7 +648,7 @@ class SwipeScreen extends StatelessWidget {
                     label: 'Delete',
                     icon: Icons.delete_outline_rounded,
                     destructive: true,
-                    onTap: gig.status == 'closed' || gig.status == 'completed'
+                    onTap: _canDeleteGig(gig)
                         ? () => _deleteGig(context, vm, gig)
                         : null,
                   ),
