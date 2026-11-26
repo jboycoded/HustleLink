@@ -33,7 +33,14 @@ class ChatScreen extends StatelessWidget {
     return StreamBuilder<UserProfile?>(
       stream: profileRepository.watchMyProfile(),
       builder: (context, profileSnapshot) {
-        if (!profileSnapshot.hasData) {
+        if (profileSnapshot.hasError) {
+          return const _ChatEmptyState(
+            icon: Icons.error_outline_rounded,
+            title: 'Unable to load your profile',
+            message: 'Please check your connection and try again.',
+          );
+        }
+        if (!profileSnapshot.hasData || profileSnapshot.data == null) {
           return const Center(child: CircularProgressIndicator());
         }
         final activeRole = profileSnapshot.data!.activeRole;
