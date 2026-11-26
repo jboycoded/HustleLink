@@ -5,6 +5,7 @@ class UserProfile {
   final String activeRole;
   final List<String> roles;
   final String location;
+  final String workerDescription;
   final List<String> skills;
   final bool isVerified;
   final bool profileCompleted;
@@ -25,6 +26,7 @@ class UserProfile {
     required this.activeRole,
     required this.roles,
     required this.location,
+    this.workerDescription = '',
     required this.skills,
     required this.isVerified,
     required this.profileCompleted,
@@ -75,6 +77,7 @@ class UserProfile {
       activeRole: activeRole ?? this.activeRole,
       roles: roles,
       location: location,
+      workerDescription: workerDescription,
       skills: skills,
       isVerified: isVerified,
       profileCompleted: profileCompleted,
@@ -101,6 +104,7 @@ class UserProfile {
       activeRole: data['activeRole'] as String? ?? 'worker',
       roles: List<String>.from(data['roles'] ?? ['worker', 'poster']),
       location: data['location'] as String? ?? '',
+      workerDescription: data['workerDescription'] as String? ?? '',
       skills: List<String>.from(data['skills'] ?? []),
       isVerified: data['isVerified'] as bool? ?? false,
       profileCompleted: data['profileCompleted'] as bool? ?? false,
@@ -124,6 +128,7 @@ class UserProfile {
       'activeRole': activeRole,
       'roles': roles,
       'location': location,
+      'workerDescription': workerDescription,
       'skills': skills,
       'isVerified': isVerified,
       'profileCompleted': profileCompleted,
