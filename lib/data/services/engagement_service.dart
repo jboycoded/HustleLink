@@ -78,9 +78,16 @@ class EngagementService {
             await _db.collection('applications').doc(item.relatedId).get();
         if (!application.exists) return false;
         final data = application.data()!;
-        return data['recipientId'] == _uid ||
-            data['posterId'] == _uid ||
-            data['workerId'] == _uid;
+        if (item.type == 'application_received') {
+          // A new-application alert is no longer actionable after the poster
+          // has accepted or rejected that application.
+          return data['posterId'] == _uid && data['status'] == 'pending';
+        }
+        if (item.type == 'application_accepted') {
+          return data['workerId'] == _uid &&
+              (data['status'] == 'accepted' || data['status'] == 'completed');
+        }
+        return data['workerId'] == _uid && data['status'] == 'rejected';
 
       case 'new_message':
         final conversation =
