@@ -401,33 +401,42 @@ class EngagementService {
         .where('revieweeId', isEqualTo: userId)
         .snapshots()
         .asyncMap((snapshot) async {
-      final result = <GigReview>[];
-      final gigCache = <String, Map<String, dynamic>?>{};
-      for (final doc in snapshot.docs) {
+      final reviews = await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data();
         var revieweeRole = data['revieweeRole'] as String?;
-        // Resolve older reviews from the gig participants because legacy
-        // review records did not persist the role being reviewed.
+
+        // Legacy reviews did not store the role. Resolve those records in
+        // parallel so one slow gig lookup does not hold up the whole list.
         if (revieweeRole == null || revieweeRole.isEmpty) {
           final gigId = data['gigId'] as String? ?? '';
-          if (!gigCache.containsKey(gigId) && gigId.isNotEmpty) {
-            final gig = await _db.collection('gigs').doc(gigId).get();
-            gigCache[gigId] = gig.data();
-          }
-          final gig = gigCache[gigId];
           final reviewerId = data['reviewerId'] as String? ?? '';
-          if (gig?['posterId'] == reviewerId) {
-            revieweeRole = 'worker';
-          } else if (gig?['acceptedWorkerId'] == reviewerId) {
-            revieweeRole = 'poster';
+          if (gigId.isNotEmpty) {
+            try {
+              final gigSnapshot =
+                  await _db.collection('gigs').doc(gigId).get();
+              final gig = gigSnapshot.data();
+              if (gig?['posterId'] == reviewerId) {
+                revieweeRole = 'worker';
+              } else if (gig?['acceptedWorkerId'] == reviewerId) {
+                revieweeRole = 'poster';
+              }
+            } catch (_) {
+              // Keep other reviews visible if a legacy gig cannot be read.
+            }
           }
         }
-        if (revieweeRole == role) {
-          result.add(GigReview.fromMap(doc.id, {...data, 'revieweeRole': revieweeRole}));
-        }
-      }
-      result.sort((a, b) =>
-          (b.createdAt ?? DateTime(2000)).compareTo(a.createdAt ?? DateTime(2000)));
+
+        if (revieweeRole != role) return null;
+        return GigReview.fromMap(
+          doc.id,
+          {...data, 'revieweeRole': revieweeRole},
+        );
+      }));
+
+      final result = reviews.whereType<GigReview>().toList()
+        ..sort((a, b) =>
+            (b.createdAt ?? DateTime(2000))
+                .compareTo(a.createdAt ?? DateTime(2000)));
       return result;
     });
   }
