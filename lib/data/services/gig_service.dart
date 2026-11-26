@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../core/constants/hustlelink_categories.dart';
+
 import '../models/gig.dart';
 import '../models/gig_application.dart';
 import 'push_notification_service.dart';
@@ -58,7 +60,7 @@ class GigService {
     await document.set({
       'title': title.trim(),
       'description': description.trim(),
-      'category': category.trim(),
+      'category': HustleLinkCategories.canonicalize(category),
       'pay': pay,
       'posterId': uid,
       'posterName': posterName,
@@ -77,7 +79,7 @@ class GigService {
       await _notifyMatchingWorkers(
         gigId: document.id,
         title: title.trim(),
-        category: category.trim(),
+        category: HustleLinkCategories.canonicalize(category),
         pay: pay,
       );
     } catch (_) {
@@ -554,7 +556,7 @@ class GigService {
     await _gigs.doc(gigId).update({
       'title': title.trim(),
       'description': description.trim(),
-      'category': category.trim(),
+      'category': HustleLinkCategories.canonicalize(category),
       'pay': pay,
       'location': location.trim(),
       'when': when.trim(),
