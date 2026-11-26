@@ -595,6 +595,21 @@ service cloud.firestore {
             && request.resource.data.hiddenFor.hasOnly(resource.data.participants)
           )
           || (
+            // The gig owner may hide the shared conversation for both
+            // participants only in the same atomic batch that deletes it.
+            request.auth.uid == resource.data.posterId
+            && resource.data.gigId is string
+            && get(/databases/$(database)/documents/gigs/$(resource.data.gigId)).data.posterId == request.auth.uid
+            && !existsAfter(/databases/$(database)/documents/gigs/$(resource.data.gigId))
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['hiddenFor'])
+            && request.resource.data.hiddenFor is list
+            && request.resource.data.hiddenFor.hasAll(resource.data.get('hiddenFor', []))
+            && request.resource.data.hiddenFor.hasAll(resource.data.participants)
+            && request.resource.data.hiddenFor.size() == resource.data.participants.size()
+            && request.resource.data.hiddenFor.hasOnly(resource.data.participants)
+          )
+          || (
             request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['lastReadAt'])
             && request.resource.data.lastReadAt is map
