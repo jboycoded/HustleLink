@@ -577,7 +577,7 @@ class GigService {
         .where('gigId', isEqualTo: gigId)
         .where('participants', arrayContains: _uid)
         .get();
-    if (conversations.docs.length > 499) {
+    if (conversations.docs.length > 498) {
       throw StateError(
         'This gig has too many conversation records to archive safely. Please contact support.',
       );
@@ -609,6 +609,28 @@ class GigService {
         });
       }
     }
+
+    // Preserve a small, immutable engagement record so deleting an eligible
+    // gig does not erase either participant's credibility history.
+    finalBatch.set(_firestore.collection('gigHistory').doc(gigId), {
+      'gigId': gigId,
+      'posterId': _uid,
+      'acceptedWorkerId': hasAcceptedParticipant
+          ? (gig['acceptedWorkerId'] as String? ??
+              applications.docs
+                  .map((application) => application.data())
+                  .firstWhere(
+                    (data) => data['status'] == 'accepted' ||
+                        data['status'] == 'completed',
+                    orElse: () => const <String, dynamic>{},
+                  )['workerId'] as String?)
+          : null,
+      'status': gig['status'],
+      'paid': gig['paid'] == true,
+      'createdAt': gig['createdAt'],
+      'completedAt': gig['completedAt'],
+      'archivedAt': FieldValue.serverTimestamp(),
+    });
     finalBatch.delete(gigRef);
     await finalBatch.commit();
   }
