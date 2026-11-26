@@ -571,10 +571,7 @@ class SwipeScreen extends StatelessWidget {
         (gig.acceptedApplicationId?.isNotEmpty ?? false);
     if (gig.status == 'closed') return !hasAcceptedParticipant;
     if (gig.status == 'completed') {
-      return hasAcceptedParticipant &&
-          gig.paid &&
-          gig.posterPaymentConfirmed &&
-          gig.workerPaymentConfirmed;
+      return hasAcceptedParticipant && gig.paid;
     }
     return false;
   }
