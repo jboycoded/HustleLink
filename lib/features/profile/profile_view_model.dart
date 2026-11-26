@@ -34,9 +34,23 @@ class ProfileViewModel extends ChangeNotifier {
     try {
       _profile = await _repository.getMyProfile();
       _profileSubscription ??= _repository.watchMyProfile().listen(
-        (profile) {
+        (profile) async {
           if (profile == null) return;
-          _profile = profile;
+          final previous = _profile;
+          if (previous != null && previous.activeRole == profile.activeRole) {
+            // The lightweight profile stream intentionally omits aggregate
+            // queries. Preserve the last computed credibility values while
+            // applying live identity/availability changes.
+            _profile = profile.copyWith(
+              rating: previous.rating,
+              acceptedGigs: previous.acceptedGigs,
+              completedGigs: previous.completedGigs,
+              postedGigs: previous.postedGigs,
+              paidGigs: previous.paidGigs,
+            );
+          } else {
+            _profile = await _repository.getMyProfile();
+          }
           notifyListeners();
         },
         onError: (Object error) {
@@ -132,6 +146,7 @@ class ProfileViewModel extends ChangeNotifier {
 
     try {
       await _repository.updateActiveRole(role);
+      _profile = await _repository.getMyProfile();
       return true;
     } catch (error) {
       _profile = previousProfile;
