@@ -454,7 +454,7 @@ class SwipeScreen extends StatelessWidget {
                     child: _PosterGigAction(
                       label: 'Edit',
                       icon: Icons.edit_outlined,
-                      onTap: vm.isSaving
+                      onTap: vm.isSaving || !gig.isOpen
                           ? null
                           : () => _showGigForm(context, vm, gig: gig),
                     ),
