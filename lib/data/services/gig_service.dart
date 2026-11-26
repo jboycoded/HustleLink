@@ -168,7 +168,6 @@ class GigService {
               document.id,
               document.data(),
             ))
-        .where((gig) => gig.status != 'closed')
         .toList();
 
     gigs.sort((a, b) {
@@ -272,7 +271,6 @@ class GigService {
       onCacheState?.call(snapshot.metadata.isFromCache);
       final gigs = snapshot.docs
           .map((document) => Gig.fromMap(document.id, document.data()))
-          .where((gig) => gig.status != 'closed')
           .toList();
       gigs.sort((a, b) => (b.createdAt ?? DateTime(2000))
           .compareTo(a.createdAt ?? DateTime(2000)));
