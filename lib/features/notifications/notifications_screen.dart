@@ -126,7 +126,7 @@ class NotificationsScreen extends StatelessWidget {
                         if (item.type == 'application_accepted') {
                           context.go('/chat/${item.relatedId}');
                         } else {
-                          context.push('/matches');
+                          context.go('/matches');
                         }
                       }
                     } else if (item.type == 'new_message') {
@@ -136,7 +136,7 @@ class NotificationsScreen extends StatelessWidget {
                         } catch (_) {}
                       }
                       if (context.mounted) {
-                        context.push('/chat/${item.relatedId}');
+                        context.go('/chat/${item.relatedId}');
                       }
                     } else if (item.type == 'new_matching_gig') {
                       try {
