@@ -59,6 +59,11 @@ class UserProfile {
   UserProfile copyWith({
     String? activeRole,
     bool? isAvailableForGigs,
+    double? rating,
+    int? acceptedGigs,
+    int? completedGigs,
+    int? postedGigs,
+    int? paidGigs,
   }) {
     return UserProfile(
       id: id,
@@ -71,11 +76,11 @@ class UserProfile {
       isVerified: isVerified,
       profileCompleted: profileCompleted,
       isAvailableForGigs: isAvailableForGigs ?? this.isAvailableForGigs,
-      rating: rating,
-      completedGigs: completedGigs,
-      acceptedGigs: acceptedGigs,
-      postedGigs: postedGigs,
-      paidGigs: paidGigs,
+      rating: rating ?? this.rating,
+      completedGigs: completedGigs ?? this.completedGigs,
+      acceptedGigs: acceptedGigs ?? this.acceptedGigs,
+      postedGigs: postedGigs ?? this.postedGigs,
+      paidGigs: paidGigs ?? this.paidGigs,
       proofVideoUrl: proofVideoUrl,
       photoUrl: photoUrl,
     );
