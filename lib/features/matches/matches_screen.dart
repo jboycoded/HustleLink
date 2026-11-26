@@ -178,7 +178,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     MatchesViewModel vm,
   ) {
     return RefreshIndicator(
-      onRefresh: vm.load,
+      onRefresh: vm.refresh,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         itemCount: vm.filteredWorkerApplications.length,
@@ -474,7 +474,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () {
                       Navigator.pop(sheetContext);
-                      context.push('/profile/${application.workerId}');
+                      context.push('/profile/${application.workerId}?role=worker');
                     },
                     icon: const Icon(Icons.person_outline_rounded),
                     label: const Text('View public profile'),
