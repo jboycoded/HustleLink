@@ -26,6 +26,7 @@ class MatchesViewModel extends ChangeNotifier {
   bool isLoading = false;
   String? offlineMessage;
   Timer? _initialSnapshotTimer;
+  Timer? _cacheStateTimer;
   bool _posterGigsFromCache = false;
   bool _posterApplicationsFromCache = false;
   bool _workerApplicationsFromCache = false;
@@ -43,17 +44,33 @@ class MatchesViewModel extends ChangeNotifier {
     final offline = isPosterMode
         ? _posterGigsFromCache || _posterApplicationsFromCache
         : _workerApplicationsFromCache;
-    offlineMessage = offline
-        ? 'Offline mode: showing saved applications and gig details.'
-        : null;
-    if (offline && recordCount == 0) {
-      error = 'You are offline and there are no saved applications to display.';
-    } else if (offline) {
-      error = null;
-    } else if (error?.contains('offline') == true) {
-      error = null;
+
+    if (!offline) {
+      _cacheStateTimer?.cancel();
+      _cacheStateTimer = null;
+      offlineMessage = null;
+      if (error?.toLowerCase().contains('offline') == true) error = null;
+      notifyListeners();
+      return;
     }
-    notifyListeners();
+
+    // Firestore commonly emits a cached snapshot first, even while online.
+    // Wait briefly for its server-backed snapshot before showing an offline
+    // warning, avoiding the misleading banner flash during refresh.
+    _cacheStateTimer ??= Timer(const Duration(seconds: 2), () {
+      final stillOffline = isPosterMode
+          ? _posterGigsFromCache || _posterApplicationsFromCache
+          : _workerApplicationsFromCache;
+      if (!stillOffline) return;
+      offlineMessage =
+          'Offline mode: showing saved applications and gig details.';
+      if (recordCount == 0) {
+        error = 'You are offline and there are no saved applications to display.';
+      } else {
+        error = null;
+      }
+      notifyListeners();
+    });
   }
 
   void setStatusFilter(String value) {
@@ -265,6 +282,7 @@ class MatchesViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _initialSnapshotTimer?.cancel();
+    _cacheStateTimer?.cancel();
     _profileSubscription?.cancel();
     _workerApplicationsSubscription?.cancel();
     _posterApplicationsSubscription?.cancel();
