@@ -66,13 +66,16 @@ class UserProfileRepository {
           .where('posterId', isEqualTo: userId).get(),
       _firestore.collection('gigs')
           .where('acceptedWorkerId', isEqualTo: userId).get(),
-      _firestore.collection('applications')
-          .where('posterId', isEqualTo: userId).get(),
     ]);
     final reviews = results[0].docs;
     final posted = results[1].docs;
     final worked = results[2].docs;
-    final posterApplications = results[3].docs;
+    final posterApplications = userId == _auth.currentUser?.uid
+        ? (await _firestore.collection('applications')
+                .where('posterId', isEqualTo: userId)
+                .get())
+            .docs
+        : <QueryDocumentSnapshot<Map<String, dynamic>>>[];
     final acceptedWorkersByGig = <String, Set<String>>{};
     for (final application in posterApplications) {
       final data = application.data();
