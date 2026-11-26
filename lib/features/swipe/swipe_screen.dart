@@ -297,7 +297,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
             child: Row(
               children: [
                 Text(
@@ -368,7 +368,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
       children: [
         if (vm.categories.length > 1)
           SizedBox(
-            height: 48,
+            height: 42,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               scrollDirection: Axis.horizontal,
@@ -562,7 +562,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
       children: [
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 25, 12),
+            padding: const EdgeInsets.fromLTRB(20, 4, 25, 6),
             child: GestureDetector(
               onTap: () => _showWorkerGigDetails(context, vm, gig),
               onHorizontalDragEnd: (details) {
@@ -584,14 +584,14 @@ class _SwipeScreenState extends State<SwipeScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(bottom: 20, top: 4),
+          padding: const EdgeInsets.only(bottom: 12, top: 2),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _RoundButton(
                 icon: Icons.close_rounded,
                 label: 'Pass',
-                size: 64,
+                size: 58,
                 onPressed: vm.pass,
               ),
               const SizedBox(width: 28),
@@ -600,7 +600,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     ? Icons.hourglass_top_rounded
                     : Icons.check_rounded,
                 label: 'Apply',
-                size: 72,
+                size: 66,
                 fill: scheme.primary,
                 iconColor: scheme.onPrimary,
                 onPressed: vm.isApplying
@@ -660,7 +660,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(
-                height: 290,
+                height: 360,
                 child: GigCard(gig: gig),
               ),
               const SizedBox(height: 12),
