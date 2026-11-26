@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../data/repositories/user_profile_repository.dart';
@@ -13,6 +15,7 @@ class ProfileViewModel extends ChangeNotifier {
   bool _isSaving = false;
   bool _isVideoUploading = false;
   String? _errorMessage;
+  StreamSubscription<UserProfile?>? _profileSubscription;
 
   UserProfile? get profile => _profile;
   bool get isLoading => _isLoading;
@@ -30,6 +33,17 @@ class ProfileViewModel extends ChangeNotifier {
 
     try {
       _profile = await _repository.getMyProfile();
+      _profileSubscription ??= _repository.watchMyProfile().listen(
+        (profile) {
+          if (profile == null) return;
+          _profile = profile;
+          notifyListeners();
+        },
+        onError: (Object error) {
+          _errorMessage = _friendlyError(error);
+          notifyListeners();
+        },
+      );
     } catch (error) {
       _errorMessage = _friendlyError(error);
     } finally {
@@ -140,6 +154,12 @@ class ProfileViewModel extends ChangeNotifier {
       _errorMessage = _friendlyError(error);
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _profileSubscription?.cancel();
+    super.dispose();
   }
 
   String _friendlyError(Object error) {
