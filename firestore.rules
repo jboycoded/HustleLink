@@ -762,11 +762,11 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.keys().hasAll([
           'gigId', 'reviewerId', 'revieweeId', 'revieweeRole', 'reviewerName',
-          'rating', 'comment', 'createdAt'
+          'rating', 'categoryRatings', 'comment', 'createdAt'
         ])
         && request.resource.data.keys().hasOnly([
           'gigId', 'reviewerId', 'revieweeId', 'revieweeRole', 'reviewerName',
-          'rating', 'comment', 'createdAt'
+          'rating', 'categoryRatings', 'comment', 'createdAt'
         ])
         && request.resource.data.reviewerId == request.auth.uid
         && request.resource.data.revieweeRole in ['worker', 'poster']
@@ -778,6 +778,52 @@ service cloud.firestore {
         && request.resource.data.rating is int
         && request.resource.data.rating >= 1
         && request.resource.data.rating <= 5
+        && request.resource.data.categoryRatings is map
+        && (
+          (
+            request.resource.data.revieweeRole == 'worker'
+            && request.resource.data.categoryRatings.keys().hasAll([
+              'quality', 'professionalism', 'communication', 'punctuality'
+            ])
+            && request.resource.data.categoryRatings.keys().hasOnly([
+              'quality', 'professionalism', 'communication', 'punctuality'
+            ])
+            && request.resource.data.categoryRatings.quality is int
+            && request.resource.data.categoryRatings.quality >= 1
+            && request.resource.data.categoryRatings.quality <= 5
+            && request.resource.data.categoryRatings.professionalism is int
+            && request.resource.data.categoryRatings.professionalism >= 1
+            && request.resource.data.categoryRatings.professionalism <= 5
+            && request.resource.data.categoryRatings.communication is int
+            && request.resource.data.categoryRatings.communication >= 1
+            && request.resource.data.categoryRatings.communication <= 5
+            && request.resource.data.categoryRatings.punctuality is int
+            && request.resource.data.categoryRatings.punctuality >= 1
+            && request.resource.data.categoryRatings.punctuality <= 5
+          )
+          ||
+          (
+            request.resource.data.revieweeRole == 'poster'
+            && request.resource.data.categoryRatings.keys().hasAll([
+              'paymentReliability', 'communication', 'fairTreatment', 'requirementClarity'
+            ])
+            && request.resource.data.categoryRatings.keys().hasOnly([
+              'paymentReliability', 'communication', 'fairTreatment', 'requirementClarity'
+            ])
+            && request.resource.data.categoryRatings.paymentReliability is int
+            && request.resource.data.categoryRatings.paymentReliability >= 1
+            && request.resource.data.categoryRatings.paymentReliability <= 5
+            && request.resource.data.categoryRatings.communication is int
+            && request.resource.data.categoryRatings.communication >= 1
+            && request.resource.data.categoryRatings.communication <= 5
+            && request.resource.data.categoryRatings.fairTreatment is int
+            && request.resource.data.categoryRatings.fairTreatment >= 1
+            && request.resource.data.categoryRatings.fairTreatment <= 5
+            && request.resource.data.categoryRatings.requirementClarity is int
+            && request.resource.data.categoryRatings.requirementClarity >= 1
+            && request.resource.data.categoryRatings.requirementClarity <= 5
+          )
+        )
         && request.resource.data.comment is string
         && request.resource.data.comment.size() <= 500
         && request.resource.data.createdAt == request.time
