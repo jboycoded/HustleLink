@@ -111,13 +111,16 @@ class ProfileViewModel extends ChangeNotifier {
       return false;
     }
 
+    final previousProfile = _profile!;
+    _profile = previousProfile.copyWith(activeRole: role);
+    _errorMessage = null;
+    notifyListeners();
+
     try {
       await _repository.updateActiveRole(role);
-      _profile = _profile!.copyWith(activeRole: role);
-      _errorMessage = null;
-      notifyListeners();
       return true;
     } catch (error) {
+      _profile = previousProfile;
       _errorMessage = _friendlyError(error);
       notifyListeners();
       return false;
@@ -125,15 +128,18 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   Future<void> toggleAvailability(bool value) async {
+    final previousProfile = _profile;
+    _profile = previousProfile?.copyWith(isAvailableForGigs: value);
+    _errorMessage = null;
+    notifyListeners();
+
     try {
       await _repository.updateAvailability(value);
-      _profile = _profile?.copyWith(isAvailableForGigs: value);
-      _errorMessage = null;
     } catch (error) {
+      _profile = previousProfile;
       _errorMessage = _friendlyError(error);
+      notifyListeners();
     }
-
-    notifyListeners();
   }
 
   String _friendlyError(Object error) {
