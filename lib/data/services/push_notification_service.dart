@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
@@ -92,12 +94,80 @@ class PushNotificationService {
 
     _auth.authStateChanges().listen((user) {
       if (user != null) {
-        _registerCurrentToken();
+        _handleSignedInUser(user.uid);
       }
     });
 
     _initialized = true;
-    if (_auth.currentUser != null) await _registerCurrentToken();
+  }
+
+  final Set<String> _usersSyncingMissedNotifications = {};
+
+  Future<void> _handleSignedInUser(String userId) async {
+    await _registerCurrentToken();
+    if (!_usersSyncingMissedNotifications.add(userId)) return;
+    try {
+      await _showMissedNotifications(userId);
+    } catch (error) {
+      debugPrint('HustleLink missed-notification sync failed: $error');
+    } finally {
+      _usersSyncingMissedNotifications.remove(userId);
+    }
+  }
+
+  Future<void> _showMissedNotifications(String userId) async {
+    final preferences = await SharedPreferences.getInstance();
+    final lastSyncKey = 'hustlelink_notification_sync_$userId';
+    final lastSyncMillis = preferences.getInt(lastSyncKey);
+    final snapshot = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('recipientId', isEqualTo: userId)
+        .get();
+
+    final pending = snapshot.docs.where((document) {
+      final data = document.data();
+      if (data['isRead'] == true) return false;
+      final createdAt = data['createdAt'];
+      if (createdAt is! Timestamp) return false;
+      if (lastSyncMillis == null) return true;
+      return createdAt.millisecondsSinceEpoch > lastSyncMillis;
+    }).toList()
+      ..sort((a, b) {
+        final aDate = a.data()['createdAt'] as Timestamp;
+        final bDate = b.data()['createdAt'] as Timestamp;
+        return bDate.compareTo(aDate);
+      });
+
+    // Limit the initial catch-up so a long-unused account does not flood
+    // the notification shade with a large historical backlog.
+    for (final document in pending.take(10).toList().reversed) {
+      final data = document.data();
+      await _localNotifications.show(
+        id: document.id.hashCode & 0x7fffffff,
+        title: data['title'] as String? ?? 'HustleLink',
+        body: data['body'] as String? ?? 'You have a new update.',
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            channelId,
+            channelName,
+            channelDescription: 'Applications, messages and gig updates.',
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: true,
+          ),
+        ),
+        payload: jsonEncode({
+          'type': data['type'] as String? ?? '',
+          'relatedId': data['relatedId'] as String? ?? '',
+          'notificationId': document.id,
+        }),
+      );
+    }
+
+    await preferences.setInt(
+      lastSyncKey,
+      DateTime.now().millisecondsSinceEpoch,
+    );
   }
 
   Future<void> _registerCurrentToken() async {
