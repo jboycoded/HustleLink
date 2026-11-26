@@ -32,6 +32,15 @@ class ChatService {
   }
 
 
+  Future<String?> getCurrentUserRoleForGig(String gigId) async {
+    final snapshot = await _firestore.collection('gigs').doc(gigId).get();
+    if (!snapshot.exists) return null;
+    final data = snapshot.data()!;
+    if (data['posterId'] == _uid) return 'poster';
+    if (data['acceptedWorkerId'] == _uid) return 'worker';
+    return null;
+  }
+
   Future<String?> getCurrentUserRoleForConversation(String conversationId) async {
     final snapshot = await _conversations.doc(conversationId).get();
     if (!snapshot.exists) return null;
