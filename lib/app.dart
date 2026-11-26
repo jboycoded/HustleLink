@@ -55,7 +55,7 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
       try {
         await UserProfileRepository().updateActiveRole('worker');
       } catch (_) {}
-      if (mounted) _router.go('/swipe?gigId=' + relatedId);
+      if (mounted) _router.go('/swipe?gigId=$relatedId');
       return;
     }
     if (type == 'application_accepted' ||
