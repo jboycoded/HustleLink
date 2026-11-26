@@ -70,10 +70,22 @@ class UserProfileRepository {
     final reviews = results[0].docs;
     final posted = results[1].docs;
     final worked = results[2].docs;
-    final ratings = reviews
-        .map((doc) => (doc.data()['rating'] as num?)?.toDouble())
-        .whereType<double>()
-        .toList();
+    final gigsById = <String, Map<String, dynamic>>{
+      for (final doc in [...posted, ...worked]) doc.id: doc.data(),
+    };
+    final ratings = reviews.where((doc) {
+      final review = doc.data();
+      final savedRole = review['revieweeRole'] as String?;
+      if (savedRole != null) return savedRole == role;
+      final gig = gigsById[review['gigId'] as String? ?? ''];
+      if (gig == null) return false;
+      final reviewerId = review['reviewerId'] as String? ?? '';
+      return role == 'worker'
+          ? gig['posterId'] == reviewerId
+          : gig['acceptedWorkerId'] == reviewerId;
+    }).map((doc) => (doc.data()['rating'] as num?)?.toDouble())
+      .whereType<double>()
+      .toList();
     final completed = role == 'poster'
         ? posted.where((doc) => doc.data()['status'] == 'completed').length
         : worked.where((doc) => doc.data()['status'] == 'completed').length;
@@ -87,11 +99,18 @@ class UserProfileRepository {
     };
   }
 
-  Future<UserProfile?> getPublicProfile(String userId) async {
+  Future<UserProfile?> getPublicProfile(
+    String userId, {
+    String? roleOverride,
+  }) async {
     final document = await _publicProfile(userId).get();
     if (!document.exists) return null;
     final data = Map<String, dynamic>.from(document.data()!);
-    final role = data['activeRole'] as String? ?? 'worker';
+    final storedRole = data['activeRole'] as String? ?? 'worker';
+    final role = roleOverride == 'worker' || roleOverride == 'poster'
+        ? roleOverride!
+        : storedRole;
+    data['activeRole'] = role;
     data.addAll(await _computedProfileStats(userId, role));
     return UserProfile.fromMap(document.id, data);
   }
