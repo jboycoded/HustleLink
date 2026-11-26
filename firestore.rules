@@ -357,7 +357,22 @@ service cloud.firestore {
       allow delete: if request.auth != null
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['poster'])
                     && resource.data.posterId == request.auth.uid
-                    && resource.data.status in ['closed', 'completed'];
+                    && (
+                      (
+                        resource.data.status == 'closed'
+                        && resource.data.get('acceptedWorkerId', '') == ''
+                        && resource.data.get('acceptedApplicationId', '') == ''
+                      )
+                      ||
+                      (
+                        resource.data.status == 'completed'
+                        && resource.data.get('acceptedWorkerId', '') is string
+                        && resource.data.get('acceptedWorkerId', '') != ''
+                        && resource.data.get('paid', false) == true
+                        && resource.data.get('posterPaymentConfirmed', false) == true
+                        && resource.data.get('workerPaymentConfirmed', false) == true
+                      )
+                    );
     }
 
     match /applications/{applicationId} {
