@@ -6,6 +6,7 @@ service cloud.firestore {
     function currentAdminRole() {
       return request.auth != null
         && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid))
+        && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.active == true
         ? get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role
         : '';
     }
@@ -33,7 +34,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if request.auth != null
-                  && (request.auth.uid == userId || isAdmin());
+                  && (request.auth.uid == userId || canManageUsers());
 
       allow create: if request.auth != null
                     && request.auth.uid == userId
