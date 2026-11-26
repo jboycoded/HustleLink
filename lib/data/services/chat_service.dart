@@ -32,13 +32,18 @@ class ChatService {
   }
 
 
-  Future<String?> getCurrentUserRoleForGig(String gigId) async {
+  Future<String?> getCurrentUserRoleForGig(
+    String gigId, {
+    bool allowConversationFallback = true,
+  }) async {
     final snapshot = await _firestore.collection('gigs').doc(gigId).get();
     if (snapshot.exists) {
       final data = snapshot.data()!;
       if (data['posterId'] == _uid) return 'poster';
       if (data['acceptedWorkerId'] == _uid) return 'worker';
     }
+
+    if (!allowConversationFallback) return null;
 
     // Older accepted gigs may not have acceptedWorkerId populated. Use the
     // conversation created for that gig as a compatibility fallback.
@@ -59,6 +64,10 @@ class ChatService {
     final snapshot = await _conversations.doc(conversationId).get();
     if (!snapshot.exists) return null;
     final data = snapshot.data()!;
+    final participants = data['participants'];
+    final hiddenFor = data['hiddenFor'];
+    if (participants is! List || !participants.contains(_uid)) return null;
+    if (hiddenFor is List && hiddenFor.contains(_uid)) return null;
     if (data['workerId'] == _uid) return 'worker';
     if (data['posterId'] == _uid) return 'poster';
     return null;
