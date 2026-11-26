@@ -69,7 +69,8 @@ class NotificationsScreen extends StatelessWidget {
                   onTap: () async {
                     if (!item.isRead) await service.markNotificationRead(item.id);
                     if (!context.mounted || item.relatedId.isEmpty) return;
-                    if (item.type == 'new_message') {
+                    if (item.type == 'new_message' ||
+                        item.type == 'application_accepted') {
                       context.push('/chat/${item.relatedId}');
                     } else {
                       context.push('/matches');
