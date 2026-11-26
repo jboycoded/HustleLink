@@ -369,8 +369,6 @@ service cloud.firestore {
                         && resource.data.get('acceptedWorkerId', '') is string
                         && resource.data.get('acceptedWorkerId', '') != ''
                         && resource.data.get('paid', false) == true
-                        && resource.data.get('posterPaymentConfirmed', false) == true
-                        && resource.data.get('workerPaymentConfirmed', false) == true
                       )
                     );
     }
