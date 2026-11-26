@@ -46,23 +46,15 @@ class EngagementService {
   }
 
   Stream<List<AppNotification>> watchNotifications() {
+    // Keep the notification list independent of related-document lookups.
+    // Validating every application/gig/conversation here caused an N+1 read
+    // on every snapshot and left the screen blank until all reads completed.
     return _notifications
         .where('recipientId', isEqualTo: _uid)
         .snapshots()
-        .asyncMap((snapshot) async {
-      final checks = await Future.wait(snapshot.docs.map((doc) async {
-        final item = AppNotification.fromMap(doc.id, doc.data());
-        try {
-          return MapEntry(item, await isNotificationActionable(item));
-        } catch (_) {
-          // A stale or blocked related record should not prevent the rest of
-          // the notification list from loading.
-          return MapEntry(item, false);
-        }
-      }));
-      final items = checks
-          .where((entry) => entry.value)
-          .map((entry) => entry.key)
+        .map((snapshot) {
+      final items = snapshot.docs
+          .map((doc) => AppNotification.fromMap(doc.id, doc.data()))
           .toList();
       items.sort((a, b) => (b.createdAt ?? DateTime(2000))
           .compareTo(a.createdAt ?? DateTime(2000)));
