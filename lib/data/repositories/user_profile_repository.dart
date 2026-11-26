@@ -115,6 +115,11 @@ class UserProfileRepository {
     return UserProfile.fromMap(document.id, data);
   }
 
+  Future<String> getActiveRole() async {
+    final document = await _users.doc(_uid).get();
+    return document.data()?['activeRole'] as String? ?? 'worker';
+  }
+
   Future<UserProfile> getMyProfile() async {
     final user = _auth.currentUser;
 
