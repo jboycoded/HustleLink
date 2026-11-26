@@ -39,7 +39,7 @@ class PushNotificationService {
       android: androidSettings,
     );
     await _localNotifications.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: (response) {
         final payload = response.payload;
         if (payload == null || payload.isEmpty) return;
@@ -80,6 +80,10 @@ class PushNotificationService {
       await _handleRemoteTap(initialMessage);
     }
 
+    // Keep using the FCM registration token here: the Supabase Edge Function
+    // sends through the FCM HTTP v1 API, which targets registration tokens.
+    // The newer onRegistered stream provides a Firebase Installation ID,
+    // which is not interchangeable with that FCM registration token.
     _messaging.onTokenRefresh.listen((token) {
       if (_auth.currentUser != null) {
         _registerToken(token);
@@ -156,10 +160,10 @@ class PushNotificationService {
     final notification = message.notification;
     if (notification == null) return;
     await _localNotifications.show(
-      message.hashCode,
-      notification.title ?? 'HustleLink',
-      notification.body ?? '',
-      const NotificationDetails(
+      id: message.hashCode,
+      title: notification.title ?? 'HustleLink',
+      body: notification.body ?? '',
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           channelId,
           channelName,
