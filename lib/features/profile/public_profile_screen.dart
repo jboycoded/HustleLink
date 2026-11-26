@@ -185,32 +185,28 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       ),
                     ],
                     const SizedBox(height: 20),
-                    if (profile.activeRole == 'poster')
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _ProfileStat(
-                              label: 'GIGS POSTED',
-                              value: '${profile.postedGigs}',
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _ProfileStat(
-                              label: 'GIGS PAID',
-                              value: '${profile.paidGigs}',
-                            ),
-                          ),
-                        ],
-                      )
-                    else
-                      SizedBox(
-                        width: double.infinity,
-                        child: _ProfileStat(
-                          label: 'COMPLETED',
-                          value: '${profile.completedGigs} GIGS',
-                        ),
-                      ),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: (profile.activeRole == 'poster'
+                          ? <(String, String)>[
+                              ('GIGS POSTED', '${profile.postedGigs}'),
+                              ('ACCEPTED', '${profile.acceptedGigs}'),
+                              ('COMPLETED', '${profile.completedGigs}'),
+                              ('PAYMENT CONFIRMED', '${profile.paidGigs}'),
+                            ]
+                          : <(String, String)>[
+                              ('ACCEPTED', '${profile.acceptedGigs}'),
+                              ('COMPLETED', '${profile.completedGigs}'),
+                              ('PAYMENT CONFIRMED', '${profile.paidGigs}'),
+                              ('COMPLETION RATE', '${(profile.completionRate * 100).round()}%'),
+                            ])
+                          .map((item) => SizedBox(
+                            width: (MediaQuery.sizeOf(context).width - 72) / 2,
+                            child: _ProfileStat(label: item.$1, value: item.$2),
+                          ))
+                          .toList(),
+                    ),
                     if (profile.activeRole == 'worker') ...[
                       const SizedBox(height: 16),
                       Row(
@@ -319,9 +315,9 @@ class _ProfileReviews extends StatelessWidget {
             Text(
               [
                 reviews.isEmpty
-                    ? 'No reviews'
+                    ? 'New to HustleLink'
                     : '${average.toStringAsFixed(1)} ★  •  ${reviews.length} reviews',
-                if (paidGigs != null) '$paidGigs verified paid',
+                if (paidGigs != null) '$paidGigs payment confirmed',
               ].join('  •  '),
               style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
@@ -330,7 +326,7 @@ class _ProfileReviews extends StatelessWidget {
           if (snapshot.hasError)
             Text('Reviews could not be loaded.', style: TextStyle(color: scheme.onSurfaceVariant))
           else if (reviews.isEmpty)
-            Text('Reviews from completed gigs will appear here.',
+            Text('New to HustleLink — reviews from completed gigs will appear here.',
               style: TextStyle(color: scheme.onSurfaceVariant))
           else
             ...reviews.take(8).map((review) => Container(
