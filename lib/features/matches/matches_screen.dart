@@ -895,16 +895,6 @@ class _ApplicationCard extends StatelessWidget {
           if (!showWorkerName) ...[
             _GigLifecycleStatus(gigId: application.gigId),
             const SizedBox(height: 8),
-          ],
-          if (showWorkerName) ...[
-            Text(
-              application.gigTitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: scheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 6),
             Row(
               children: [
                 Icon(
@@ -921,6 +911,16 @@ class _ApplicationCard extends StatelessWidget {
                 ),
               ],
             ),
+          ],
+          if (showWorkerName) ...[
+            Text(
+              application.gigTitle,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 6),
           ],
           if (showWorkerName && application.status == 'pending') ...[
             const SizedBox(height: 16),
