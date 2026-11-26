@@ -81,8 +81,7 @@ class SwipeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final profile = await _profiles.getMyProfile();
-      activeRole = profile.activeRole;
+      activeRole = await _profiles.getActiveRole();
 
       await _loadGigs();
       await _startDiscoveryStreams();
