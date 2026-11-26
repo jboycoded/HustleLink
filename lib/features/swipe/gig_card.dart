@@ -37,36 +37,40 @@ class GigCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (gig.posterPhotoUrl != null && gig.posterPhotoUrl!.isNotEmpty)
-                CircleAvatar(radius: 16, backgroundImage: NetworkImage(gig.posterPhotoUrl!)),
-              Flexible(child: _Tag(gig.category)),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  gig.when,
-                  overflow: TextOverflow.ellipsis,
-                  style: text.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: scheme.onSecondary,
-                  ),
-                ),
+              Row(
+                children: [
+                  if (gig.posterPhotoUrl != null &&
+                      gig.posterPhotoUrl!.isNotEmpty) ...[
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundImage: NetworkImage(gig.posterPhotoUrl!),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(child: _Tag(gig.category, maxLines: 2)),
+                  if (onReport != null)
+                    PopupMenuButton<String>(
+                      tooltip: 'Gig options',
+                      onSelected: (value) {
+                        if (value == 'report') onReport!();
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: 'report',
+                          child: Text('Report gig'),
+                        ),
+                      ],
+                      icon: Icon(Icons.more_vert_rounded, color: scheme.onSecondary),
+                    ),
+                ],
               ),
-              const Spacer(),
-              if (onReport != null)
-                PopupMenuButton<String>(
-                  tooltip: 'Gig options',
-                  onSelected: (value) { if (value == 'report') onReport!(); },
-                  itemBuilder: (_) => const [PopupMenuItem(value: 'report', child: Text('Report gig'))],
-                  icon: Icon(Icons.more_vert_rounded, color: scheme.onSecondary),
-                ),
-              Flexible(
-                child: _Tag(
-                  gig.location,
-                  icon: Icons.place_outlined,
-                ),
-              ),
+              const SizedBox(height: 8),
+              _Tag(gig.location, icon: Icons.place_outlined, maxLines: 2),
+              const SizedBox(height: 8),
+              _Tag(gig.when, icon: Icons.schedule_rounded),
             ],
           ),
           Column(
@@ -97,7 +101,9 @@ class GigCard extends StatelessWidget {
                 Text(
                   gig.description,
                   maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
+                  maxLines: maxLines,
+              softWrap: true,
+              overflow: TextOverflow.ellipsis,
                   style: text.bodyMedium?.copyWith(
                     color: scheme.onSecondary.withValues(alpha: 0.8),
                   ),
@@ -143,10 +149,11 @@ class GigCard extends StatelessWidget {
 }
 
 class _Tag extends StatelessWidget {
-  const _Tag(this.label, {this.icon});
+  const _Tag(this.label, {this.icon, this.maxLines = 1});
 
   final String label;
   final IconData? icon;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
