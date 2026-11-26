@@ -403,7 +403,9 @@ class EngagementService {
         .asyncMap((snapshot) async {
       final reviews = await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data();
-        var revieweeRole = data['revieweeRole'] as String?;
+        final savedRole = data['revieweeRole'];
+        var revieweeRole =
+            savedRole is String ? savedRole.trim().toLowerCase() : null;
 
         // Legacy reviews did not store the role. Resolve those records in
         // parallel so one slow gig lookup does not hold up the whole list.
