@@ -98,6 +98,12 @@ class EngagementService {
             participants.contains(_uid) &&
             !(hiddenFor is List && hiddenFor.contains(_uid));
 
+      case 'new_matching_gig':
+        final gig = await _db.collection('gigs').doc(item.relatedId).get();
+        if (!gig.exists) return false;
+        final gigData = gig.data()!;
+        return gigData['status'] == 'open' && gigData['posterId'] != _uid;
+
       case 'gig_completion_confirmed':
       case 'payment_marked':
       case 'payment_received':
