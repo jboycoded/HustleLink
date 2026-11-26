@@ -95,16 +95,16 @@ class GigService {
   }) async {
     final profiles = await _firestore
         .collection('publicProfiles')
-        .where('activeRole', isEqualTo: 'worker')
         .where('isAvailableForGigs', isEqualTo: true)
         .get();
 
     final matches = profiles.docs.where((profile) {
       final skills = profile.data()['skills'];
       return profile.id != _uid &&
+          profile.data()['activeRole'] == 'worker' &&
           skills is List &&
           skills.whereType<String>().any(
-            (skill) => skill.trim().toLowerCase() == category.toLowerCase(),
+            (skill) => skill.trim() == category,
           );
     }).toList();
 
