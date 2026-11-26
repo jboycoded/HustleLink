@@ -802,6 +802,19 @@ class _ProfileProofVideoSection extends StatelessWidget {
   }
 }
 
+String _reviewCategoryLabel(String key) {
+  const labels = {
+    'quality': 'Quality',
+    'professionalism': 'Professionalism',
+    'communication': 'Communication',
+    'punctuality': 'Punctuality',
+    'paymentReliability': 'Payment reliability',
+    'fairTreatment': 'Fair treatment',
+    'requirementClarity': 'Requirements clarity',
+  };
+  return labels[key] ?? key;
+}
+
 class _CredibilityStats extends StatelessWidget {
   const _CredibilityStats({required this.profile});
   final UserProfile profile;
@@ -860,7 +873,23 @@ class _OwnProfileReviews extends StatelessWidget {
           ...reviews.take(5).map((r) => ListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(r.reviewerName),
-            subtitle: r.comment.isEmpty ? null : Text(r.comment),
+            subtitle: (r.comment.isEmpty && r.categoryRatings.isEmpty)
+                ? null
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (r.comment.isNotEmpty) Text(r.comment),
+                      if (r.categoryRatings.isNotEmpty)
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 2,
+                          children: r.categoryRatings.entries.map((entry) =>
+                            Text('${_reviewCategoryLabel(entry.key)}: ${entry.value}/5',
+                              style: Theme.of(context).textTheme.labelSmall),
+                          ).toList(),
+                        ),
+                    ],
+                  ),
             trailing: Text('${r.rating} ★'),
           )),
         ]);
