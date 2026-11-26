@@ -108,8 +108,10 @@ class GigService {
           );
     }).toList();
 
-    for (var start = 0; start < matches.length; start += 400) {
-      final chunk = matches.skip(start).take(400).toList();
+    final pushService = PushNotificationService();
+    // Keep each batch below Firestore's 20-document access-call limit in rules.
+    for (var start = 0; start < matches.length; start += 19) {
+      final chunk = matches.skip(start).take(19).toList();
       final batch = _firestore.batch();
       final notificationIds = <String>[];
       for (final profile in chunk) {
@@ -129,11 +131,7 @@ class GigService {
       }
       await batch.commit();
       for (final id in notificationIds) {
-        try {
-          await PushNotificationService().sendForNotification(id);
-        } catch (_) {
-          // Continue sending to the remaining matched workers.
-        }
+        unawaited(pushService.sendForNotification(id).catchError((_) {}));
       }
     }
   }
