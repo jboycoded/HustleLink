@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../data/services/engagement_service.dart';
 import '../../data/repositories/user_profile_repository.dart';
+import '../../data/services/chat_service.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -95,7 +96,19 @@ class NotificationsScreen extends StatelessWidget {
                         }
                       }
                     } else if (item.type == 'new_message') {
-                      context.push('/chat/${item.relatedId}');
+                      try {
+                        final role = await context
+                            .read<ChatService>()
+                            .getCurrentUserRoleForConversation(item.relatedId);
+                        if (role != null) {
+                          await context
+                              .read<UserProfileRepository>()
+                              .updateActiveRole(role);
+                        }
+                      } catch (_) {}
+                      if (context.mounted) {
+                        context.push('/chat/${item.relatedId}');
+                      }
                     } else {
                       context.push('/matches');
                     }
