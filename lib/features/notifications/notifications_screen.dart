@@ -77,8 +77,20 @@ class NotificationsScreen extends StatelessWidget {
                     // BuildContext lookup is performed across an async gap.
                     final profiles = context.read<UserProfileRepository>();
                     final chats = context.read<ChatService>();
-                    final actionable =
-                        await service.isNotificationActionable(item);
+                    String? resolvedRole;
+                    final actionable = item.type == 'new_message'
+                        ? (resolvedRole = await chats
+                                .getCurrentUserRoleForConversation(item.relatedId)) !=
+                            null
+                        : (item.type == 'gig_completion_confirmed' ||
+                                item.type == 'payment_marked' ||
+                                item.type == 'payment_received')
+                            ? (resolvedRole = await chats.getCurrentUserRoleForGig(
+                                  item.relatedId,
+                                  allowConversationFallback: false,
+                                )) !=
+                                null
+                            : await service.isNotificationActionable(item);
                     if (!context.mounted) return;
                     if (!actionable) {
                       try {
@@ -93,7 +105,9 @@ class NotificationsScreen extends StatelessWidget {
                       }
                       return;
                     }
-                    if (!item.isRead) await service.markNotificationRead(item.id);
+                    if (!item.isRead) {
+                      service.markNotificationRead(item.id).catchError((_) {});
+                    }
                     if (!context.mounted || item.relatedId.isEmpty) return;
                     if (item.type == 'application_received') {
                       try {
@@ -116,11 +130,11 @@ class NotificationsScreen extends StatelessWidget {
                         }
                       }
                     } else if (item.type == 'new_message') {
-                      try {
-                        final role = await chats
-                            .getCurrentUserRoleForConversation(item.relatedId);
-                        if (role != null) await profiles.updateActiveRole(role);
-                      } catch (_) {}
+                      if (resolvedRole != null) {
+                        try {
+                          await profiles.updateActiveRole(resolvedRole!);
+                        } catch (_) {}
+                      }
                       if (context.mounted) {
                         context.push('/chat/${item.relatedId}');
                       }
@@ -128,11 +142,11 @@ class NotificationsScreen extends StatelessWidget {
                       if (item.type == 'gig_completion_confirmed' ||
                           item.type == 'payment_marked' ||
                           item.type == 'payment_received') {
-                        try {
-                          final role =
-                              await chats.getCurrentUserRoleForGig(item.relatedId);
-                          if (role != null) await profiles.updateActiveRole(role);
-                        } catch (_) {}
+                        if (resolvedRole != null) {
+                          try {
+                            await profiles.updateActiveRole(resolvedRole!);
+                          } catch (_) {}
+                        }
                       }
                       if (context.mounted) context.push('/matches');
                     }
