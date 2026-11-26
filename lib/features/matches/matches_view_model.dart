@@ -72,12 +72,18 @@ class MatchesViewModel extends ChangeNotifier {
 
   // Poster filters classify each gig by its overall lifecycle, not by the
   // individual application statuses attached to that gig.
+  bool _hasAcceptedApplication(Gig gig) =>
+      (_posterApplicationsByGig[gig.id] ?? const <GigApplication>[])
+          .any((application) => application.status == 'accepted');
+
   List<Gig> get filteredPosterGigs => _posterGigs.where((gig) {
+        final hasAcceptedApplication = _hasAcceptedApplication(gig);
         switch (statusFilter) {
           case 'pending':
-            return gig.status == 'open';
+            return gig.status == 'open' && !hasAcceptedApplication;
           case 'confirmed':
-            return gig.status == 'filled';
+            return gig.status == 'filled' ||
+                (gig.status == 'open' && hasAcceptedApplication);
           case 'closed':
             return gig.status == 'closed';
           case 'completed':
