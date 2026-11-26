@@ -10,6 +10,7 @@ class GigReview {
     required this.rating,
     required this.comment,
     this.revieweeRole,
+    this.categoryRatings = const {},
     this.createdAt,
   });
 
@@ -21,6 +22,7 @@ class GigReview {
   final int rating;
   final String comment;
   final String? revieweeRole;
+  final Map<String, int> categoryRatings;
   final DateTime? createdAt;
 
   factory GigReview.fromMap(String id, Map<String, dynamic> data) {
@@ -34,6 +36,8 @@ class GigReview {
       rating: (data['rating'] as num?)?.toInt() ?? 0,
       comment: data['comment'] as String? ?? '',
       revieweeRole: data['revieweeRole'] as String?,
+      categoryRatings: (data['categoryRatings'] as Map<String, dynamic>? ?? {})
+          .map((key, value) => MapEntry(key, (value as num).toInt())),
       createdAt: timestamp is Timestamp ? timestamp.toDate() : null,
     );
   }
