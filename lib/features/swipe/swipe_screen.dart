@@ -359,6 +359,152 @@ class SwipeScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _showWorkerGigDetails(
+    BuildContext context,
+    SwipeViewModel vm,
+    Gig gig,
+  ) async {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: scheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            22,
+            18,
+            22,
+            22 + MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: scheme.outline,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'GIG DETAILS',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: scheme.secondary,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  gig.title,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    Chip(label: Text(gig.category)),
+                    Chip(
+                      avatar: const Icon(Icons.place_outlined, size: 17),
+                      label: Text(gig.location.isEmpty ? 'Location not provided' : gig.location),
+                    ),
+                    Chip(
+                      avatar: const Icon(Icons.calendar_today_outlined, size: 16),
+                      label: Text(gig.when.isEmpty ? 'Date not specified' : gig.when),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'PAY',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  '₦${gig.pay.toString().replaceAllMapped(RegExp(r'\\B(?=(\\d{3})+(?!\\d))'), (_) => ',')}',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'DESCRIPTION',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  gig.description.isEmpty ? 'No additional description provided.' : gig.description,
+                  style: theme.textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 18),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    backgroundImage: gig.posterPhotoUrl != null &&
+                            gig.posterPhotoUrl!.isNotEmpty
+                        ? NetworkImage(gig.posterPhotoUrl!)
+                        : null,
+                    child: gig.posterPhotoUrl == null || gig.posterPhotoUrl!.isEmpty
+                        ? const Icon(Icons.person_outline_rounded)
+                        : null,
+                  ),
+                  title: Text(gig.posterName),
+                  subtitle: const Text('View poster profile'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    context.push('/profile/${gig.posterId}');
+                  },
+                ),
+                if (gig.proofVideoRequired) ...[
+                  const Divider(),
+                  const ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.videocam_outlined),
+                    title: Text('30-second profile video required'),
+                    subtitle: Text('Add an introduction video to your profile before applying.'),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: vm.isApplying
+                        ? null
+                        : () {
+                            Navigator.pop(sheetContext);
+                            _applyToGig(context, vm);
+                          },
+                    icon: const Icon(Icons.check_rounded),
+                    label: const Text('Apply for this gig'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildWorkerGig(BuildContext context, SwipeViewModel vm) {
     final gig = vm.currentGig!;
     final scheme = Theme.of(context).colorScheme;
@@ -369,6 +515,7 @@ class SwipeScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 25, 12),
             child: GestureDetector(
+              onTap: () => _showWorkerGigDetails(context, vm, gig),
               onHorizontalDragEnd: (details) {
                 final velocity = details.primaryVelocity ?? 0;
 
