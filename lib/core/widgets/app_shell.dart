@@ -20,6 +20,12 @@ class AppShell extends StatelessWidget {
         backgroundColor: scheme.surface,
         selectedIndex: shell.currentIndex,
         onDestinationSelected: (i) {
+          // Always open the Chat list root when the Chat tab is selected.
+          // This avoids restoring a stale nested conversation route.
+          if (i == 2) {
+            context.go('/chat');
+            return;
+          }
           shell.goBranch(
             i,
             initialLocation: i == shell.currentIndex,
