@@ -270,8 +270,8 @@ class SwipeViewModel extends ChangeNotifier {
   notifyListeners();
 }
 
-  Future<bool> apply() async {
-    final gig = currentGig;
+  Future<bool> apply({Gig? targetGig}) async {
+    final gig = targetGig ?? currentGig;
     if (gig == null || isApplying) return false;
 
     isApplying = true;
