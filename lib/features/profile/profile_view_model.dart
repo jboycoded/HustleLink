@@ -71,6 +71,7 @@ class ProfileViewModel extends ChangeNotifier {
     required String fullName,
     required String location,
     required List<String> skills,
+    String? workerDescription,
   }) async {
     _isSaving = true;
     _errorMessage = null;
@@ -81,6 +82,7 @@ class ProfileViewModel extends ChangeNotifier {
         fullName: fullName,
         location: location,
         skills: skills,
+        workerDescription: workerDescription,
       );
 
       _profile = await _repository.getMyProfile();
