@@ -534,10 +534,8 @@ class GigService {
         hasAcceptedApplication;
 
     if (hasAcceptedParticipant) {
-      final isCompletedAndPaid = gig['status'] == 'completed' &&
-          gig['paid'] == true &&
-          gig['posterPaymentConfirmed'] == true &&
-          gig['workerPaymentConfirmed'] == true;
+      final isCompletedAndPaid =
+          gig['status'] == 'completed' && gig['paid'] == true;
       if (!isCompletedAndPaid) {
         throw StateError(
           'This gig has an accepted worker. It can only be deleted after completion and payment have both been confirmed.',
