@@ -143,6 +143,15 @@ class MatchesViewModel extends ChangeNotifier {
     await _repo.deleteWorkerApplication(applicationId);
   }
 
+  Future<void> refresh() async {
+    // Avoid a profile-document network read during pull-to-refresh. Existing
+    // cached application data should remain visible and the refresh indicator
+    // should not wait for a server response while offline.
+    error = null;
+    offlineMessage = null;
+    await _listenToRoleData();
+  }
+
   Future<void> load() async {
     isLoading = recordCount == 0;
     error = null;
