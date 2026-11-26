@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/app_notification.dart';
 import '../models/gig_review.dart';
+import 'push_notification_service.dart';
 
 class EngagementService {
   EngagementService({FirebaseFirestore? firestore, FirebaseAuth? auth})
@@ -31,7 +32,7 @@ class EngagementService {
     String relatedId = '',
   }) async {
     if (recipientId.isEmpty || recipientId == _uid) return;
-    await _notifications.add({
+    final notification = await _notifications.add({
       'recipientId': recipientId,
       'actorId': _uid,
       'type': type,
@@ -41,6 +42,7 @@ class EngagementService {
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    await PushNotificationService().sendForNotification(notification.id);
   }
 
   Stream<List<AppNotification>> watchNotifications() {
@@ -135,6 +137,7 @@ class EngagementService {
   }) async {
     final uid = _uid;
     final gigRef = _db.collection('gigs').doc(gigId);
+    final notificationRef = _notifications.doc('${gigId}_${uid}_completion');
     await _db.runTransaction((transaction) async {
       final snapshot = await transaction.get(gigRef);
       if (!snapshot.exists) throw StateError('Gig not found.');
@@ -184,8 +187,7 @@ class EngagementService {
       transaction.update(gigRef, updates);
 
       final otherId = uid == workerId ? posterId : workerId;
-      final notificationRef = _notifications.doc('${gigId}_${uid}_completion');
-      transaction.set(notificationRef, {
+      transaction.set(notificationRef!, {
         'recipientId': otherId,
         'actorId': uid,
         'type': 'gig_completion_confirmed',
@@ -196,6 +198,7 @@ class EngagementService {
         'createdAt': FieldValue.serverTimestamp(),
       });
     });
+    await PushNotificationService().sendForNotification(notificationRef.id);
   }
 
   Future<void> confirmGigPayment({
@@ -203,6 +206,7 @@ class EngagementService {
   }) async {
     final uid = _uid;
     final gigRef = _db.collection('gigs').doc(gigId);
+    DocumentReference<Map<String, dynamic>>? notificationRef;
     await _db.runTransaction((transaction) async {
       final snapshot = await transaction.get(gigRef);
       if (!snapshot.exists) throw StateError('Gig not found.');
@@ -246,7 +250,7 @@ class EngagementService {
       final notificationId = uid == posterId
           ? '${gigId}_payment_marked'
           : '${gigId}_payment_received';
-      final notificationRef = _notifications.doc(notificationId);
+      notificationRef = _notifications.doc(notificationId);
       transaction.set(notificationRef, {
         'recipientId': recipientId,
         'actorId': uid,
@@ -260,6 +264,9 @@ class EngagementService {
         'createdAt': FieldValue.serverTimestamp(),
       });
     });
+    if (notificationRef != null) {
+      await PushNotificationService().sendForNotification(notificationRef!.id);
+    }
   }
 
   Future<bool> hasReviewed(String gigId) async {
