@@ -426,7 +426,9 @@ class EngagementService {
             try {
               final gigSnapshot =
                   await _db.collection('gigs').doc(gigId).get();
-              final gig = gigSnapshot.data();
+              final gig = gigSnapshot.exists
+                  ? gigSnapshot.data()
+                  : (await _db.collection('gigHistory').doc(gigId).get()).data();
               if (gig?['posterId'] == reviewerId) {
                 revieweeRole = 'worker';
               } else if (gig?['acceptedWorkerId'] == reviewerId) {
