@@ -823,7 +823,15 @@ class _OwnProfileReviews extends StatelessWidget {
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('YOUR REVIEWS', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
           const SizedBox(height: 6),
-          Text(reviews.isEmpty ? 'No reviews yet.' : '${average.toStringAsFixed(1)} ★ from ${reviews.length} reviews'),
+          if (snapshot.hasError)
+            const Text('Reviews could not be loaded. Please check your connection and try again.')
+          else if (snapshot.connectionState == ConnectionState.waiting && reviews.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: LinearProgressIndicator(),
+            )
+          else
+            Text(reviews.isEmpty ? 'No reviews yet.' : '${average.toStringAsFixed(1)} ★ from ${reviews.length} reviews'),
           ...reviews.take(5).map((r) => ListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(r.reviewerName),
