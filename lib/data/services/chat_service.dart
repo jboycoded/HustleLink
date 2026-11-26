@@ -34,10 +34,24 @@ class ChatService {
 
   Future<String?> getCurrentUserRoleForGig(String gigId) async {
     final snapshot = await _firestore.collection('gigs').doc(gigId).get();
-    if (!snapshot.exists) return null;
-    final data = snapshot.data()!;
-    if (data['posterId'] == _uid) return 'poster';
-    if (data['acceptedWorkerId'] == _uid) return 'worker';
+    if (snapshot.exists) {
+      final data = snapshot.data()!;
+      if (data['posterId'] == _uid) return 'poster';
+      if (data['acceptedWorkerId'] == _uid) return 'worker';
+    }
+
+    // Older accepted gigs may not have acceptedWorkerId populated. Use the
+    // conversation created for that gig as a compatibility fallback.
+    final conversations = await _conversations
+        .where('gigId', isEqualTo: gigId)
+        .where('participants', arrayContains: _uid)
+        .limit(5)
+        .get();
+    for (final conversation in conversations.docs) {
+      final data = conversation.data();
+      if (data['posterId'] == _uid) return 'poster';
+      if (data['workerId'] == _uid) return 'worker';
+    }
     return null;
   }
 
