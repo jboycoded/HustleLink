@@ -383,7 +383,7 @@ class EngagementService {
         categoryRatings.values.any((value) => value < 1 || value > 5)) {
       throw ArgumentError('Please rate all four review categories from 1 to 5.');
     }
-    final id = '${gigId}_${uid}';
+    final id = '${gigId}_$uid';
     final ref = _db.collection('reviews').doc(id);
     final reviewer = await _db.collection('users').doc(uid).get();
     await _db.runTransaction((transaction) async {
