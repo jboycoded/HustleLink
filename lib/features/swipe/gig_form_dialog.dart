@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/models/gig.dart';
+import '../../core/constants/hustlelink_categories.dart';
 
 class GigFormData {
   const GigFormData({
@@ -35,7 +36,7 @@ class _GigFormDialogState extends State<GigFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _title;
   late final TextEditingController _description;
-  late final TextEditingController _category;
+  String? _selectedCategory;
   late final TextEditingController _pay;
   late final TextEditingController _location;
   late final TextEditingController _when;
@@ -49,7 +50,10 @@ class _GigFormDialogState extends State<GigFormDialog> {
 
     _title = TextEditingController(text: gig?.title ?? '');
     _description = TextEditingController(text: gig?.description ?? '');
-    _category = TextEditingController(text: gig?.category ?? '');
+    final savedCategory = gig?.category;
+    _selectedCategory = savedCategory == null || savedCategory.trim().isEmpty
+        ? null
+        : HustleLinkCategories.canonicalize(savedCategory);
     _pay = TextEditingController(
       text: gig == null ? '' : gig.pay.toString(),
     );
@@ -62,7 +66,6 @@ class _GigFormDialogState extends State<GigFormDialog> {
   void dispose() {
     _title.dispose();
     _description.dispose();
-    _category.dispose();
     _pay.dispose();
     _location.dispose();
     _when.dispose();
@@ -84,7 +87,7 @@ class _GigFormDialogState extends State<GigFormDialog> {
       GigFormData(
         title: _title.text.trim(),
         description: _description.text.trim(),
-        category: _category.text.trim(),
+        category: _selectedCategory!,
         pay: int.parse(_pay.text.replaceAll(',', '').trim()),
         location: _location.text.trim(),
         when: _when.text.trim(),
@@ -129,14 +132,25 @@ class _GigFormDialogState extends State<GigFormDialog> {
                   validator: _required,
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _category,
+                DropdownButtonFormField<String>(
+                  value: HustleLinkCategories.all.contains(_selectedCategory)
+                      ? _selectedCategory
+                      : null,
                   decoration: const InputDecoration(
                     labelText: 'Category',
-                    hintText: 'e.g. Graphics, Repairs, Hair',
+                    hintText: 'Select the type of work',
                   ),
-                  textCapitalization: TextCapitalization.words,
-                  validator: _required,
+                  items: HustleLinkCategories.all
+                      .map((category) => DropdownMenuItem(
+                            value: category,
+                            child: Text(category),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() => _selectedCategory = value);
+                  },
+                  validator: (value) =>
+                      value == null ? 'Please select a category.' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
