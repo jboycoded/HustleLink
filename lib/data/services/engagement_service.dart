@@ -351,6 +351,7 @@ class EngagementService {
     required String gigId,
     required int rating,
     required String comment,
+    required Map<String, int> categoryRatings,
   }) async {
     if (rating < 1 || rating > 5) {
       throw ArgumentError('Choose a rating from 1 to 5 stars.');
@@ -374,7 +375,15 @@ class EngagementService {
       throw StateError('Only the gig participants can leave a review.');
     }
     final revieweeId = uid == workerId ? posterId : workerId;
-    final id = '${gigId}_$uid';
+    final expectedCategories = uid == posterId
+        ? const ['quality', 'professionalism', 'communication', 'punctuality']
+        : const ['paymentReliability', 'communication', 'fairTreatment', 'requirementClarity'];
+    if (categoryRatings.keys.toSet().length != expectedCategories.length ||
+        !categoryRatings.keys.toSet().containsAll(expectedCategories) ||
+        categoryRatings.values.any((value) => value < 1 || value > 5)) {
+      throw ArgumentError('Please rate all four review categories from 1 to 5.');
+    }
+    final id = '${gigId}_${uid}';
     final ref = _db.collection('reviews').doc(id);
     final reviewer = await _db.collection('users').doc(uid).get();
     await _db.runTransaction((transaction) async {
@@ -387,6 +396,7 @@ class EngagementService {
         'revieweeRole': uid == workerId ? 'poster' : 'worker',
         'reviewerName': reviewer.data()?['fullName'] ?? 'HustleLink member',
         'rating': rating,
+        'categoryRatings': categoryRatings,
         'comment': comment.trim(),
         'createdAt': FieldValue.serverTimestamp(),
       });
