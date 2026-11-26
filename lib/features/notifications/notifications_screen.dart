@@ -53,7 +53,7 @@ class NotificationsScreen extends StatelessWidget {
                         style: theme.textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w800)),
                     const SizedBox(height: 6),
-                    Text('Updates about applications and chats will appear here.',
+                    Text('Updates about matching gigs, applications and chats will appear here.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: scheme.onSurfaceVariant)),
                   ],
@@ -249,6 +249,7 @@ class NotificationsScreen extends StatelessWidget {
         'application_accepted' => Icons.check_circle_rounded,
         'application_rejected' => Icons.info_outline_rounded,
         'new_message' => Icons.chat_bubble_outline_rounded,
+        'new_matching_gig' => Icons.work_outline_rounded,
         'gig_completion_confirmed' => Icons.task_alt_rounded,
         'payment_marked' => Icons.payments_outlined,
         'payment_received' => Icons.verified_rounded,
