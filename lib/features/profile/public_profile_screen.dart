@@ -180,7 +180,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           Icon(Icons.location_on_outlined,
                               size: 16, color: scheme.onSurfaceVariant),
                           const SizedBox(width: 4),
-                          Text(profile.location),
+                          Flexible(
+                            child: Text(
+                              profile.location,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                         ],
                       ),
                     ],
