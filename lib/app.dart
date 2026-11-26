@@ -44,6 +44,18 @@ class _HustleLinkAppState extends State<HustleLinkApp> {
     if (!mounted) return;
     final type = data['type'] as String? ?? '';
     final relatedId = data['relatedId'] as String? ?? '';
+    if (type == 'application_received') {
+      try {
+        await UserProfileRepository().updateActiveRole('poster');
+      } catch (_) {}
+      if (mounted) _router.go('/matches');
+      return;
+    }
+    if (type == 'application_accepted') {
+      try {
+        await UserProfileRepository().updateActiveRole('worker');
+      } catch (_) {}
+    }
     if ((type == 'new_message' || type == 'application_accepted') &&
         relatedId.isNotEmpty) {
       _router.go('/chat/$relatedId');
