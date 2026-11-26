@@ -588,7 +588,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     final gigs = vm.filteredPosterGigs;
 
     return RefreshIndicator(
-      onRefresh: vm.load,
+      onRefresh: vm.refresh,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
