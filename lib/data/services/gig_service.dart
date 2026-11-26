@@ -98,16 +98,14 @@ class GigService {
   }) async {
     // Skills are the worker's saved capabilities. Do not gate notifications
     // on activeRole or isAvailableForGigs: either setting may change later.
-    final profiles = await _firestore.collection('publicProfiles').get();
+    // Query the canonical category directly to avoid scanning every profile.
+    final profiles = await _firestore
+        .collection('publicProfiles')
+        .where('skills', arrayContains: category)
+        .get();
 
-    final matches = profiles.docs.where((profile) {
-      final skills = profile.data()['skills'];
-      return profile.id != _uid &&
-          skills is List &&
-          skills.whereType<String>().any(
-            (skill) => skill.trim() == category,
-          );
-    }).toList();
+    final matches =
+        profiles.docs.where((profile) => profile.id != _uid).toList();
 
     final pushService = PushNotificationService();
     // Keep each batch below Firestore's 20-document access-call limit in rules.
