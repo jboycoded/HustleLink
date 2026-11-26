@@ -66,10 +66,16 @@ class UserProfileRepository {
           .where('posterId', isEqualTo: userId).get(),
       _firestore.collection('gigs')
           .where('acceptedWorkerId', isEqualTo: userId).get(),
+      _firestore.collection('gigHistory')
+          .where('posterId', isEqualTo: userId).get(),
+      _firestore.collection('gigHistory')
+          .where('acceptedWorkerId', isEqualTo: userId).get(),
     ]);
     final reviews = results[0].docs;
     final posted = results[1].docs;
     final worked = results[2].docs;
+    final archivedPosted = results[3].docs;
+    final archivedWorked = results[4].docs;
 
     // Private application records are queried only for the signed-in user.
     // They provide a compatibility path for older gigs whose acceptedWorkerId
@@ -96,14 +102,14 @@ class UserProfileRepository {
     }
 
     final gigsById = <String, Map<String, dynamic>>{
-      for (final doc in [...posted, ...worked]) doc.id: doc.data(),
+      for (final doc in [...posted, ...worked, ...archivedPosted, ...archivedWorked]) doc.id: doc.data(),
     };
     final acceptedIds = <String>{};
     final completedIds = <String>{};
     final paidIds = <String>{};
 
     if (role == 'poster') {
-      for (final doc in posted) {
+      for (final doc in [...posted, ...archivedPosted]) {
         final data = doc.data();
         if ((data['acceptedWorkerId'] as String?)?.isNotEmpty == true ||
             (data['acceptedApplicationId'] as String?)?.isNotEmpty == true ||
@@ -124,7 +130,7 @@ class UserProfileRepository {
         if (data['status'] == 'completed') completedIds.add(gigId);
       }
     } else {
-      for (final doc in worked) {
+      for (final doc in [...worked, ...archivedWorked]) {
         final data = doc.data();
         acceptedIds.add(doc.id);
         if (data['status'] == 'completed') completedIds.add(doc.id);
@@ -175,7 +181,7 @@ class UserProfileRepository {
           : ratings.reduce((a, b) => a + b) / ratings.length,
       'acceptedGigs': acceptedIds.length,
       'completedGigs': completedIds.length,
-      'postedGigs': role == 'poster' ? posted.length : 0,
+      'postedGigs': role == 'poster' ? posted.length + archivedPosted.length : 0,
       'paidGigs': paidIds.length,
     };
   }
