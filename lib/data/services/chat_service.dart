@@ -31,6 +31,16 @@ class ChatService {
         .snapshots();
   }
 
+
+  Future<String?> getCurrentUserRoleForConversation(String conversationId) async {
+    final snapshot = await _conversations.doc(conversationId).get();
+    if (!snapshot.exists) return null;
+    final data = snapshot.data()!;
+    if (data['workerId'] == _uid) return 'worker';
+    if (data['posterId'] == _uid) return 'poster';
+    return null;
+  }
+
   Stream<QuerySnapshot<Map<String, dynamic>>> watchMessages(
     String conversationId,
   ) {
