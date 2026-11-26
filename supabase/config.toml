@@ -2,3 +2,7 @@
 # The function verifies Firebase ID tokens itself using Google's signing keys.
 # Supabase's gateway must not try to validate those tokens as Supabase Auth JWTs.
 verify_jwt = false
+
+[functions.push-notification]
+# The function verifies Firebase ID tokens itself using Google's signing keys.
+verify_jwt = false
