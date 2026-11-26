@@ -527,6 +527,7 @@ class SwipeScreen extends StatelessWidget {
               },
               child: GigCard(
                 gig: gig,
+                showDetailsHint: true,
                 onReport: () => _reportGig(context, gig),
                 onPosterTap: () => context.push('/profile/${gig.posterId}'),
               ),
