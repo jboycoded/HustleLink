@@ -419,6 +419,21 @@ class EngagementService {
                 revieweeRole = 'worker';
               } else if (gig?['acceptedWorkerId'] == reviewerId) {
                 revieweeRole = 'poster';
+              } else if (gig?['posterId'] == userId) {
+                // Some older accepted gigs did not copy acceptedWorkerId
+                // onto the gig. The poster can still read their own
+                // applications, so use that record to classify the review.
+                final applications = await _db.collection('applications')
+                    .where('posterId', isEqualTo: userId)
+                    .get();
+                final acceptedWorkerExists = applications.docs.any((app) {
+                  final application = app.data();
+                  return application['gigId'] == gigId &&
+                      application['workerId'] == reviewerId &&
+                      (application['status'] == 'accepted' ||
+                          application['status'] == 'completed');
+                });
+                if (acceptedWorkerExists) revieweeRole = 'poster';
               }
             } catch (_) {
               // Keep other reviews visible if a legacy gig cannot be read.
