@@ -105,8 +105,7 @@ class GigService {
       return profile.id != _uid &&
           skills is List &&
           skills.whereType<String>().any(
-            (skill) =>
-                HustleLinkCategories.canonicalize(skill) == category,
+            (skill) => skill.trim() == category,
           );
     }).toList();
 
