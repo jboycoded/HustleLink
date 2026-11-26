@@ -258,6 +258,22 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 const SizedBox(height: 12),
                 ProfileProofVideoPlayer(videoUrl: profile.proofVideoUrl!),
               ],
+              if (profile.activeRole == 'worker' &&
+                  profile.workerDescription.trim().isNotEmpty) ...[
+                const SizedBox(height: 22),
+                Text(
+                  'ABOUT ME',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: .8,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  profile.workerDescription,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
               const SizedBox(height: 22),
               _ProfileReviews(
                 userId: profile.id,
