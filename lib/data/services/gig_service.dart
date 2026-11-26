@@ -482,8 +482,8 @@ class GigService {
     if (!gigSnapshot.exists || gigSnapshot.data()?['posterId'] != _uid) {
       throw StateError('Gig not found or you do not own this gig.');
     }
-    if (gigSnapshot.data()?['status'] == 'closed') {
-      throw StateError('Closed gigs can no longer be edited.');
+    if ((gigSnapshot.data()?['status'] as String? ?? 'open') != 'open') {
+      throw StateError('Only open gigs can be edited.');
     }
     await _gigs.doc(gigId).update({
       'title': title.trim(),
