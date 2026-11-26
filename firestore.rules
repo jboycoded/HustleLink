@@ -38,7 +38,8 @@ service cloud.firestore {
                       'rating',
                       'completedGigs',
                       'createdAt',
-                      'photoUrl'
+                      'photoUrl',
+                      'workerDescription'
                     ])
                     && request.resource.data.uid == userId
                     && request.resource.data.fullName is string
