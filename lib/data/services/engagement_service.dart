@@ -164,7 +164,7 @@ class EngagementService {
       };
       if (workerConfirmed && posterConfirmed && data['status'] != 'completed') {
         final applicationId = data['acceptedApplicationId'] as String? ??
-            '${gigId}_${workerId}';
+            '${gigId}_$workerId';
         final applicationRef =
             _db.collection('applications').doc(applicationId);
         final applicationSnapshot = await transaction.get(applicationRef);
