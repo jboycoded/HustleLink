@@ -22,7 +22,10 @@ class SwipeViewModel extends ChangeNotifier {
 
   StreamSubscription<UserProfile?>? _profileSubscription;
   StreamSubscription<List<Gig>>? _availableGigsSubscription;
+  StreamSubscription<List<Gig>>? _myGigsSubscription;
   StreamSubscription<List<GigApplication>>? _workerApplicationsSubscription;
+  StreamSubscription<List<GigApplication>>? _posterApplicationsSubscription;
+  final Set<String> _acceptedGigIds = {};
 
   bool isLoading = false;
   bool isSaving = false;
@@ -34,6 +37,7 @@ class SwipeViewModel extends ChangeNotifier {
   int _currentIndex = 0;
 
   bool get isPosterMode => activeRole == 'poster';
+  bool hasAcceptedApplication(String gigId) => _acceptedGigIds.contains(gigId);
   String get selectedCategory => _selectedCategory;
 
   List<Gig> get gigs => List.unmodifiable(_gigs);
@@ -115,9 +119,36 @@ class SwipeViewModel extends ChangeNotifier {
 
   Future<void> _startDiscoveryStreams() async {
     await _availableGigsSubscription?.cancel();
+    await _myGigsSubscription?.cancel();
     await _workerApplicationsSubscription?.cancel();
-    if (isPosterMode) return;
+    await _posterApplicationsSubscription?.cancel();
 
+    if (isPosterMode) {
+      _myGigsSubscription = _repo.watchMyGigs().listen((gigs) {
+        _gigs = gigs.where((gig) => gig.status != 'closed').toList();
+        notifyListeners();
+      }, onError: (Object error) {
+        this.error = _friendlyError(error);
+        notifyListeners();
+      });
+      _posterApplicationsSubscription =
+          _repo.watchPosterApplications().listen((applications) {
+        _acceptedGigIds
+          ..clear()
+          ..addAll(applications
+              .where((application) =>
+                  application.status == 'accepted' ||
+                  application.status == 'completed')
+              .map((application) => application.gigId));
+        notifyListeners();
+      }, onError: (Object error) {
+        this.error = _friendlyError(error);
+        notifyListeners();
+      });
+      return;
+    }
+
+    _acceptedGigIds.clear();
     _availableGigsSubscription = _repo.watchAvailableGigs().listen((gigs) {
       _gigs = gigs;
       if (_currentIndex >= _discoveryGigs.length) _currentIndex = 0;
@@ -143,8 +174,17 @@ class SwipeViewModel extends ChangeNotifier {
   Future<void> _loadGigs() async {
     try {
       if (isPosterMode) {
+        final applications = await _repo.getPosterApplications();
+        _acceptedGigIds
+          ..clear()
+          ..addAll(applications
+              .where((application) =>
+                  application.status == 'accepted' ||
+                  application.status == 'completed')
+              .map((application) => application.gigId));
         _gigs = await _repo.getMyGigs();
       } else {
+        _acceptedGigIds.clear();
         final applications = await _repo.getWorkerApplications();
         _appliedGigIds
           ..clear()
@@ -375,7 +415,9 @@ class SwipeViewModel extends ChangeNotifier {
   void dispose() {
     _profileSubscription?.cancel();
     _availableGigsSubscription?.cancel();
+    _myGigsSubscription?.cancel();
     _workerApplicationsSubscription?.cancel();
+    _posterApplicationsSubscription?.cancel();
     super.dispose();
   }
 }
