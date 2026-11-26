@@ -170,6 +170,9 @@ class UserProfileRepository {
               // gig record cannot be read.
             }
           }
+          if (gigsById[gigId]?['status'] == 'completed') {
+            completedIds.add(gigId);
+          }
           if (gigsById[gigId]?['paid'] == true) paidIds.add(gigId);
         }
       }
