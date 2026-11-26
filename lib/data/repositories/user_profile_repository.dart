@@ -212,36 +212,35 @@ class UserProfileRepository {
       throw ArgumentError('Invalid account role.');
     }
 
-    await _users.doc(_uid).update({
+    final batch = _firestore.batch();
+    final update = {
       'activeRole': role,
       'updatedAt': FieldValue.serverTimestamp(),
-    });
-    await _publicProfile(_uid).set({
-      'activeRole': role,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+    batch.update(_users.doc(_uid), update);
+    batch.set(_publicProfile(_uid), update, SetOptions(merge: true));
+    await batch.commit();
   }
 
   Future<void> updateAvailability(bool isAvailable) async {
-    await _users.doc(_uid).update({
+    final batch = _firestore.batch();
+    final update = {
       'isAvailableForGigs': isAvailable,
       'updatedAt': FieldValue.serverTimestamp(),
-    });
-    await _publicProfile(_uid).set({
-      'isAvailableForGigs': isAvailable,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+    batch.update(_users.doc(_uid), update);
+    batch.set(_publicProfile(_uid), update, SetOptions(merge: true));
+    await batch.commit();
   }
 
   Stream<UserProfile?> watchMyProfile() {
-    return _users.doc(_uid).snapshots().asyncMap((document) async {
+    // This stream is used for lightweight account-state changes such as role
+    // and availability. Re-running three aggregate queries for every profile
+    // document update made those controls unnecessarily slow. Full profile
+    // loads still calculate authoritative stats in getMyProfile().
+    return _users.doc(_uid).snapshots().map((document) {
       if (!document.exists) return null;
-      final data = document.data()!;
-      final computed = await _computedProfileStats(
-        document.id,
-        data['activeRole'] as String? ?? 'worker',
-      );
-      return UserProfile.fromMap(document.id, {...data, ...computed});
+      return UserProfile.fromMap(document.id, document.data()!);
     });
   }
 }
