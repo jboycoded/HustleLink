@@ -161,8 +161,7 @@ class MatchesViewModel extends ChangeNotifier {
     _workerApplicationsFromCache = false;
     notifyListeners();
     try {
-      final profile = await _profiles.getMyProfile();
-      activeRole = profile.activeRole;
+      activeRole = await _profiles.getActiveRole();
       statusFilter = activeRole == 'poster' ? 'pending' : 'all';
       _profileSubscription ??= _profiles.watchMyProfile().listen(
         _handleProfileUpdate,
