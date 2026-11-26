@@ -502,7 +502,32 @@ class GigService {
   }
 
   Future<void> closeGig(String gigId) async {
-    await _gigs.doc(gigId).update({
+    final gigRef = _gigs.doc(gigId);
+    final snapshot = await gigRef.get();
+    if (!snapshot.exists || snapshot.data()?['posterId'] != _uid) {
+      throw StateError('Gig not found or you do not own this gig.');
+    }
+    if (snapshot.data()?['status'] != 'open') {
+      throw StateError('Only open gigs can be closed.');
+    }
+
+    // Protect legacy records where an application was accepted before the
+    // gig's accepted-participant fields were consistently populated.
+    final applications = await _applications
+        .where('gigId', isEqualTo: gigId)
+        .where('posterId', isEqualTo: _uid)
+        .get();
+    final hasAcceptedApplication = applications.docs.any((application) {
+      final status = application.data()['status'];
+      return status == 'accepted' || status == 'completed';
+    });
+    if (hasAcceptedApplication) {
+      throw StateError(
+        'This gig already has an accepted worker and cannot be closed.',
+      );
+    }
+
+    await gigRef.update({
       'status': 'closed',
       'updatedAt': FieldValue.serverTimestamp(),
     });
