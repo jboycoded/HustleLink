@@ -1,12 +1,27 @@
 # HustleLink — Quality, Fixes & Issue Register
 
 **Project:** HustleLink Flutter gig marketplace  
-**Coverage:** Reconstructed from available project conversation context and Git commit history, primarily 18–27 November 2026.  
+**Coverage:** Reconstructed from available project conversation context and Git commit history, from the initial repository work on 9 November through 27 November 2026.  
 **Purpose:** Categorize the engineering work already undertaken, preserve lessons, and identify what remains to be verified or implemented.
 
 > **Status note:** “Implemented” means code/configuration was committed. It does not automatically mean the latest change has passed an APK build or on-device verification. Recent performance changes listed in Section 10 are committed but have not yet been built and tested as a grouped release.
 
 ---
+
+## Project development timeline
+
+This is a high-level chronology of the major engineering work visible in the repository history.
+
+| Period | Main work |
+|---|---|
+| 9–11 Nov 2026 | Initial Flutter project setup; visual theme and colour system; first Swipe, Matches, Chat and Profile screens; navigation, models and early screen state. |
+| 17–19 Nov 2026 | Firebase Core, Authentication and Firestore integration; user profiles; gig creation and discovery; applications and Poster decisions; first security rules; public profiles and accepted-application chat. |
+| 19–22 Nov 2026 | Reusable Worker proof video; Supabase storage pivot; real-time chat, read receipts and conversation privacy; in-app notifications and FCM; profile photos; reports, blocks, completion and reviews. |
+| 22–25 Nov 2026 | Role-aware Worker/Poster experiences; notification routing; offline cache handling; two-party completion/payment acknowledgement; profile credibility metrics; lifecycle and deletion protections; legacy-data compatibility. |
+| 26 Nov 2026 | Category normalization and skill matching; structured locations; matching-gig notifications; public-profile and gig-card refinements; admin dashboard foundation and Firestore role rules. |
+| 27 Nov 2026 | UI/formatting refinements; profile-photo cache/preview fixes; role-switch and stream-race protections; broader performance review and this reusable engineering documentation. |
+
+The original early commits are often titled “Update file” rather than describing the issue. Therefore, the categories below combine the available commit history with the user's reported symptoms and the project decisions recorded during development. They are a practical engineering record, not a claim that every individual line change has been separately catalogued.
 
 ## 1. Product and requirements management
 
