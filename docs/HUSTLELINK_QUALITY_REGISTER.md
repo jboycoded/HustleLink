@@ -244,7 +244,7 @@
 - Firestore persistence is unlimited to support offline use. Do not reduce it without testing cache eviction and offline behaviour.
 - Flutter image-cache settings should be tuned using device profiling, not guesswork.
 - The client-side gig notification fan-out is now detached from the posting flow. It is best-effort and may not finish if the app is terminated. If guaranteed delivery becomes a requirement, move fan-out to a trusted server-side trigger/queue.
-- A bounded 50-record notification catch-up is a performance compromise; it does not promise exhaustive delivery of every old unread notification.
+- A bounded catch-up query retrieves the newest 50 notifications for the user. It uses a composite Firestore index on recipientId (ascending) and createdAt (descending); the index definition is now tracked in firestore.indexes.json and firebase.json. The catch-up intentionally displays at most 10 notifications per sign-in.
 
 **Reusable lesson:** Optimize measured bottlenecks while preserving correctness. A fast UI that silently loses important background work is not a correct solution.
 
@@ -317,6 +317,7 @@
 | Payment processor / escrow | Product/client decision | Do not implement until client clarifies the escrow requirements |
 | Automated test suite | Quality | Add tests for critical business rules and regression cases; current repository tree has no dedicated test/ directory |
 | Firestore rules deployment | Backend/release | Publish and verify rules in Firebase Console whenever rules change |
+| Notification composite index | Backend/performance | Publish the index defined in firestore.indexes.json before testing missed-notification recovery; verify its status is Enabled in Firestore Console |
 
 ## 15. Reusable categories for future project registers
 
