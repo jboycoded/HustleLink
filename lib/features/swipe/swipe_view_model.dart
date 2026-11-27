@@ -37,6 +37,7 @@ class SwipeViewModel extends ChangeNotifier {
 
   String _selectedCategory = 'All';
   int _currentIndex = 0;
+  int _roleReloadGeneration = 0;
 
   bool get isPosterMode => activeRole == 'poster';
   bool hasAcceptedApplication(String gigId) => _acceptedGigIds.contains(gigId);
@@ -133,18 +134,51 @@ class SwipeViewModel extends ChangeNotifier {
   }
 
   Future<void> _reloadForRole() async {
-    await _loadGigs();
+    final generation = ++_roleReloadGeneration;
+
+    // Never render the previous role's gigs using the newly selected role's
+    // layout while its replacement query is still in flight.
+    isLoading = true;
+    error = null;
+    _gigs = [];
+    _focusedGig = null;
+    _appliedGigIds.clear();
+    _acceptedGigIds.clear();
+    _passedGigIds.clear();
+    _currentIndex = 0;
+    notifyListeners();
+
+    await _cancelDiscoveryStreams();
+    if (generation != _roleReloadGeneration) return;
+
+    await _loadGigs(expectedRole: activeRole);
+    if (generation != _roleReloadGeneration) return;
+
     await _startDiscoveryStreams();
+    if (generation != _roleReloadGeneration) return;
+
+    isLoading = false;
+    notifyListeners();
   }
 
-  Future<void> _startDiscoveryStreams() async {
+  Future<void> _cancelDiscoveryStreams() async {
     await _availableGigsSubscription?.cancel();
     await _myGigsSubscription?.cancel();
     await _workerApplicationsSubscription?.cancel();
     await _posterApplicationsSubscription?.cancel();
+    _availableGigsSubscription = null;
+    _myGigsSubscription = null;
+    _workerApplicationsSubscription = null;
+    _posterApplicationsSubscription = null;
+  }
+
+  Future<void> _startDiscoveryStreams() async {
+    await _cancelDiscoveryStreams();
+    final streamRole = activeRole;
 
     if (isPosterMode) {
       _myGigsSubscription = _repo.watchMyGigs().listen((gigs) {
+        if (activeRole != streamRole) return;
         _gigs = gigs.where((gig) => gig.status != 'closed').toList();
         notifyListeners();
       }, onError: (Object error) {
@@ -153,6 +187,7 @@ class SwipeViewModel extends ChangeNotifier {
       });
       _posterApplicationsSubscription =
           _repo.watchPosterApplications().listen((applications) {
+        if (activeRole != streamRole) return;
         _acceptedGigIds
           ..clear()
           ..addAll(applications
@@ -170,6 +205,7 @@ class SwipeViewModel extends ChangeNotifier {
 
     _acceptedGigIds.clear();
     _availableGigsSubscription = _repo.watchAvailableGigs().listen((gigs) {
+      if (activeRole != streamRole) return;
       _gigs = gigs;
       if (_currentIndex >= _discoveryGigs.length) _currentIndex = 0;
       notifyListeners();
@@ -180,6 +216,7 @@ class SwipeViewModel extends ChangeNotifier {
 
     _workerApplicationsSubscription =
         _repo.watchWorkerApplications().listen((applications) {
+      if (activeRole != streamRole) return;
       _appliedGigIds
         ..clear()
         ..addAll(applications.map((application) => application.gigId));
@@ -191,10 +228,12 @@ class SwipeViewModel extends ChangeNotifier {
     });
   }
 
-  Future<void> _loadGigs() async {
+  Future<void> _loadGigs({String? expectedRole}) async {
+    final requestedRole = expectedRole ?? activeRole;
     try {
-      if (isPosterMode) {
+      if (requestedRole == 'poster') {
         final applications = await _repo.getPosterApplications();
+        if (activeRole != requestedRole) return;
         _acceptedGigIds
           ..clear()
           ..addAll(applications
@@ -202,24 +241,31 @@ class SwipeViewModel extends ChangeNotifier {
                   application.status == 'accepted' ||
                   application.status == 'completed')
               .map((application) => application.gigId));
-        _gigs = await _repo.getMyGigs();
+        final gigs = await _repo.getMyGigs();
+        if (activeRole != requestedRole) return;
+        _gigs = gigs;
       } else {
         _acceptedGigIds.clear();
         final applications = await _repo.getWorkerApplications();
+        if (activeRole != requestedRole) return;
         _appliedGigIds
           ..clear()
           ..addAll(applications.map((application) => application.gigId));
 
-        _gigs = await _repo.getGigs();
+        final gigs = await _repo.getGigs();
+        if (activeRole != requestedRole) return;
+        _gigs = gigs;
       }
 
       _currentIndex = 0;
       error = null;
     } catch (e) {
-      error = _friendlyError(e);
+      if (activeRole == requestedRole) {
+        error = _friendlyError(e);
+      }
     }
 
-    notifyListeners();
+    if (activeRole == requestedRole) notifyListeners();
   }
 
   Future<void> refresh() async {
