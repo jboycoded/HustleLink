@@ -12,8 +12,19 @@ class GigCard extends StatelessWidget {
   final VoidCallback? onPosterTap;
   final bool showDetailsHint;
 
+  String? _postedAgo(DateTime? createdAt) {
+    if (createdAt == null) return null;
+    final elapsed = DateTime.now().difference(createdAt);
+    if (elapsed.isNegative || elapsed.inMinutes < 1) return 'Posted just now';
+    if (elapsed.inHours < 1) return 'Posted ${elapsed.inMinutes}m ago';
+    if (elapsed.inDays < 1) return 'Posted ${elapsed.inHours}h ago';
+    if (elapsed.inDays < 7) return 'Posted ${elapsed.inDays}d ago';
+    return 'Posted ${(elapsed.inDays / 7).floor()}w ago';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final postedAgo = _postedAgo(gig.createdAt);
     final cardDescription = gig.description.trim().length > 120
         ? '${gig.description.trim().substring(0, 120).trimRight()}…'
         : gig.description.trim();
@@ -128,13 +139,30 @@ class GigCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                formatNaira(gig.pay),
-                style: text.displayMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  height: 1,
-                  color: scheme.onSecondary,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Text(
+                      formatNaira(gig.pay),
+                      style: text.displayMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                        color: scheme.onSecondary,
+                      ),
+                    ),
+                  ),
+                  if (postedAgo != null) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      postedAgo,
+                      style: text.labelSmall?.copyWith(
+                        color: scheme.onSecondary.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
               ),
               if (gig.proofVideoRequired) ...[
                 const SizedBox(height: 12),
