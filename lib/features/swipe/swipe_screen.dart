@@ -6,6 +6,7 @@ import '../../data/services/engagement_service.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
+import '../../core/utils/currency_formatter.dart';
 import '../../data/models/gig.dart';
 import 'gig_card.dart';
 import 'gig_form_dialog.dart';
@@ -367,7 +368,9 @@ class _SwipeScreenState extends State<SwipeScreen> {
     return Column(
       children: [
         if (vm.categories.length > 1)
-          SizedBox(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: SizedBox(
             height: 42,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -394,6 +397,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                 );
               },
             ),
+          ),
           ),
         Expanded(
           child: vm.currentGig == null
@@ -486,7 +490,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   ),
                 ),
                 Text(
-                  '₦${gig.pay.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',')}',
+                  formatNaira(gig.pay),
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -562,7 +566,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
       children: [
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 25, 6),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
             child: GestureDetector(
               onTap: () => _showWorkerGigDetails(context, vm, gig),
               onHorizontalDragEnd: (details) {
@@ -584,7 +588,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(bottom: 12, top: 2),
+          padding: const EdgeInsets.only(bottom: 16, top: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
