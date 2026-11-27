@@ -326,7 +326,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
             child: Row(
               children: [
                 Text(
-                  'HUSTLELINK',
+                  vm.isPosterMode ? 'MY GIGS' : 'DISCOVER',
                   style: text.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.1,
@@ -346,34 +346,11 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     ),
                     icon: Icon(Icons.add, color: scheme.onPrimary),
                   ),
-                if (vm.isPosterMode) const SizedBox(width: 8),
-                if (vm.isPosterMode)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.peachSoft,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: scheme.outline,
-                        width: AppTokens.borderWidth,
-                      ),
-                    ),
-                    child: Text(
-                      'MY GIGS',
-                      style: text.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: scheme.onSurface,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  )
-                else
-                  TextButton(
+                if (!vm.isPosterMode)
+                  IconButton(
+                    tooltip: 'Refresh gigs',
                     onPressed: vm.isLoading ? null : vm.refresh,
-                    child: const Text('DISCOVER'),
+                    icon: const Icon(Icons.refresh_rounded),
                   ),
               ],
             ),
