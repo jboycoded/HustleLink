@@ -15,6 +15,8 @@ class ProfileViewModel extends ChangeNotifier {
   bool _isSaving = false;
   bool _isVideoUploading = false;
   String? _errorMessage;
+  String? _localPhotoPath;
+  int _roleSwitchGeneration = 0;
   StreamSubscription<UserProfile?>? _profileSubscription;
 
   UserProfile? get profile => _profile;
@@ -22,6 +24,12 @@ class ProfileViewModel extends ChangeNotifier {
   bool get isSaving => _isSaving;
   bool get isVideoUploading => _isVideoUploading;
   String? get errorMessage => _errorMessage;
+  String? get localPhotoPath => _localPhotoPath;
+
+  void setProfilePhotoPreview(String? path) {
+    _localPhotoPath = path;
+    notifyListeners();
+  }
 
   bool get isAvailableForGigs =>
       _profile?.isAvailableForGigs ?? false;
@@ -108,8 +116,10 @@ class ProfileViewModel extends ChangeNotifier {
     try {
       await _repository.updateProfilePhotoUrl(url);
       _profile = await _repository.getMyProfile();
+      _localPhotoPath = null;
       return true;
     } catch (error) {
+      _localPhotoPath = null;
       _errorMessage = _friendlyError(error);
       return false;
     } finally {
@@ -143,15 +153,20 @@ class ProfileViewModel extends ChangeNotifier {
     }
 
     final previousProfile = _profile!;
+    final generation = ++_roleSwitchGeneration;
     _profile = previousProfile.copyWith(activeRole: role);
     _errorMessage = null;
     notifyListeners();
 
     try {
       await _repository.updateActiveRole(role);
-      _profile = await _repository.getMyProfile();
+      final refreshedProfile = await _repository.getMyProfile();
+      if (generation != _roleSwitchGeneration) return true;
+      _profile = refreshedProfile;
+      notifyListeners();
       return true;
     } catch (error) {
+      if (generation != _roleSwitchGeneration) return false;
       _profile = previousProfile;
       _errorMessage = _friendlyError(error);
       notifyListeners();
