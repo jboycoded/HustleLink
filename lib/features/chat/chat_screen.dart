@@ -48,7 +48,7 @@ class ChatScreen extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
               children: [
                 Text(
@@ -180,7 +180,7 @@ class ChatScreen extends StatelessWidget {
                                       overflow: TextOverflow.ellipsis,
                                       style: theme.textTheme.labelSmall
                                           ?.copyWith(
-                                        color: scheme.secondary,
+                                        color: scheme.onSurface,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
