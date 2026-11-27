@@ -62,6 +62,7 @@ Use explicit lifecycle states. Define valid transitions and disallowed transitio
 - Design security rules alongside the data model, not after the UI is complete.
 - Decide how server-only operations will be performed.
 - Identify indexes, query limits, pagination and expected data growth.
+- Track required composite indexes in version control and include their deployment in the release checklist.
 - Define offline/cache expectations and what data must remain available.
 
 **Required outputs:** architecture/data-flow diagram; schema; role-permission matrix; security-rules plan; integration/configuration checklist; migration and legacy-data plan.
