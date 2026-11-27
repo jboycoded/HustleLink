@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_tokens.dart';
+import '../../core/utils/currency_formatter.dart';
 import '../../data/models/gig.dart';
 
 class GigCard extends StatelessWidget {
@@ -11,13 +12,11 @@ class GigCard extends StatelessWidget {
   final VoidCallback? onPosterTap;
   final bool showDetailsHint;
 
-  static String _naira(int value) => '₦${value.toString().replaceAllMapped(
-        RegExp(r'\B(?=(\d{3})+(?!\d))'),
-        (_) => ',',
-      )}';
-
   @override
   Widget build(BuildContext context) {
+    final cardDescription = gig.description.trim().length > 120
+        ? '${gig.description.trim().substring(0, 120).trimRight()}…'
+        : gig.description.trim();
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
@@ -113,11 +112,11 @@ class GigCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (gig.description.isNotEmpty) ...[
+              if (cardDescription.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
-                  gig.description,
-                  maxLines: 3,
+                  cardDescription,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: text.bodyMedium?.copyWith(
                     color: scheme.onSecondary.withValues(alpha: 0.8),
@@ -130,7 +129,7 @@ class GigCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _naira(gig.pay),
+                formatNaira(gig.pay),
                 style: text.displayMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   height: 1,
