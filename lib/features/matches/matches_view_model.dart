@@ -88,22 +88,20 @@ class MatchesViewModel extends ChangeNotifier {
       List<GigApplication>.unmodifiable(_workerApplications);
   List<Gig> get posterGigs => List<Gig>.unmodifiable(_posterGigs);
 
-  // Poster filters classify each gig by its overall lifecycle, not by the
-  // individual application statuses attached to that gig.
-  bool _hasAcceptedApplication(Gig gig) =>
-      (_posterApplicationsByGig[gig.id] ?? const <GigApplication>[])
-          .any((application) => application.status == 'accepted');
-
+  // The Applications tab only lists gigs that have application records.
+  // My Gigs remains the single home for editing, closing, and deleting gigs.
   List<Gig> get filteredPosterGigs => _posterGigs.where((gig) {
-        final hasAcceptedApplication = _hasAcceptedApplication(gig);
+        final applications =
+            _posterApplicationsByGig[gig.id] ?? const <GigApplication>[];
+        if (applications.isEmpty) return false;
         switch (statusFilter) {
           case 'pending':
-            return gig.status == 'open' && !hasAcceptedApplication;
+            return applications.any((item) => item.status == 'pending');
           case 'confirmed':
-            return gig.status == 'filled' ||
-                (gig.status == 'open' && hasAcceptedApplication);
+            return applications.any((item) => item.status == 'accepted' || item.status == 'completed');
           case 'closed':
-            return gig.status == 'closed';
+            return gig.status == 'closed' ||
+                applications.every((item) => item.status == 'rejected');
           case 'completed':
             return gig.status == 'completed';
           case 'all':
@@ -118,8 +116,10 @@ class MatchesViewModel extends ChangeNotifier {
           entry.key: List<GigApplication>.unmodifiable(entry.value),
       });
 
-  int get recordCount =>
-      isPosterMode ? _posterGigs.length : _workerApplications.length;
+  int get recordCount => isPosterMode
+      ? _posterApplicationsByGig.values.fold<int>(
+          0, (total, applications) => total + applications.length)
+      : _workerApplications.length;
 
   final Set<String> _updatingApplicationIds = {};
   bool isUpdating(String id) => _updatingApplicationIds.contains(id);
