@@ -61,6 +61,12 @@ The original early commits are often titled “Update file” rather than descri
 
 ## 3. Functional and business-logic issues
 
+### Authentication and account access
+
+- Integrated Firebase email/password authentication and account profile creation.
+- Added password-reset/forgot-password functionality.
+- Tightened authenticated profile access and role synchronization between private and public profile records.
+
 ### Gig lifecycle and management
 
 - Added gig creation, editing, closing and deletion.
@@ -321,6 +327,7 @@ The original early commits are often titled “Update file” rather than descri
 | Item | Category | Status / next action |
 |---|---|---|
 | Grouped build of the latest performance changes | Release/testing | Not yet built; run analyzer/build once the batch is ready |
+| Login/logout confirmation | UI/UX | Earlier requirement was identified; verify whether the current app now confirms before ending a session, and implement if still absent |
 | On-device verification of photo preview/cache refresh | Performance/media | Test upload success, cancellation, failure and app restart |
 | On-device verification of Worker/Poster switching | State/performance | Rapidly switch roles and confirm no stale cards, counts or streams |
 | Push delivery after detached dispatch | Notifications/resilience | Verify normal delivery; understand that client fan-out is best-effort |
