@@ -95,15 +95,18 @@ class _MatchesScreenState extends State<MatchesScreen> {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
               children: [
-                Text(
-                  vm.isPosterMode ? 'APPLICATIONS TO MY GIGS' : 'MY APPLICATIONS',
-                  style: text.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                    color: scheme.onSurface,
+                Expanded(
+                  child: Text(
+                    vm.isPosterMode ? 'APPLICATIONS TO MY GIGS' : 'MY APPLICATIONS',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                      color: scheme.onSurface,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 const NotificationBell(),
                 Container(
                   padding: const EdgeInsets.symmetric(
