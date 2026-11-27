@@ -58,7 +58,12 @@ class ProfileViewModel extends ChangeNotifier {
               repeatEngagements: previous.repeatEngagements,
             );
           } else {
-            _profile = await _repository.getMyProfile();
+            final generation = ++_roleSwitchGeneration;
+            final refreshedProfile = await _repository.getMyProfile();
+            // Ignore a slower role refresh if the user has since switched
+            // roles again or a newer refresh has already completed.
+            if (generation != _roleSwitchGeneration) return;
+            _profile = refreshedProfile;
           }
           notifyListeners();
         },
