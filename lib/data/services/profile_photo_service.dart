@@ -44,7 +44,7 @@ class ProfilePhotoService {
     return Map<String, dynamic>.from(response.data);
   }
 
-  Future<String?> pickAndUpload() async {
+  Future<String?> pickAndUpload({void Function(String path)? onSelected}) async {
     final selected = await _picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
@@ -52,6 +52,7 @@ class ProfilePhotoService {
       maxHeight: 1600,
     );
     if (selected == null) return null;
+    onSelected?.call(selected.path);
     final file = File(selected.path);
     if (await file.length() > 8 * 1000 * 1000) {
       throw StateError('Choose an image smaller than 8 MB.');
@@ -76,9 +77,12 @@ class ProfilePhotoService {
           file,
           FileOptions(contentType: contentType, upsert: true),
         );
-    return _client.storage
+    final publicUrl = _client.storage
         .from(SupabaseConfig.profilePhotoBucketName)
         .getPublicUrl(path);
+    // The storage object path is reused for profile-photo replacements.
+    // Version the URL so Flutter cannot keep displaying the cached old image.
+    return '$publicUrl?v=${DateTime.now().microsecondsSinceEpoch}';
   }
 
   Future<void> deletePhoto() async {
