@@ -62,7 +62,7 @@ class UserProfileRepository {
     String userId,
     String role,
   ) async {
-    final results = await Future.wait([
+    final queries = [
       _firestore.collection('reviews')
           .where('revieweeId', isEqualTo: userId).get(),
       _firestore.collection('gigs')
@@ -73,7 +73,19 @@ class UserProfileRepository {
           .where('posterId', isEqualTo: userId).get(),
       _firestore.collection('gigHistory')
           .where('acceptedWorkerId', isEqualTo: userId).get(),
-    ]);
+    ];
+    final isOwnProfile = userId == _auth.currentUser?.uid;
+    // Fetch application records alongside the other profile queries rather
+    // than waiting for a second network round trip.
+    if (isOwnProfile) {
+      queries.addAll([
+        _firestore.collection('applications')
+            .where('workerId', isEqualTo: userId).get(),
+        _firestore.collection('applications')
+            .where('posterId', isEqualTo: userId).get(),
+      ]);
+    }
+    final results = await Future.wait(queries);
     final reviews = results[0].docs;
     final posted = results[1].docs;
     final worked = results[2].docs;
@@ -90,19 +102,10 @@ class UserProfileRepository {
         .where((doc) => !liveGigIds.contains(doc.id))
         .toList();
 
-    // Private application records are queried only for the signed-in user.
-    // They provide a compatibility path for older gigs whose acceptedWorkerId
-    // field was not populated consistently.
-    final appResults = userId == _auth.currentUser?.uid
-        ? await Future.wait([
-            _firestore.collection('applications')
-                .where('workerId', isEqualTo: userId).get(),
-            _firestore.collection('applications')
-                .where('posterId', isEqualTo: userId).get(),
-          ])
-        : null;
-    final workerApplications = appResults?[0].docs ?? [];
-    final posterApplications = appResults?[1].docs ?? [];
+    // These application records provide a compatibility path for older
+    // gigs whose acceptedWorkerId field was not populated consistently.
+    final workerApplications = isOwnProfile ? results[5].docs : [];
+    final posterApplications = isOwnProfile ? results[6].docs : [];
 
     final acceptedWorkersByGig = <String, Set<String>>{};
     for (final application in posterApplications) {
@@ -157,6 +160,26 @@ class UserProfileRepository {
         if (data['status'] == 'completed') completedIds.add(doc.id);
         if (data['paid'] == true) paidIds.add(doc.id);
       }
+
+      final missingGigIds = workerApplications
+          .where((application) {
+            final data = application.data();
+            return (data['status'] == 'accepted' ||
+                    data['status'] == 'completed') &&
+                (data['gigId'] as String? ?? '').isNotEmpty &&
+                !gigsById.containsKey(data['gigId']);
+          })
+          .map((application) => application.data()['gigId'] as String)
+          .toSet();
+      if (missingGigIds.isNotEmpty) {
+        final missingGigs = await Future.wait(
+          missingGigIds.map((gigId) => _firestore.collection('gigs').doc(gigId).get()),
+        );
+        for (final gig in missingGigs) {
+          if (gig.exists) gigsById[gig.id] = gig.data()!;
+        }
+      }
+
       for (final application in workerApplications) {
         final data = application.data();
         final gigId = data['gigId'] as String? ?? '';
@@ -164,15 +187,6 @@ class UserProfileRepository {
         if (data['status'] == 'accepted' || data['status'] == 'completed') {
           acceptedIds.add(gigId);
           if (data['status'] == 'completed') completedIds.add(gigId);
-          if (!gigsById.containsKey(gigId)) {
-            try {
-              final gig = await _firestore.collection('gigs').doc(gigId).get();
-              if (gig.exists) gigsById[gigId] = gig.data()!;
-            } catch (_) {
-              // Keep the remaining profile statistics available if a legacy
-              // gig record cannot be read.
-            }
-          }
           if (gigsById[gigId]?['status'] == 'completed') {
             completedIds.add(gigId);
           }
