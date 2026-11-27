@@ -1147,6 +1147,8 @@ class _RoleButton extends StatelessWidget {
         backgroundColor: selected ? scheme.secondary : scheme.surface,
         foregroundColor:
             selected ? scheme.onSecondary : scheme.onSurface,
+        disabledBackgroundColor: scheme.secondary,
+        disabledForegroundColor: scheme.onSecondary,
         side: BorderSide(
           color: scheme.outline,
           width: AppTokens.borderWidth,
@@ -1177,7 +1179,6 @@ class _StatBox extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: scheme.secondary.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(AppTokens.rLg),
         borderRadius: BorderRadius.circular(AppTokens.rMd),
       ),
       child: Column(
