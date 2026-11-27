@@ -92,8 +92,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 Text(
                   'MATCHES',
                   style: text.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
                     color: scheme.onSurface,
                   ),
                 ),
