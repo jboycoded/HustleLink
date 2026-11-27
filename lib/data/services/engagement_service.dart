@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -42,7 +44,7 @@ class EngagementService {
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    await PushNotificationService().sendForNotification(notification.id);
+    unawaited(PushNotificationService().sendForNotification(notification.id));
   }
 
   Stream<List<AppNotification>> watchNotifications() {
@@ -277,7 +279,7 @@ class EngagementService {
         'createdAt': FieldValue.serverTimestamp(),
       });
     });
-    await PushNotificationService().sendForNotification(notificationRef.id);
+    unawaited(PushNotificationService().sendForNotification(notificationRef.id));
   }
 
   Future<void> confirmGigPayment({
@@ -344,7 +346,7 @@ class EngagementService {
       });
     });
     if (notificationRef != null) {
-      await PushNotificationService().sendForNotification(notificationRef!.id);
+      unawaited(PushNotificationService().sendForNotification(notificationRef!.id));
     }
   }
 
