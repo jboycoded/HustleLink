@@ -83,7 +83,9 @@ class SwipeViewModel extends ChangeNotifier {
     final generation = _roleReloadGeneration;
     final gig = await _repo.getGigById(gigId);
     if (generation != _roleReloadGeneration ||
-        gig == null || !gig.isOpen || gig.posterId.isEmpty) return null;
+        gig == null || !gig.isOpen || gig.posterId.isEmpty) {
+      return null;
+    }
     _focusedGig = gig;
     notifyListeners();
     return gig;
