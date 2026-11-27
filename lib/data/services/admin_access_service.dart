@@ -16,7 +16,9 @@ class AdminAccessService {
     if (uid == null) return null;
     final snapshot = await _firestore.collection('adminUsers').doc(uid).get();
     if (!snapshot.exists) return null;
-    final role = snapshot.data()?['role'];
+    final data = snapshot.data();
+    if (data?['active'] != true) return null;
+    final role = data?['role'];
     const allowed = {
       'super_admin', 'admin', 'moderator', 'support', 'analyst',
     };
