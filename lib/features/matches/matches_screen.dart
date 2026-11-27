@@ -59,10 +59,16 @@ class _MatchesScreenState extends State<MatchesScreen> {
         ),
       );
     } else if (vm.isPosterMode && vm.filteredPosterGigs.isEmpty) {
-      body = const _EmptyState(
+      body = _EmptyState(
         icon: Icons.filter_list_off_rounded,
-        title: 'No applications yet.',
-        message: 'Applications from workers will appear here when someone applies to one of your gigs.',
+        title: vm.statusFilter == 'pending'
+            ? 'No pending applications.'
+            : vm.statusFilter == 'all'
+                ? 'No applications yet.'
+                : 'No applications in this status.',
+        message: vm.statusFilter == 'all'
+            ? 'Applications from workers will appear here when someone applies to one of your gigs.'
+            : 'Choose another status filter to see applications in a different stage.',
       );
     } else if (vm.isPosterMode) {
       body = _buildPosterApplications(context, vm);
