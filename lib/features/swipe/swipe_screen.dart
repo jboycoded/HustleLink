@@ -298,14 +298,14 @@ class _SwipeScreenState extends State<SwipeScreen> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
               children: [
                 Text(
                   'HUSTLELINK',
                   style: text.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
                     color: scheme.onSurface,
                   ),
                 ),
