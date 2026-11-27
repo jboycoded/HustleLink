@@ -145,6 +145,30 @@ class _SwipeScreenState extends State<SwipeScreen> {
     final gig = vm.currentGig;
     if (gig == null || vm.isApplying) return;
 
+    if (gig.proofVideoRequired && !vm.hasWorkerProofVideo) {
+      final addVideo = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Profile video required'),
+          content: const Text(
+            'This gig requires a 30-second introduction video on your worker profile before you can apply.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Not now'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Add video'),
+            ),
+          ],
+        ),
+      );
+      if (addVideo == true && context.mounted) context.go('/profile');
+      return;
+    }
+
     final confirmed = await _confirm(
       context,
       title: 'Apply for this gig?',
