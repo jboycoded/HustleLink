@@ -73,19 +73,16 @@ class GigService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    // Notify every profile with a matching saved worker skill, regardless
-    // of the user's currently selected role or availability setting.
-    // Delivery is best-effort and cannot undo a posted gig.
-    try {
-      await _notifyMatchingWorkers(
+    // The gig is already committed. Start best-effort fan-out without
+    // making the posting flow wait for every matching recipient write.
+    unawaited(
+      _notifyMatchingWorkers(
         gigId: document.id,
         title: title.trim(),
         category: HustleLinkCategories.canonicalize(category),
         pay: pay,
-      );
-    } catch (_) {
-      // The gig is already live; a notification failure must not fail posting.
-    }
+      ).catchError((_) {}),
+    );
 
     return document.id;
   }
@@ -187,12 +184,13 @@ class GigService {
   }
 
   Future<List<Gig>> fetchAvailableGigs() async {
-    final snapshot = await _gigs
-        .where('status', isEqualTo: 'open')
-        .get();
-
-    final blocked = await _firestore.collection('users').doc(_uid)
-        .collection('blockedUsers').get();
+    final results = await Future.wait([
+      _gigs.where('status', isEqualTo: 'open').get(),
+      _firestore.collection('users').doc(_uid)
+          .collection('blockedUsers').get(),
+    ]);
+    final snapshot = results[0];
+    final blocked = results[1];
     final blockedIds = blocked.docs.map((doc) => doc.id).toSet();
     final gigs = snapshot.docs
         .where((document) => document.data()['posterId'] != _uid && !blockedIds.contains(document.data()['posterId']))
@@ -329,7 +327,7 @@ class GigService {
       'createdAt': FieldValue.serverTimestamp(),
     });
     await batch.commit();
-    await PushNotificationService().sendForNotification(notificationRef.id);
+    unawaited(PushNotificationService().sendForNotification(notificationRef.id));
   }
 
   Stream<List<Gig>> watchMyGigs({void Function(bool fromCache)? onCacheState}) {
