@@ -200,8 +200,10 @@ class SwipeViewModel extends ChangeNotifier {
               .map((application) => application.gigId));
         notifyListeners();
       }, onError: (Object error) {
+        if (activeRole != streamRole) return;
         this.error = _friendlyError(error);
         notifyListeners();
+
       });
       return;
     }
@@ -213,8 +215,10 @@ class SwipeViewModel extends ChangeNotifier {
       if (_currentIndex >= _discoveryGigs.length) _currentIndex = 0;
       notifyListeners();
     }, onError: (Object error) {
+      if (activeRole != streamRole) return;
       this.error = _friendlyError(error);
       notifyListeners();
+
     });
 
     _workerApplicationsSubscription =
@@ -226,8 +230,10 @@ class SwipeViewModel extends ChangeNotifier {
       if (_currentIndex >= _discoveryGigs.length) _currentIndex = 0;
       notifyListeners();
     }, onError: (Object error) {
+      if (activeRole != streamRole) return;
       this.error = _friendlyError(error);
       notifyListeners();
+
     });
   }
 
