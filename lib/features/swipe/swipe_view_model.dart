@@ -80,8 +80,10 @@ class SwipeViewModel extends ChangeNotifier {
   bool get hasMoreGigs => currentGig != null;
 
   Future<Gig?> focusGig(String gigId) async {
+    final generation = _roleReloadGeneration;
     final gig = await _repo.getGigById(gigId);
-    if (gig == null || !gig.isOpen || gig.posterId.isEmpty) return null;
+    if (generation != _roleReloadGeneration ||
+        gig == null || !gig.isOpen || gig.posterId.isEmpty) return null;
     _focusedGig = gig;
     notifyListeners();
     return gig;
@@ -182,6 +184,7 @@ class SwipeViewModel extends ChangeNotifier {
         _gigs = gigs.where((gig) => gig.status != 'closed').toList();
         notifyListeners();
       }, onError: (Object error) {
+        if (activeRole != streamRole) return;
         this.error = _friendlyError(error);
         notifyListeners();
       });
