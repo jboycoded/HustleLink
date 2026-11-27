@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_tokens.dart';
+import '../../core/utils/currency_formatter.dart';
 import '../../core/widgets/profile_avatar.dart';
 import '../../data/models/gig_application.dart';
 import '../../data/models/gig.dart';
@@ -323,7 +324,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                             ),
                             _DetailRow(
                               label: 'Payment',
-                              value: '₦${gig?.pay ?? application.gigPay}',
+                              value: formatNaira(gig?.pay ?? application.gigPay),
                             ),
                             _DetailRow(
                               label: 'Location',
@@ -437,7 +438,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                           ),
                           _DetailRow(
                             label: 'Payment',
-                            value: '₦${gig?.pay ?? (applications.isNotEmpty ? applications.first.gigPay : 0)}',
+                            value: formatNaira(gig?.pay ?? (applications.isNotEmpty ? applications.first.gigPay : 0)),
                           ),
                           _DetailRow(
                             label: 'Location',
@@ -583,7 +584,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 _DetailRow(label: 'Category', value: application.gigCategory),
                 _DetailRow(
                   label: 'Payment',
-                  value: '₦${application.gigPay}',
+                  value: formatNaira(application.gigPay),
                 ),
                 _DetailRow(label: 'Location', value: application.gigLocation),
                 _DetailRow(
@@ -957,7 +958,7 @@ class _ApplicationCard extends StatelessWidget {
                 ),
               _InfoItem(
                 icon: Icons.payments_outlined,
-                text: '₦${application.gigPay}',
+                text: formatNaira(application.gigPay),
               ),
               if (application.gigLocation.isNotEmpty)
                 _InfoItem(
@@ -1554,7 +1555,7 @@ class _GigApplicationsCard extends StatelessWidget {
                       Text(
                         'VIEW GIG DETAILS',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: scheme.secondary,
+                          color: scheme.onSurface,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.8,
                         ),
