@@ -175,12 +175,18 @@ class EngagementService {
   Future<List<Map<String, String>>> getBlockedUsers() async {
     final snapshot = await _db.collection('users').doc(_uid)
         .collection('blockedUsers').get();
-    final users = <Map<String, String>>[];
-    for (final doc in snapshot.docs) {
-      final profile = await _db.collection('publicProfiles').doc(doc.id).get();
-      users.add({'id': doc.id, 'name': profile.data()?['fullName'] as String? ?? 'HustleLink member'});
-    }
-    return users;
+    final profiles = await Future.wait(
+      snapshot.docs.map((doc) =>
+          _db.collection('publicProfiles').doc(doc.id).get()),
+    );
+    return [
+      for (var i = 0; i < snapshot.docs.length; i++)
+        {
+          'id': snapshot.docs[i].id,
+          'name': profiles[i].data()?['fullName'] as String? ??
+              'HustleLink member',
+        },
+    ];
   }
 
   Future<Set<String>> getBlockedUserIds() async {
