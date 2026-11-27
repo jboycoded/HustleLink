@@ -568,10 +568,7 @@ class ProfileScreen extends StatelessWidget {
       final url = await context.read<ProfilePhotoService>().pickAndUpload(
         onSelected: vm.setProfilePhotoPreview,
       );
-      if (url == null || !context.mounted) {
-        vm.setProfilePhotoPreview(null);
-        return;
-      }
+      if (url == null || !context.mounted) return;
       final saved = await vm.updateProfilePhotoUrl(url);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(saved ? 'Profile photo updated.' : vm.errorMessage ?? 'Could not save profile photo.')));
