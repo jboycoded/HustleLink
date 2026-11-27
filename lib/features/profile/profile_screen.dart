@@ -576,6 +576,7 @@ class ProfileScreen extends StatelessWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(saved ? 'Profile photo updated.' : vm.errorMessage ?? 'Could not save profile photo.')));
     } catch (error) {
+      vm.setProfilePhotoPreview(null);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Bad state: ', ''))));
     }
