@@ -137,7 +137,7 @@ class MatchesViewModel extends ChangeNotifier {
       );
     } finally {
       _updatingApplicationIds.remove(applicationId);
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 
@@ -174,6 +174,7 @@ class MatchesViewModel extends ChangeNotifier {
       );
       await _listenToRoleData();
     } catch (_) {
+      if (_disposed) return;
       isLoading = false;
       if (recordCount > 0) {
         offlineMessage = 'Connection unavailable. Showing the last data loaded on this device.';
@@ -193,6 +194,8 @@ class MatchesViewModel extends ChangeNotifier {
     _posterGigs = [];
     _posterApplicationsByGig = {};
     _posterApplications = [];
+    isLoading = true;
+    notifyListeners();
     unawaited(_listenToRoleData());
   }
 
