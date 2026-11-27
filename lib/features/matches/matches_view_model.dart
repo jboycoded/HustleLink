@@ -30,6 +30,8 @@ class MatchesViewModel extends ChangeNotifier {
   bool _posterGigsFromCache = false;
   bool _posterApplicationsFromCache = false;
   bool _workerApplicationsFromCache = false;
+  int _roleDataGeneration = 0;
+  bool _disposed = false;
   String statusFilter = 'all';
 
   void _updateCacheState(String source, bool fromCache) {
@@ -184,7 +186,7 @@ class MatchesViewModel extends ChangeNotifier {
   }
 
   void _handleProfileUpdate(UserProfile? profile) {
-    if (profile == null || profile.activeRole == activeRole) return;
+    if (_disposed || profile == null || profile.activeRole == activeRole) return;
     activeRole = profile.activeRole;
     statusFilter = activeRole == 'poster' ? 'pending' : 'all';
     _workerApplications = [];
@@ -195,9 +197,12 @@ class MatchesViewModel extends ChangeNotifier {
   }
 
   Future<void> _listenToRoleData() async {
+    final generation = ++_roleDataGeneration;
+    final roleForLoad = activeRole;
     await _workerApplicationsSubscription?.cancel();
     await _posterApplicationsSubscription?.cancel();
     await _posterGigsSubscription?.cancel();
+    if (_disposed || generation != _roleDataGeneration) return;
     // Keep the last successful data in memory while reconnecting.
     isLoading = recordCount == 0;
     error = null;
@@ -210,7 +215,7 @@ class MatchesViewModel extends ChangeNotifier {
     var receivedFirstSnapshot = false;
     _initialSnapshotTimer?.cancel();
     _initialSnapshotTimer = Timer(const Duration(seconds: 8), () {
-      if (receivedFirstSnapshot) return;
+      if (_disposed || generation != _roleDataGeneration || receivedFirstSnapshot) return;
       isLoading = false;
       offlineMessage = 'You appear to be offline. Showing saved data where available.';
       if (recordCount == 0) {
@@ -219,7 +224,7 @@ class MatchesViewModel extends ChangeNotifier {
       notifyListeners();
     });
     void firstSnapshotReceived() {
-      if (receivedFirstSnapshot) return;
+      if (_disposed || generation != _roleDataGeneration || receivedFirstSnapshot) return;
       receivedFirstSnapshot = true;
       _initialSnapshotTimer?.cancel();
       isLoading = false;
@@ -234,6 +239,7 @@ class MatchesViewModel extends ChangeNotifier {
     }
 
     void streamFailed(Object _) {
+      if (_disposed || generation != _roleDataGeneration) return;
       _initialSnapshotTimer?.cancel();
       isLoading = false;
       if (receivedFirstSnapshot || recordCount > 0) {
@@ -245,10 +251,15 @@ class MatchesViewModel extends ChangeNotifier {
       notifyListeners();
     }
 
-    if (isPosterMode) {
+    if (roleForLoad == 'poster') {
       _posterGigsSubscription = _repo.watchMyGigs(
-        onCacheState: (fromCache) => _updateCacheState('posterGigs', fromCache),
+        onCacheState: (fromCache) {
+          if (!_disposed && generation == _roleDataGeneration) {
+            _updateCacheState('posterGigs', fromCache);
+          }
+        },
       ).listen((gigs) {
+        if (_disposed || generation != _roleDataGeneration) return;
         _posterGigs = gigs;
         _rebuildPosterApplicationGroups();
         firstSnapshotReceived();
@@ -257,8 +268,13 @@ class MatchesViewModel extends ChangeNotifier {
 
       _posterApplicationsSubscription =
           _repo.watchPosterApplications(
-            onCacheState: (fromCache) => _updateCacheState('posterApplications', fromCache),
+            onCacheState: (fromCache) {
+            if (!_disposed && generation == _roleDataGeneration) {
+              _updateCacheState('posterApplications', fromCache);
+            }
+          },
           ).listen((applications) {
+        if (_disposed || generation != _roleDataGeneration) return;
         // Keep all statuses; the UI filter exposes rejected applications as history.
         _posterApplications = applications;
         _rebuildPosterApplicationGroups();
@@ -268,8 +284,13 @@ class MatchesViewModel extends ChangeNotifier {
     } else {
       _workerApplicationsSubscription =
           _repo.watchWorkerApplications(
-            onCacheState: (fromCache) => _updateCacheState('workerApplications', fromCache),
+            onCacheState: (fromCache) {
+            if (!_disposed && generation == _roleDataGeneration) {
+              _updateCacheState('workerApplications', fromCache);
+            }
+          },
           ).listen((applications) {
+        if (_disposed || generation != _roleDataGeneration) return;
         _workerApplications = applications;
         firstSnapshotReceived();
         notifyListeners();
@@ -289,6 +310,8 @@ class MatchesViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
+    _roleDataGeneration++;
     _initialSnapshotTimer?.cancel();
     _cacheStateTimer?.cancel();
     _profileSubscription?.cancel();
