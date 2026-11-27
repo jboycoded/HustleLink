@@ -7,18 +7,32 @@ import '../../data/repositories/user_profile_repository.dart';
 import '../../features/profile/models/user_profile.dart';
 
 /// The bottom navigation wrapper around the four main screens.
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   const AppShell({super.key, required this.shell});
 
   final StatefulNavigationShell shell;
 
   @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  late final Stream<UserProfile?> _profileStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileStream = context.read<UserProfileRepository>().watchMyProfile();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final shell = widget.shell;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
     return StreamBuilder<UserProfile?>(
-      stream: context.read<UserProfileRepository>().watchMyProfile(),
+      stream: _profileStream,
       builder: (context, snapshot) {
         final isPoster = snapshot.data?.activeRole == 'poster';
         return Scaffold(
