@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -137,6 +139,6 @@ class ChatService {
       'createdAt': FieldValue.serverTimestamp(),
     });
     await batch.commit();
-    await PushNotificationService().sendForNotification(notificationRef.id);
+    unawaited(PushNotificationService().sendForNotification(notificationRef.id));
   }
 }
