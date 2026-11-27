@@ -108,7 +108,9 @@ class SwipeViewModel extends ChangeNotifier {
       await _profileSubscription?.cancel();
       _profileSubscription = _profiles.watchMyProfile().listen(
         (profile) {
-          if (profile == null) return;
+          if (profile == null) {
+            return;
+          }
           hasWorkerProofVideo = profile.proofVideoUrl?.trim().isNotEmpty == true;
           if (profile.activeRole == activeRole) {
             notifyListeners();
