@@ -1,4 +1,6 @@
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -174,9 +176,40 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                         alignment: Alignment.center,
-                        child: profile.photoUrl != null && profile.photoUrl!.isNotEmpty
-                            ? ClipOval(child: Image.network(profile.photoUrl!, width: 76, height: 76, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Text(profile.initials, style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w700, color: scheme.onSecondary)))))
-                            : Text(profile.initials, style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w700, color: scheme.onSecondary)),
+                        child: vm.localPhotoPath != null
+                            ? ClipOval(
+                                child: Image.file(
+                                  File(vm.localPhotoPath!),
+                                  width: 76,
+                                  height: 76,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : profile.photoUrl != null && profile.photoUrl!.isNotEmpty
+                                ? ClipOval(
+                                    child: Image.network(
+                                      profile.photoUrl!,
+                                      width: 76,
+                                      height: 76,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Center(
+                                        child: Text(
+                                          profile.initials,
+                                          style: text.headlineSmall?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: scheme.onSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    profile.initials,
+                                    style: text.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: scheme.onSecondary,
+                                    ),
+                                  ),
                       ),
                           Positioned(
                             right: -4,
@@ -532,8 +565,13 @@ class ProfileScreen extends StatelessWidget {
 
   Future<void> _chooseProfilePhoto(BuildContext context, ProfileViewModel vm) async {
     try {
-      final url = await context.read<ProfilePhotoService>().pickAndUpload();
-      if (url == null || !context.mounted) return;
+      final url = await context.read<ProfilePhotoService>().pickAndUpload(
+        onSelected: vm.setProfilePhotoPreview,
+      );
+      if (url == null || !context.mounted) {
+        vm.setProfilePhotoPreview(null);
+        return;
+      }
       final saved = await vm.updateProfilePhotoUrl(url);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(saved ? 'Profile photo updated.' : vm.errorMessage ?? 'Could not save profile photo.')));
