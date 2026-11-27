@@ -125,6 +125,7 @@ class PushNotificationService {
     final snapshot = await FirebaseFirestore.instance
         .collection('notifications')
         .where('recipientId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
         .limit(50)
         .get();
 
