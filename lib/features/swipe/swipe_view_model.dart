@@ -33,6 +33,7 @@ class SwipeViewModel extends ChangeNotifier {
   bool isApplying = false;
   String? error;
   String activeRole = 'worker';
+  bool hasWorkerProofVideo = false;
 
   String _selectedCategory = 'All';
   int _currentIndex = 0;
@@ -104,7 +105,12 @@ class SwipeViewModel extends ChangeNotifier {
       await _profileSubscription?.cancel();
       _profileSubscription = _profiles.watchMyProfile().listen(
         (profile) {
-          if (profile == null || profile.activeRole == activeRole) return;
+          if (profile == null) return;
+          hasWorkerProofVideo = profile.proofVideoUrl?.trim().isNotEmpty == true;
+          if (profile.activeRole == activeRole) {
+            notifyListeners();
+            return;
+          }
 
           activeRole = profile.activeRole;
           _selectedCategory = 'All';
