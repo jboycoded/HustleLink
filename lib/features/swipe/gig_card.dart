@@ -105,6 +105,8 @@ class GigCard extends StatelessWidget {
             children: [
               Text(
                 gig.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: text.displaySmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   height: 1.05,
