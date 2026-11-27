@@ -218,11 +218,26 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Completion rate is completed gigs divided by accepted gigs, including ongoing engagements. Payment is counted only after both parties confirm it in HustleLink.',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        tooltip: 'About profile statistics',
+                        visualDensity: VisualDensity.compact,
+                        iconSize: 18,
+                        onPressed: () => showDialog<void>(
+                          context: context,
+                          builder: (dialogContext) => AlertDialog(
+                            title: const Text('About profile statistics'),
+                            content: const Text('Completion rate is completed gigs divided by accepted gigs, including ongoing engagements. Payment is counted only after both parties confirm it in HustleLink.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(dialogContext),
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        icon: const Icon(Icons.info_outline_rounded),
                       ),
                     ),
                     if (profile.activeRole == 'worker') ...[
