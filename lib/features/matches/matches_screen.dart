@@ -61,8 +61,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
     } else if (vm.isPosterMode && vm.filteredPosterGigs.isEmpty) {
       body = const _EmptyState(
         icon: Icons.filter_list_off_rounded,
-        title: 'No gigs in this category.',
-        message: 'Choose another filter to see more gigs.',
+        title: 'No applications yet.',
+        message: 'Applications from workers will appear here when someone applies to one of your gigs.',
       );
     } else if (vm.isPosterMode) {
       body = _buildPosterApplications(context, vm);
@@ -90,7 +90,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
             child: Row(
               children: [
                 Text(
-                  vm.isPosterMode ? 'APPLICATIONS' : 'MY APPLICATIONS',
+                  vm.isPosterMode ? 'APPLICATIONS TO MY GIGS' : 'MY APPLICATIONS',
                   style: text.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.1,
@@ -113,7 +113,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     ),
                   ),
                   child: Text(
-                    '${vm.recordCount} ${vm.isPosterMode ? 'GIGS' : 'APPLICATIONS'}',
+                    '${vm.recordCount} APPLICATIONS',
                     style: text.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: scheme.onSecondary,
