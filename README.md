@@ -80,6 +80,11 @@ flutter build apk --release
 The GitHub Actions workflow at `.github/workflows/build.yml` builds and uploads the Android APK
 as an artifact when manually triggered.
 
+## Engineering documentation
+
+- [Software Engineering SOP & Quality Framework](docs/ENGINEERING_SOP.md) — reusable project lifecycle, issue handling, review and release checklists.
+- [HustleLink Quality Register](docs/HUSTLELINK_QUALITY_REGISTER.md) — categorized history of issues, fixes, decisions, outstanding work and lessons from this project.
+
 ## Dependencies
 - `go_router`: declarative routing and the stateful bottom-navigation shell
 - `provider`: dependency injection and view-model state access
