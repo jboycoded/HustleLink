@@ -81,15 +81,15 @@ class GigCard extends StatelessWidget {
               const SizedBox(height: 8),
               Padding(
                 padding: EdgeInsets.only(left: hasPosterPhoto ? 40 : 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
                   children: [
                     _Tag(
                       gig.location,
                       icon: Icons.place_outlined,
                       maxLines: 2,
                     ),
-                    const SizedBox(height: 6),
                     _Tag(
                       gig.when,
                       icon: Icons.schedule_rounded,
