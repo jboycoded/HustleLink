@@ -119,9 +119,14 @@ class PushNotificationService {
     final preferences = await SharedPreferences.getInstance();
     final lastSyncKey = 'hustlelink_notification_sync_$userId';
     final lastSyncMillis = preferences.getInt(lastSyncKey);
+    // Read only a recent window instead of downloading the account's
+    // entire notification history on every sign-in. Filtering by read state
+    // and last sync remains local within this bounded result set.
     final snapshot = await FirebaseFirestore.instance
         .collection('notifications')
         .where('recipientId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .limit(50)
         .get();
 
     final pending = snapshot.docs.where((document) {
