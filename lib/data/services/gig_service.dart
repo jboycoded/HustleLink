@@ -443,7 +443,7 @@ class GigService {
           'createdAt': FieldValue.serverTimestamp(),
         });
       });
-      await PushNotificationService().sendForNotification(notificationRef.id);
+      unawaited(PushNotificationService().sendForNotification(notificationRef.id));
       return;
     }
 
@@ -517,7 +517,7 @@ class GigService {
         'createdAt': FieldValue.serverTimestamp(),
       });
     });
-    await PushNotificationService().sendForNotification(notificationRef.id);
+    unawaited(PushNotificationService().sendForNotification(notificationRef.id));
   }
 
   Future<void> deleteWorkerApplication(String applicationId) async {
