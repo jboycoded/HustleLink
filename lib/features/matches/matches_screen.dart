@@ -70,13 +70,13 @@ class _MatchesScreenState extends State<MatchesScreen> {
       body = const _EmptyState(
         icon: Icons.favorite_border_rounded,
         title: 'No applications yet.',
-        message: 'Gigs you apply for will appear here so you can track their status.',
+        message: 'Your applications will appear here so you can track their status.',
       );
     } else if (vm.filteredWorkerApplications.isEmpty) {
       body = const _EmptyState(
         icon: Icons.filter_list_off_rounded,
         title: 'No applications in this status.',
-        message: 'Choose another filter to see more applications.',
+        message: 'Choose another status filter to see more applications.',
       );
     } else {
       body = _buildWorkerApplications(context, vm);
@@ -90,7 +90,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
             child: Row(
               children: [
                 Text(
-                  'MATCHES',
+                  vm.isPosterMode ? 'APPLICATIONS' : 'MY APPLICATIONS',
                   style: text.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.1,
