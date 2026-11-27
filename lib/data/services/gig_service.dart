@@ -496,10 +496,10 @@ class GigService {
       transaction.set(conversationRef, {
         'applicationId': applicationId,
         'gigId': gigId,
-        'gigTitle': (application['gigTitle'] as String?)?.trim().isNotEmpty == true
-            ? (application['gigTitle'] as String).trim()
-            : ((gigData['title'] as String?)?.trim().isNotEmpty == true
-                ? (gigData['title'] as String).trim()
+        'gigTitle': (gigData['title'] as String?)?.trim().isNotEmpty == true
+            ? (gigData['title'] as String).trim()
+            : ((application['gigTitle'] as String?)?.trim().isNotEmpty == true
+                ? (application['gigTitle'] as String).trim()
                 : 'Gig'),
         'workerId': application['workerId'],
         'posterId': application['posterId'],
