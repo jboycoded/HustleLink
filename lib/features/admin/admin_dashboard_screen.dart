@@ -378,6 +378,12 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
             _detail('Reason', d['reason'] as String? ?? '—'),
             _detail('Submitted', _dateLabel(d['createdAt'])),
             _detail('Details', d['details'] as String? ?? '—'),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _showReportTarget(d),
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('Inspect reported target'),
+            ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: status,
@@ -405,6 +411,45 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
     if (result == null) return;
     await _run(() => _service.reviewReport(
       reportId: doc.id, status: result.$1, resolutionNote: result.$2), 'Report updated.');
+  }
+
+  Future<void> _showReportTarget(Map<String, dynamic> report) async {
+    try {
+      final target = await _service.getReportTarget(
+        targetType: report['targetType'] as String? ?? '',
+        targetId: report['targetId'] as String? ?? '',
+      );
+      if (!mounted) return;
+      if (target == null) {
+        _message('The reported item could not be found.');
+        return;
+      }
+      final entries = target.entries.toList();
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('REPORTED TARGET'),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: entries.map((entry) => _detail(
+                  entry.key.replaceAllMapped(RegExp(r'[A-Z]'), (m) => ' ${m.group(0)}').replaceAll('_', ' '),
+                  entry.value?.toString() ?? '—',
+                )).toList(),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close')),
+          ],
+        ),
+      );
+    } catch (error) {
+      if (mounted) _message(error.toString());
+    }
   }
 
   Future<String?> _textDialog({
