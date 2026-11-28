@@ -486,6 +486,23 @@ Deno.serve(async (request: Request) => {
       return jsonResponse({ success: true, ...result });
     }
 
+    if (action === "admin-overview") {
+      await requireAdmin(uid, ["super_admin", "admin", "moderator", "support", "analyst"]);
+      const [users, gigs, reports] = await Promise.all([
+        listCollection("users"), listCollection("gigs"), listCollection("reports"),
+      ]);
+      const activeGigs = gigs.filter((doc) => doc.fields?.status?.stringValue === "open").length;
+      const openReports = reports.filter((doc) => doc.fields?.status?.stringValue === "open").length;
+      return jsonResponse({
+        success: true,
+        users: users.length,
+        gigs: gigs.length,
+        openGigs: activeGigs,
+        reports: reports.length,
+        pendingReports: openReports,
+      });
+    }
+
     return jsonResponse({ error: "Unsupported action." }, 400);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Request failed.";
