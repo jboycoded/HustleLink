@@ -84,6 +84,7 @@ as an artifact when manually triggered.
 
 - [Software Engineering SOP & Quality Framework](docs/ENGINEERING_SOP.md) — reusable project lifecycle, issue handling, review and release checklists.
 - [HustleLink Quality Register](docs/HUSTLELINK_QUALITY_REGISTER.md) — categorized history of issues, fixes, decisions, outstanding work and lessons from this project.
+- [Admin Dashboard Setup](docs/ADMIN_DASHBOARD_SETUP.md) — module scope, role permissions, backend deployment and required Firebase configuration.
 
 ## Dependencies
 - `go_router`: declarative routing and the stateful bottom-navigation shell
