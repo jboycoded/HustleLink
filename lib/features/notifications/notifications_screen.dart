@@ -108,6 +108,23 @@ class NotificationsScreen extends StatelessWidget {
                     if (!item.isRead) {
                       service.markNotificationRead(item.id).catchError((_) {});
                     }
+                    if (!context.mounted) return;
+                    if (item.type == 'announcement') {
+                      await showDialog<void>(
+                        context: context,
+                        builder: (dialogContext) => AlertDialog(
+                          title: Text(item.title),
+                          content: SingleChildScrollView(child: Text(item.body)),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogContext),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      );
+                      return;
+                    }
                     if (!context.mounted || item.relatedId.isEmpty) return;
                     if (item.type == 'application_received') {
                       try {
