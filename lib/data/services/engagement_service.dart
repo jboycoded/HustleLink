@@ -71,6 +71,9 @@ class EngagementService {
     if (item.relatedId.isEmpty) return false;
 
     switch (item.type) {
+      case 'announcement':
+        return true;
+
       case 'application_received':
       case 'application_accepted':
       case 'application_rejected':
