@@ -246,6 +246,23 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
   Future<void> _showUser(QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
     final d = doc.data();
     final suspended = d['accountStatus'] == 'suspended';
+    if (widget.role == 'moderator') {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(d['fullName'] as String? ?? 'User account'),
+          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _detail('Email', d['email'] as String? ?? '—'),
+            _detail('User ID', doc.id),
+            _detail('Location', d['location'] as String? ?? '—'),
+            _detail('Current mode', d['activeRole'] as String? ?? '—'),
+            _detail('Account status', suspended ? 'Suspended' : 'Active'),
+          ]),
+          actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close'))],
+        ),
+      );
+      return;
+    }
     final reason = await _textDialog(
       title: d['fullName'] as String? ?? 'User account',
       initial: d['suspensionReason'] as String? ?? '',
@@ -283,7 +300,7 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
             final doc = docs[i]; final d = doc.data();
             return Card(child: ListTile(
               title: Text(d['title'] as String? ?? 'Untitled gig'),
-              subtitle: Text('${d['category'] ?? 'Uncategorised'} · ₦${d['pay'] ?? 0}\n${d['posterName'] ?? 'Poster'} · ${d['status'] ?? 'unknown'}'),
+              subtitle: Text('${d['category'] ?? 'Uncategorised'} · ₦${d['pay'] ?? 0}\n${d['posterName'] ?? 'Poster'} · ${d['moderationStatus'] == 'removed' ? 'removed' : d['status'] ?? 'unknown'}'),
               isThreeLine: true, trailing: const Icon(Icons.chevron_right),
               onTap: () => _showGig(doc),
             ));
