@@ -277,7 +277,7 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
       actionLabel: widget.role == 'moderator' ? 'Close' : suspended ? 'Restore account' : 'Suspend account',
       destructive: widget.role != 'moderator' && !suspended,
     );
-    if (reason == null || widget.role == 'moderator') return;
+    if (!mounted || reason == null || widget.role == 'moderator') return;
     await _run(() => _service.setUserSuspended(
       userId: doc.id, suspended: !suspended, reason: reason),
       suspended ? 'User account restored.' : 'User account suspended.');
@@ -328,7 +328,7 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
       actionLabel: status == 'open' ? 'Close gig' : status == 'removed' ? 'Already removed' : 'Remove gig',
       destructive: true,
     );
-    if (note == null || status == 'removed' || widget.role == 'support') return;
+    if (!mounted || note == null || status == 'removed' || widget.role == 'support') return;
     final remove = status != 'open';
     await _run(() => _service.moderateGig(gigId: doc.id, remove: remove, note: note),
       remove ? 'Gig removed from the marketplace.' : 'Gig closed.');
@@ -408,7 +408,7 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
       )),
     );
     noteController.dispose();
-    if (result == null) return;
+    if (!mounted || result == null) return;
     await _run(() => _service.reviewReport(
       reportId: doc.id, status: result.$1, resolutionNote: result.$2), 'Report updated.');
   }
