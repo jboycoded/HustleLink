@@ -126,12 +126,12 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value)));
   }
 
-  Future<void> _run(Future<void> Function() action, String success) async {
+  Future<void> _run(Future<void> Function() action, [String? success]) async {
     if (_busy) return;
     setState(() => _busy = true);
     try {
       await action();
-      if (mounted) _message(success);
+      if (mounted && success != null && success.isNotEmpty) _message(success);
     } catch (error) {
       if (mounted) _message(error.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -260,7 +260,7 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
       actionLabel: suspended ? 'Restore account' : 'Suspend account',
       destructive: !suspended,
     );
-    if (reason == null) return;
+    if (reason == null || widget.role == 'moderator') return;
     await _run(() => _service.setUserSuspended(
       userId: doc.id, suspended: !suspended, reason: reason),
       suspended ? 'User account restored.' : 'User account suspended.');
@@ -306,10 +306,10 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
         _detail('Status', status),
         _detail('Description', d['description'] as String? ?? '—'),
       ],
-      actionLabel: status == 'open' ? 'Close gig' : 'Remove gig',
+      actionLabel: status == 'open' ? 'Close gig' : status == 'removed' ? 'Already removed' : 'Remove gig',
       destructive: true,
     );
-    if (note == null) return;
+    if (note == null || status == 'removed') return;
     final remove = status != 'open';
     await _run(() => _service.moderateGig(gigId: doc.id, remove: remove, note: note),
       remove ? 'Gig removed from the marketplace.' : 'Gig closed.');
@@ -489,7 +489,7 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
       );
       _titleController.clear(); _bodyController.clear(); _targetController.clear();
       _message('Announcement sent to ${result['recipients'] ?? 0} users.');
-    }, 'Announcement sent.');
+    });
   }
 
   Widget _auditLogs() => StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
