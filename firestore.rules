@@ -875,6 +875,12 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /adminAnnouncements/{announcementId} {
+      allow read: if currentAdminRole() in ['super_admin', 'admin'];
+      // Announcement creation is performed by the trusted admin Edge Function.
+      allow create, update, delete: if false;
+    }
+
     match /adminAuditLogs/{logId} {
       allow read: if currentAdminRole() in ['super_admin', 'admin', 'analyst'];
       allow create, update, delete: if false;
