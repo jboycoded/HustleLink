@@ -252,6 +252,32 @@ async function firestoreCreate(collection: string, id: string, fields: Record<st
   }
   return await response.json();
 }
+
+async function firestoreBatchCreate(collection: string, documents: { id: string; fields: Record<string, any> }[]) {
+  const token = await googleAccessToken();
+  for (let start = 0; start < documents.length; start += 400) {
+    const writes = documents.slice(start, start + 400).map((document) => ({
+      update: {
+        name: "projects/" + PROJECT_ID + "/databases/(default)/documents/" + collection + "/" + document.id,
+        fields: document.fields,
+      },
+      currentDocument: { exists: false },
+    }));
+    const response = await fetch(
+      "https://firestore.googleapis.com/v1/projects/" + PROJECT_ID + "/databases/(default)/documents:commit",
+      {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ writes }),
+      },
+    );
+    if (!response.ok) {
+      console.error("Firestore batch create failed:", response.status);
+      throw new Error("Unable to create announcement notifications.");
+    }
+  }
+}
+
 async function listCollection(collection: string): Promise<any[]> {
   const token = await googleAccessToken();
   const documents: any[] = [];
@@ -317,10 +343,10 @@ async function sendAnnouncement(uid: string, role: string, body: any) {
       const status = fields.accountStatus?.stringValue ?? "active";
       if (status === "suspended") return false;
       if (audience === "workers") {
-        return (fields.roles?.arrayValue?.values ?? []).some((v: any) => v.stringValue === "worker");
+        return fields.activeRole?.stringValue === "worker";
       }
       if (audience === "posters") {
-        return (fields.roles?.arrayValue?.values ?? []).some((v: any) => v.stringValue === "poster");
+        return fields.activeRole?.stringValue === "poster";
       }
       return true;
     });
@@ -337,27 +363,37 @@ async function sendAnnouncement(uid: string, role: string, body: any) {
     createdAt: firestoreTimestamp(),
   });
 
+  const notificationDocuments = recipients.map((recipient) => {
+    const recipientId = recipient.name.split("/").pop() ?? "";
+    return {
+      id: "announcement_" + announcementId + "_" + recipientId,
+      recipientId,
+      fields: {
+        recipientId: firestoreString(recipientId),
+        actorId: firestoreString(uid),
+        type: firestoreString("announcement"),
+        title: firestoreString(title),
+        body: firestoreString(message),
+        relatedId: firestoreString(announcementId),
+        isRead: { booleanValue: false },
+        createdAt: firestoreTimestamp(),
+      },
+    };
+  }).filter((item) => item.recipientId.length > 0);
+  await firestoreBatchCreate("notifications", notificationDocuments);
   let delivered = 0;
-  for (const recipient of recipients) {
-    const recipientId = recipient.name.split("/").pop();
-    if (!recipientId) continue;
-    const notificationId = "announcement_" + announcementId + "_" + recipientId;
-    await firestoreCreate("notifications", notificationId, {
-      recipientId: firestoreString(recipientId),
-      actorId: firestoreString(uid),
-      type: firestoreString("announcement"),
-      title: firestoreString(title),
-      body: firestoreString(message),
-      relatedId: firestoreString(announcementId),
-      isRead: { booleanValue: false },
-      createdAt: firestoreTimestamp(),
-    });
-    try {
-      await sendPush(notificationId, uid);
-      delivered++;
-    } catch (error) {
-      console.error("Announcement push failed for recipient.");
-    }
+  for (let start = 0; start < notificationDocuments.length; start += 20) {
+    const chunk = notificationDocuments.slice(start, start + 20);
+    const results = await Promise.all(chunk.map(async (item) => {
+      try {
+        await sendPush(item.id, uid);
+        return true;
+      } catch (_) {
+        console.error("Announcement push failed for recipient.");
+        return false;
+      }
+    }));
+    delivered += results.filter(Boolean).length;
   }
   await writeAdminAudit(uid, role, "announcement_sent", "announcement", announcementId,
     "Audience: " + audience + "; recipients: " + recipients.length);
