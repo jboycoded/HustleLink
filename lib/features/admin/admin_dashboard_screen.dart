@@ -386,7 +386,7 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: status,
+              initialValue: status,
               decoration: const InputDecoration(labelText: 'Report status', border: OutlineInputBorder()),
               items: const [
                 DropdownMenuItem(value: 'under_review', child: Text('Under review')),
@@ -497,7 +497,7 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
       decoration: const InputDecoration(labelText: 'Message', alignLabelWithHint: true, border: OutlineInputBorder())),
     const SizedBox(height: 12),
     DropdownButtonFormField<String>(
-      value: _audience,
+      initialValue: _audience,
       decoration: const InputDecoration(labelText: 'Audience', border: OutlineInputBorder()),
       items: const [
         DropdownMenuItem(value: 'all', child: Text('All users')),
