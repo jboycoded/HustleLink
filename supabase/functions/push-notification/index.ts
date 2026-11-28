@@ -307,7 +307,9 @@ async function sendAnnouncement(uid: string, role: string, body: any) {
   let recipients: any[] = [];
   if (audience === "user") {
     const target = await firestoreRequest("users/" + targetUserId);
-    if (target) recipients = [{ name: "users/" + targetUserId, fields: target.fields ?? {} }];
+    if (target && target.fields?.accountStatus?.stringValue !== "suspended") {
+      recipients = [{ name: "users/" + targetUserId, fields: target.fields ?? {} }];
+    }
   } else {
     const users = await listCollection("users");
     recipients = users.filter((doc) => {
@@ -409,10 +411,11 @@ Deno.serve(async (request: Request) => {
       if (!gigId) throw new Error("A gig ID is required.");
       const gig = await firestoreRequest("gigs/" + gigId);
       if (!gig) throw new Error("Gig not found.");
-      const nextStatus = action === "admin-remove-gig" ? "removed" : "closed";
+      const nextStatus = "closed";
+      const moderationStatus = action === "admin-remove-gig" ? "removed" : "closed";
       await firestorePatch("gigs/" + gigId, {
         status: firestoreString(nextStatus),
-        moderationStatus: firestoreString(nextStatus),
+        moderationStatus: firestoreString(moderationStatus),
         moderatedAt: firestoreTimestamp(),
         moderatedBy: firestoreString(uid),
         moderationNote: firestoreString(typeof body?.note === "string" ? body.note.trim().slice(0, 500) : ""),
@@ -450,7 +453,7 @@ Deno.serve(async (request: Request) => {
       const reason = typeof body?.reason === "string" ? body.reason.trim().slice(0, 500) : "";
       if (!targetUid || targetUid === uid) throw new Error("You cannot suspend your own account.");
       const adminTarget = await firestoreRequest("adminUsers/" + targetUid);
-      if (adminTarget?.fields?.active?.booleanValue === true) {
+      if (adminTarget !== null) {
         throw new Error("Administrative accounts cannot be suspended from User Management.");
       }
       const target = await firestoreRequest("users/" + targetUid);
