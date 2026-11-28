@@ -447,7 +447,13 @@ Deno.serve(async (request: Request) => {
       if (!gigId) throw new Error("A gig ID is required.");
       const gig = await firestoreRequest("gigs/" + gigId);
       if (!gig) throw new Error("Gig not found.");
-      const nextStatus = "closed";
+      const currentStatus = gig.fields?.status?.stringValue ?? "unknown";
+      if (action === "admin-close-gig" && currentStatus !== "open") {
+        throw new Error("Only open gigs can be closed.");
+      }
+      const nextStatus = action === "admin-close-gig" || currentStatus === "open"
+        ? "closed"
+        : currentStatus;
       const moderationStatus = action === "admin-remove-gig" ? "removed" : "closed";
       await firestorePatch("gigs/" + gigId, {
         status: firestoreString(nextStatus),
@@ -514,6 +520,24 @@ Deno.serve(async (request: Request) => {
         suspendedBy: firestoreString(suspend ? uid : ""),
         statusUpdatedAt: firestoreTimestamp(),
       });
+      if (suspend) {
+        const postedGigs = await listCollection("gigs");
+        const activeGigs = postedGigs.filter((doc) =>
+          doc.fields?.posterId?.stringValue === targetUid &&
+          doc.fields?.status?.stringValue === "open");
+        for (const gig of activeGigs) {
+          const gigId = gig.name.split("/").pop();
+          if (!gigId) continue;
+          await firestorePatch("gigs/" + gigId, {
+            status: firestoreString("closed"),
+            moderationStatus: firestoreString("account_suspended"),
+            moderatedAt: firestoreTimestamp(),
+            moderatedBy: firestoreString(uid),
+            moderationNote: firestoreString("Poster account suspended: " + reason),
+            updatedAt: firestoreTimestamp(),
+          });
+        }
+      }
       await writeAdminAudit(uid, role, suspend ? "user_suspended" : "user_restored",
         "user", targetUid, reason);
       return jsonResponse({ success: true });
