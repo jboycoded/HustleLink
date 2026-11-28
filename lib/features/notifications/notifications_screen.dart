@@ -262,6 +262,7 @@ class NotificationsScreen extends StatelessWidget {
   }
 
   IconData _iconFor(String type) => switch (type) {
+        'announcement' => Icons.campaign_outlined,
         'application_received' => Icons.person_add_alt_1_rounded,
         'application_accepted' => Icons.check_circle_rounded,
         'application_rejected' => Icons.info_outline_rounded,
