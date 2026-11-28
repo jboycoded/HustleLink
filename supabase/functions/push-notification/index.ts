@@ -109,8 +109,21 @@ async function firestoreRequest(path: string, method = "GET", body?: unknown) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 404) return null;
-    console.error("Firestore REST request failed:", response.status);
-    throw new Error("Unable to access notification data.");
+    const firestoreError = data?.error;
+    const errorMessage = typeof firestoreError?.message === "string"
+      ? firestoreError.message
+      : "Unknown Firestore REST error.";
+    const errorStatus = typeof firestoreError?.status === "string"
+      ? firestoreError.status
+      : "UNKNOWN";
+    console.error("Firestore REST request failed:", {
+      httpStatus: response.status,
+      errorStatus,
+      message: errorMessage,
+      path,
+      method,
+    });
+    throw new Error(`Firestore request failed (${response.status} / ${errorStatus}): ${errorMessage}`);
   }
   return data;
 }
