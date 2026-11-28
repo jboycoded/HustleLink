@@ -257,8 +257,8 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
         _detail('Joined', _dateLabel(d['createdAt'])),
         _detail('Account status', suspended ? 'Suspended' : 'Active'),
       ],
-      actionLabel: suspended ? 'Restore account' : 'Suspend account',
-      destructive: !suspended,
+      actionLabel: widget.role == 'moderator' ? 'Close' : suspended ? 'Restore account' : 'Suspend account',
+      destructive: widget.role != 'moderator' && !suspended,
     );
     if (reason == null || widget.role == 'moderator') return;
     await _run(() => _service.setUserSuspended(
@@ -293,7 +293,9 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
   ]);
 
   Future<void> _showGig(QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
-    final d = doc.data(); final status = d['status'] as String? ?? 'unknown';
+    final d = doc.data();
+    final rawStatus = d['status'] as String? ?? 'unknown';
+    final status = d['moderationStatus'] == 'removed' ? 'removed' : rawStatus;
     final note = await _textDialog(
       title: d['title'] as String? ?? 'Gig details',
       content: [
@@ -309,35 +311,38 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
       actionLabel: status == 'open' ? 'Close gig' : status == 'removed' ? 'Already removed' : 'Remove gig',
       destructive: true,
     );
-    if (note == null || status == 'removed') return;
+    if (note == null || status == 'removed' || widget.role == 'support') return;
     final remove = status != 'open';
     await _run(() => _service.moderateGig(gigId: doc.id, remove: remove, note: note),
       remove ? 'Gig removed from the marketplace.' : 'Gig closed.');
   }
 
-  Widget _reports() => StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-    stream: _service.watchReports(),
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-      if (snapshot.hasError) return _error('Could not load reports. Check admin read permissions.');
-      final docs = (snapshot.data?.docs ?? []).where((doc) {
-        final d = doc.data();
-        return '${d['reason'] ?? ''} ${d['targetType'] ?? ''} ${d['targetId'] ?? ''} ${d['details'] ?? ''} ${d['status'] ?? ''}'.toLowerCase().contains(_search);
-      }).toList();
-      if (docs.isEmpty) return _empty('No reports have been submitted.');
-      return ListView.builder(padding: const EdgeInsets.all(12), itemCount: docs.length,
-        itemBuilder: (context, i) {
-          final doc = docs[i]; final d = doc.data();
-          return Card(child: ListTile(
-            leading: const Icon(Icons.flag_outlined),
-            title: Text('${(d['reason'] as String? ?? 'other').toUpperCase()} · ${d['targetType'] ?? 'target'}'),
-            subtitle: Text('Target: ${d['targetId'] ?? '—'}\n${d['status'] ?? 'open'} · ${_dateLabel(d['createdAt'])}'),
-            isThreeLine: true, trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showReport(doc),
-          ));
-        });
-    },
-  );
+  Widget _reports() => Column(children: [
+    _searchBox('Search reason, target ID or report details'),
+    Expanded(child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _service.watchReports(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.hasError) return _error('Could not load reports. Check admin read permissions.');
+        final docs = (snapshot.data?.docs ?? []).where((doc) {
+          final d = doc.data();
+          return '${d['reason'] ?? ''} ${d['targetType'] ?? ''} ${d['targetId'] ?? ''} ${d['details'] ?? ''} ${d['status'] ?? ''}'.toLowerCase().contains(_search);
+        }).toList();
+        if (docs.isEmpty) return _empty('No reports have been submitted.');
+        return ListView.builder(padding: const EdgeInsets.all(12), itemCount: docs.length,
+          itemBuilder: (context, i) {
+            final doc = docs[i]; final d = doc.data();
+            return Card(child: ListTile(
+              leading: const Icon(Icons.flag_outlined),
+              title: Text('${(d['reason'] as String? ?? 'other').toUpperCase()} · ${d['targetType'] ?? 'target'}'),
+              subtitle: Text('Target: ${d['targetId'] ?? '—'}\n${d['status'] ?? 'open'} · ${_dateLabel(d['createdAt'])}'),
+              isThreeLine: true, trailing: const Icon(Icons.chevron_right),
+              onTap: () => _showReport(doc),
+            ));
+          });
+      },
+    )),
+  ]);
 
   Future<void> _showReport(QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
     final d = doc.data();
