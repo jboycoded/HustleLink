@@ -488,6 +488,25 @@ Deno.serve(async (request: Request) => {
       return jsonResponse({ success: true });
     }
 
+    if (action === "admin-get-report-target") {
+      await requireAdmin(uid, ["super_admin", "admin", "moderator", "support"]);
+      const targetType = typeof body?.targetType === "string" ? body.targetType : "";
+      const targetId = typeof body?.targetId === "string" ? body.targetId.trim() : "";
+      if (!targetId || !["user", "gig"].includes(targetType)) {
+        throw new Error("A valid report target is required.");
+      }
+      const target = await firestoreRequest((targetType === "user" ? "users/" : "gigs/") + targetId);
+      if (!target?.fields) return jsonResponse({ success: true, target: null });
+      const data = decodeFields(target.fields);
+      const allowedFields = targetType === "user"
+        ? ["fullName", "email", "location", "activeRole", "accountStatus", "createdAt", "photoUrl", "rating", "completedGigs"]
+        : ["title", "description", "category", "pay", "posterName", "posterId", "location", "status", "moderationStatus", "createdAt"];
+      const safeTarget = Object.fromEntries(allowedFields
+        .filter((key) => data[key] !== undefined)
+        .map((key) => [key, data[key]]));
+      return jsonResponse({ success: true, target: safeTarget });
+    }
+
     if (action === "admin-set-user-status") {
       const role = await requireAdmin(uid, ["super_admin", "admin"]);
       const targetUid = typeof body?.userId === "string" ? body.userId.trim() : "";
