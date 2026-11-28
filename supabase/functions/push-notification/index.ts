@@ -64,7 +64,7 @@ async function googleAccessToken(): Promise<string> {
   const key = await importPKCS8(account.private_key, "RS256");
   const now = Math.floor(Date.now() / 1000);
   const assertion = await new SignJWT({
-    scope: "https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/firebase.messaging",
+    scope: "https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/firebase.messaging https://www.googleapis.com/auth/identitytoolkit",
   })
     .setProtectedHeader({ alg: "RS256", typ: "JWT" })
     .setIssuer(account.client_email)
@@ -200,6 +200,168 @@ async function sendPush(notificationId: string, uid: string) {
   return { sent, devices: documents.length };
 }
 
+
+type AdminRole = "super_admin" | "admin" | "moderator" | "support" | "analyst";
+
+function firestoreString(value: string) {
+  return { stringValue: value };
+}
+function firestoreTimestamp(value = new Date()) {
+  return { timestampValue: value.toISOString() };
+}
+function decodeValue(value: any): any {
+  if (!value || typeof value !== "object") return null;
+  if ("stringValue" in value) return value.stringValue;
+  if ("booleanValue" in value) return value.booleanValue;
+  if ("integerValue" in value) return Number(value.integerValue);
+  if ("doubleValue" in value) return Number(value.doubleValue);
+  if ("timestampValue" in value) return value.timestampValue;
+  if ("arrayValue" in value) return (value.arrayValue.values ?? []).map(decodeValue);
+  if ("mapValue" in value) return decodeFields(value.mapValue.fields ?? {});
+  return null;
+}
+function decodeFields(fields: Record<string, any>) {
+  return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, decodeValue(value)]));
+}
+async function firestorePatch(path: string, fields: Record<string, any>) {
+  const url = new URL(firestoreDocumentUrl(path));
+  for (const key of Object.keys(fields)) url.searchParams.append("updateMask.fieldPaths", key);
+  const token = await googleAccessToken();
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields }),
+  });
+  if (!response.ok) {
+    console.error("Firestore admin update failed:", response.status);
+    throw new Error("Unable to save the administrative change.");
+  }
+  return await response.json();
+}
+async function firestoreCreate(collection: string, id: string, fields: Record<string, any>) {
+  const token = await googleAccessToken();
+  const url = firestoreDocumentUrl(collection) + "?documentId=" + encodeURIComponent(id);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields }),
+  });
+  if (!response.ok) {
+    console.error("Firestore admin create failed:", response.status);
+    throw new Error("Unable to create the administrative record.");
+  }
+  return await response.json();
+}
+async function listCollection(collection: string): Promise<any[]> {
+  const token = await googleAccessToken();
+  const documents: any[] = [];
+  let pageToken = "";
+  do {
+    const url = new URL(firestoreDocumentUrl(collection));
+    url.searchParams.set("pageSize", "1000");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+    const response = await fetch(url, { headers: { Authorization: "Bearer " + token } });
+    if (!response.ok) throw new Error("Unable to retrieve platform users.");
+    const result = await response.json();
+    documents.push(...(result.documents ?? []));
+    pageToken = result.nextPageToken ?? "";
+  } while (pageToken && documents.length < 10000);
+  return documents;
+}
+async function requireAdmin(uid: string, allowed: AdminRole[]): Promise<AdminRole> {
+  const record = await firestoreRequest("adminUsers/" + uid);
+  const fields = record?.fields;
+  const role = fields ? stringField(fields, "role") : "";
+  const active = fields?.active?.booleanValue === true;
+  if (!active || !allowed.includes(role as AdminRole)) {
+    throw new Error("You do not have permission to perform this action.");
+  }
+  return role as AdminRole;
+}
+async function writeAdminAudit(uid: string, role: string, action: string,
+  targetType: string, targetId: string, details = "") {
+  const id = crypto.randomUUID();
+  await firestoreCreate("adminAuditLogs", id, {
+    actorId: firestoreString(uid),
+    actorRole: firestoreString(role),
+    action: firestoreString(action),
+    targetType: firestoreString(targetType),
+    targetId: firestoreString(targetId),
+    details: firestoreString(details.slice(0, 1000)),
+    createdAt: firestoreTimestamp(),
+  });
+}
+async function sendAnnouncement(uid: string, role: string, body: any) {
+  const title = typeof body?.title === "string" ? body.title.trim() : "";
+  const message = typeof body?.body === "string" ? body.body.trim() : "";
+  const audience = typeof body?.audience === "string" ? body.audience : "all";
+  const targetUserId = typeof body?.targetUserId === "string" ? body.targetUserId.trim() : "";
+  if (!title || title.length > 100 || !message || message.length > 1000) {
+    throw new Error("Enter a title (max 100 characters) and message (max 1,000 characters).");
+  }
+  if (!["all", "workers", "posters", "user"].includes(audience)) {
+    throw new Error("Invalid announcement audience.");
+  }
+  if (audience === "user" && !targetUserId) throw new Error("Select a user for this announcement.");
+
+  let recipients: any[] = [];
+  if (audience === "user") {
+    const target = await firestoreRequest("users/" + targetUserId);
+    if (target) recipients = [{ name: "users/" + targetUserId, fields: target.fields ?? {} }];
+  } else {
+    const users = await listCollection("users");
+    recipients = users.filter((doc) => {
+      const fields = doc.fields ?? {};
+      const status = fields.accountStatus?.stringValue ?? "active";
+      if (status === "suspended") return false;
+      if (audience === "workers") {
+        return (fields.roles?.arrayValue?.values ?? []).some((v: any) => v.stringValue === "worker");
+      }
+      if (audience === "posters") {
+        return (fields.roles?.arrayValue?.values ?? []).some((v: any) => v.stringValue === "poster");
+      }
+      return true;
+    });
+  }
+  recipients = recipients.filter((doc) => doc.name.split("/").pop() !== uid);
+  const announcementId = crypto.randomUUID();
+  await firestoreCreate("adminAnnouncements", announcementId, {
+    title: firestoreString(title),
+    body: firestoreString(message),
+    audience: firestoreString(audience),
+    createdBy: firestoreString(uid),
+    createdByRole: firestoreString(role),
+    recipientCount: { integerValue: String(recipients.length) },
+    createdAt: firestoreTimestamp(),
+  });
+
+  let delivered = 0;
+  for (const recipient of recipients) {
+    const recipientId = recipient.name.split("/").pop();
+    if (!recipientId) continue;
+    const notificationId = "announcement_" + announcementId + "_" + recipientId;
+    await firestoreCreate("notifications", notificationId, {
+      recipientId: firestoreString(recipientId),
+      actorId: firestoreString(uid),
+      type: firestoreString("announcement"),
+      title: firestoreString(title),
+      body: firestoreString(message),
+      relatedId: firestoreString(announcementId),
+      isRead: { booleanValue: false },
+      createdAt: firestoreTimestamp(),
+    });
+    try {
+      await sendPush(notificationId, uid);
+      delivered++;
+    } catch (error) {
+      console.error("Announcement push failed for recipient.");
+    }
+  }
+  await writeAdminAudit(uid, role, "announcement_sent", "announcement", announcementId,
+    "Audience: " + audience + "; recipients: " + recipients.length);
+  return { announcementId, recipients: recipients.length, pushDeliveries: delivered };
+}
+
 Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (request.method !== "POST") return jsonResponse({ error: "Method not allowed." }, 405);
@@ -238,6 +400,89 @@ Deno.serve(async (request: Request) => {
         ? body.notificationId.trim()
         : "";
       const result = await sendPush(notificationId, uid);
+      return jsonResponse({ success: true, ...result });
+    }
+
+    if (action === "admin-close-gig" || action === "admin-remove-gig") {
+      const role = await requireAdmin(uid, ["super_admin", "admin", "moderator"]);
+      const gigId = typeof body?.gigId === "string" ? body.gigId.trim() : "";
+      if (!gigId) throw new Error("A gig ID is required.");
+      const gig = await firestoreRequest("gigs/" + gigId);
+      if (!gig) throw new Error("Gig not found.");
+      const nextStatus = action === "admin-remove-gig" ? "removed" : "closed";
+      await firestorePatch("gigs/" + gigId, {
+        status: firestoreString(nextStatus),
+        moderationStatus: firestoreString(nextStatus),
+        moderatedAt: firestoreTimestamp(),
+        moderatedBy: firestoreString(uid),
+        moderationNote: firestoreString(typeof body?.note === "string" ? body.note.trim().slice(0, 500) : ""),
+        updatedAt: firestoreTimestamp(),
+      });
+      await writeAdminAudit(uid, role, action === "admin-remove-gig" ? "gig_removed" : "gig_closed",
+        "gig", gigId, typeof body?.note === "string" ? body.note : "");
+      return jsonResponse({ success: true });
+    }
+
+    if (action === "admin-review-report") {
+      const role = await requireAdmin(uid, ["super_admin", "admin", "moderator", "support"]);
+      const reportId = typeof body?.reportId === "string" ? body.reportId.trim() : "";
+      const status = typeof body?.status === "string" ? body.status : "";
+      const note = typeof body?.resolutionNote === "string" ? body.resolutionNote.trim().slice(0, 1000) : "";
+      if (!reportId || !["under_review", "resolved", "dismissed"].includes(status)) {
+        throw new Error("Choose a valid report status.");
+      }
+      const report = await firestoreRequest("reports/" + reportId);
+      if (!report) throw new Error("Report not found.");
+      await firestorePatch("reports/" + reportId, {
+        status: firestoreString(status),
+        reviewedAt: firestoreTimestamp(),
+        reviewedBy: firestoreString(uid),
+        resolutionNote: firestoreString(note),
+      });
+      await writeAdminAudit(uid, role, "report_" + status, "report", reportId, note);
+      return jsonResponse({ success: true });
+    }
+
+    if (action === "admin-set-user-status") {
+      const role = await requireAdmin(uid, ["super_admin", "admin"]);
+      const targetUid = typeof body?.userId === "string" ? body.userId.trim() : "";
+      const suspend = body?.suspended === true;
+      const reason = typeof body?.reason === "string" ? body.reason.trim().slice(0, 500) : "";
+      if (!targetUid || targetUid === uid) throw new Error("You cannot suspend your own account.");
+      const adminTarget = await firestoreRequest("adminUsers/" + targetUid);
+      if (adminTarget?.fields?.active?.booleanValue === true) {
+        throw new Error("Administrative accounts cannot be suspended from User Management.");
+      }
+      const target = await firestoreRequest("users/" + targetUid);
+      if (!target) throw new Error("User not found.");
+      const token = await googleAccessToken();
+      const authResponse = await fetch(
+        "https://identitytoolkit.googleapis.com/v1/projects/" + PROJECT_ID + "/accounts:update",
+        {
+          method: "POST",
+          headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+          body: JSON.stringify({ targetProjectId: PROJECT_ID, localId: targetUid, disableUser: suspend }),
+        },
+      );
+      if (!authResponse.ok) {
+        const error = await authResponse.json().catch(() => ({}));
+        console.error("Firebase Auth account status update failed:", authResponse.status);
+        throw new Error(error?.error?.message ?? "Firebase could not update this account. Check the service account's Identity Toolkit permissions.");
+      }
+      await firestorePatch("users/" + targetUid, {
+        accountStatus: firestoreString(suspend ? "suspended" : "active"),
+        suspensionReason: firestoreString(suspend ? reason : ""),
+        suspendedBy: firestoreString(suspend ? uid : ""),
+        statusUpdatedAt: firestoreTimestamp(),
+      });
+      await writeAdminAudit(uid, role, suspend ? "user_suspended" : "user_restored",
+        "user", targetUid, reason);
+      return jsonResponse({ success: true });
+    }
+
+    if (action === "admin-send-announcement") {
+      const role = await requireAdmin(uid, ["super_admin", "admin"]);
+      const result = await sendAnnouncement(uid, role, body);
       return jsonResponse({ success: true, ...result });
     }
 
