@@ -547,6 +547,24 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
     if (_audience == 'user' && _targetController.text.trim().isEmpty) {
       _message('Enter the recipient user ID.'); return;
     }
+    final audienceLabel = switch (_audience) {
+      'workers' => 'users currently in Worker mode',
+      'posters' => 'users currently in Poster mode',
+      'user' => 'the selected user',
+      _ => 'all active users',
+    };
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Send this announcement?'),
+        content: Text('This will send "${_titleController.text.trim()}" to $audienceLabel. In-app notifications will be created and push delivery will be attempted.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Send announcement')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
     await _run(() async {
       final result = await _service.sendAnnouncement(
         title: _titleController.text.trim(),
