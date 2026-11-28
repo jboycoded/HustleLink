@@ -31,25 +31,14 @@ class AdminService {
   final FirebaseAuth _auth;
   final SupabaseClient _supabase;
 
-  Future<int> _count(Query<Map<String, dynamic>> query) async {
-    final result = await query.count().get();
-    return result.count ?? 0;
-  }
-
   Future<AdminOverview> loadOverview() async {
-    final results = await Future.wait<int>([
-      _count(_firestore.collection('users')),
-      _count(_firestore.collection('gigs')),
-      _count(_firestore.collection('gigs').where('status', isEqualTo: 'open')),
-      _count(_firestore.collection('reports')),
-      _count(_firestore.collection('reports').where('status', isEqualTo: 'open')),
-    ]);
+    final result = await invoke('admin-overview');
     return AdminOverview(
-      users: results[0],
-      gigs: results[1],
-      openGigs: results[2],
-      reports: results[3],
-      pendingReports: results[4],
+      users: (result['users'] as num?)?.toInt() ?? 0,
+      gigs: (result['gigs'] as num?)?.toInt() ?? 0,
+      openGigs: (result['openGigs'] as num?)?.toInt() ?? 0,
+      reports: (result['reports'] as num?)?.toInt() ?? 0,
+      pendingReports: (result['pendingReports'] as num?)?.toInt() ?? 0,
     );
   }
 
