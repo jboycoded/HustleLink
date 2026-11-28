@@ -124,6 +124,18 @@ class AdminService {
     });
   }
 
+  Future<Map<String, dynamic>?> getReportTarget({
+    required String targetType,
+    required String targetId,
+  }) async {
+    final result = await invoke('admin-get-report-target', {
+      'targetType': targetType,
+      'targetId': targetId,
+    });
+    final target = result['target'];
+    return target is Map<String, dynamic> ? target : null;
+  }
+
   Future<Map<String, dynamic>> sendAnnouncement({
     required String title,
     required String body,
