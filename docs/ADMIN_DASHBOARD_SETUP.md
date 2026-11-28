@@ -52,7 +52,7 @@ The same service account used by the Edge Function needs permission to update Fi
 
 1. In the FIREBASE_SERVICE_ACCOUNT_JSON secret, identify its client_email value. Do not share the JSON or private key.
 2. Open Google Cloud Console → IAM & Admin → IAM for project hustlelink-483a9.
-3. Grant that service-account principal the **Identity Toolkit Admin** role (roles/identitytoolkit.admin).
+3. Prefer a custom IAM role containing only the firebaseauth.users.update permission and grant it to that service-account principal. If you do not want to create a custom role, the predefined Identity Toolkit Admin role (roles/identitytoolkit.admin) also provides the required permission, but is broader.
 
 This permission is used only by the server function to disable or re-enable a Firebase Authentication account. User suspension also closes that user's currently open gigs. Restoring the account does not automatically reopen old gigs.
 
